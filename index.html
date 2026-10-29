@@ -107,7 +107,65 @@ if (regForm) {
                     }
                 }
             }
-        }
+        } 
+        // १. मेसेज पठाउँदा Supabase मा सेभ गर्ने (Send Message)
+async function sendMessageToSupabase(senderId, receiverId, textMsg) {
+    if (!textMsg.trim()) return;
+    const { data, error } = await supabase
+        .from('messages')
+        .insert([{ sender_id: senderId, receiver_id: receiverId, message_text: textMsg }]);
+        
+    if (error) console.error("मेसेज पठाउन सकिएन:", error.message);
+    else {
+        console.log("मेसेज सर्भरमा सेभ भयो!");
+        loadMessagesFromSupabase(senderId, receiverId);
+    }
+}
+
+// २. पुराना मेसेजहरू लोड गरेर देखाउने (Fetch Messages)
+async function loadMessagesFromSupabase(senderId, receiverId) {
+    const { data: messages, error } = await supabase
+        .from('messages')
+        .select('*')
+        .or(`and(sender_id.eq.${senderId},receiver_id.eq.${receiverId}),and(sender_id.eq.${receiverId},receiver_id.eq.${senderId})`)
+        .order('created_at', { ascending: true });
+
+    if (error) {
+        console.error("मेसेज लोड हुन सकेन:", error.message);
+        return;
+    }
+
+    const chatContainer = document.querySelector('.chat-messages') || document.getElementById('chat-box');
+    if (chatContainer && messages) {
+        chatContainer.innerHTML = '';
+        messages.forEach(msg => {
+            const isMe = msg.sender_id === senderId;
+            chatContainer.innerHTML += `
+                <div class="message ${isMe ? 'sent' : 'received'}" style="text-align: ${isMe ? 'right' : 'left'}; margin: 10px; padding: 8px; background: ${isMe ? '#dcf8c6' : '#fff'}; border-radius: 5px;">
+                    <p style="margin: 0;">${msg.message_text}</p>
+                </div>
+            `;
+        });
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+}
+
+// ३. च्याट बटन ब्रिज एक्टिभ गर्ने
+function setupChatBridge() {
+    const chatForm = document.querySelector('.chat-input-form') || document.getElementById('chat-form');
+    const messageInput = document.querySelector('.chat-input') || document.getElementById('message-input');
+    if (chatForm && messageInput) {
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await sendMessageToSupabase('CEO-001', 'USER-002', messageInput.value);
+            messageInput.value = '';
+        });
+    }
+}
+document.addEventListener("DOMContentLoaded", () => {
+    setTimeout(setupChatBridge, 1500); 
+});
+
     </script>
     <style>
         body {<!-- १. Supabase JS Library (Yo script halna compulsory xa, natra client initialize hudaina) -->

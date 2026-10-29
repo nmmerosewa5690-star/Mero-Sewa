@@ -3619,6 +3619,65 @@ button[aria-label="बन्द"]:hover,button[aria-label="बन्द गर�
   }
 })();
 </script>
+// Dynamic Registration Submission Hub for Supabase
+async function handleRegistrationForm() {
+    console.log("Supabase Form submission module active...");
+    
+    // Website ko HTML text fields components haru match garchha
+    const nameInput = document.querySelector('input[type="text"][placeholder*="नाम"]') || document.getElementById('fullName');
+    const fatherInput = document.querySelector('input[type="text"][placeholder*="बुवा"]');
+    const mobileInput = document.querySelector('input[type="text"][placeholder*="मोबाइल"]') || document.querySelector('input[type="tel"]');
+    const districtInput = document.querySelector('select[placeholder*="जिल्ला"]') || document.querySelector('select');
+    const submitBtn = document.querySelector('button[type="submit"]') || document.querySelector('.submit-btn') || document.querySelector('button');
+
+    if (submitBtn) {
+        // Purano demo action text click bypass garera naya functional click set garchha
+        submitBtn.onclick = async function(event) {
+            event.preventDefault(); // Browser auto-reload load stop garchha
+            
+            const fullName = nameInput ? nameInput.value : '';
+            const fatherName = fatherInput ? fatherInput.value : '';
+            const mobile = mobileInput ? mobileInput.value : '';
+            const district = districtInput ? districtInput.value : 'Kathmandu';
+            
+            if (!fullName || !mobile) {
+                alert("कृपया पूरा नाम र मोबाइल नम्बर अनिवार्य रूपमा भर्नुहोस्!");
+                return;
+            }
+
+            // Supabase API layer call setup
+            try {
+                const { data, error } = await supabase
+                    .from('profiles')
+                    .insert([
+                        { 
+                            full_name: fullName, 
+                            father_name: fatherName, 
+                            mobile: mobile, 
+                            district: district, 
+                            role: 'Worker' 
+                        }
+                    ]);
+
+                if (error) {
+                    alert("Error logic: " + error.message);
+                } else {
+                    alert("बधाई छ! प्राविधिक (Worker) को विवरण Supabase Server मा दर्ता भयो।");
+                    if(typeof loadWorkersFromSupabase === 'function') {
+                        loadWorkersFromSupabase(); // Render updates to client grid
+                    }
+                }
+            } catch (err) {
+                console.error("Critical submission break:", err);
+            }
+        };
+    }
+}
+
+// Auto triggers check context hook
+document.addEventListener("DOMContentLoaded", () => {
+    setTimeout(handleRegistrationForm, 1000); // 1 sec delay to map dynamic front controls
+});
 
 </body>
 </html>

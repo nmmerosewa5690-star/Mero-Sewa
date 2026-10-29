@@ -73,7 +73,26 @@ async function loadWorkersFromSupabase() {
 document.addEventListener("DOMContentLoaded", () => {
     loadWorkersFromSupabase();
 });
-
+// १. दर्ता फारम (Registration Form) सँग Supabase जडान गर्ने
+const regForm = document.querySelector('form') || document.getElementById('registration-form');
+if (regForm) {
+    regForm.addEventListener('submit', async (e) => {
+        e.preventDefault(); // पेज रिफ्रेस हुनबाट रोक्ने
+        
+        // फारमबाट डाटा तान्ने (तपाईंको वेबसाइटको इनपुट ID/Class अनुसार)
+        const fullName = document.getElementById('full-name')?.value || document.querySelector('[placeholder*="नाम"]')?.value;
+        const fatherName = document.getElementById('father-name')?.value || document.querySelector('[placeholder*="बुवा"]')?.value;
+        const mobile = document.getElementById('mobile')?.value || document.querySelector('[placeholder*="मोबाइल"]')?.value;
+        const district = document.getElementById('district')?.value || document.querySelector('select')?.value;
+        
+        if(fullName && mobile) {
+            // हामीले बनाएको Supabase फङ्सनलाई डाटा पठाइदिने
+            await registerWorkerToSupabase(fullName, fatherName, mobile, district, 'Worker');
+        } else {
+            alert("कृपया नाम र मोबाइल नम्बर अनिवार्य भर्नुहोस्।");
+        }
+    });
+}
         tailwind.config = {
             theme: {
                 extend: {

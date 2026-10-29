@@ -1,7 +1,10 @@
-<link href="https://fonts.googleapis.com/css2?family=Mukta:wght@300;400;600;700;800&display=swap" rel="stylesheet"><!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ne">
 <head>
+    <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <meta charset="UTF-8">
+    <meta name="color-scheme" content="light">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mero-Sewa | नेपाली सेवा — Smart Marketplace</title>
     <!-- Tailwind CSS -->
@@ -13,86 +16,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <!-- Google Fonts for Nepali Text (Mukta) -->
     
-    <script>// १. नयाँ प्राविधिक (Worker) दर्ता गर्दा डाटाबेसमा सुरक्षित गर्ने (Register Worker)
-async function registerWorkerToSupabase(fullName, fatherName, mobile, district, role = 'Worker') {
-    const { data, error } = await supabase
-        .from('profiles')
-        .insert([
-            { 
-                full_name: fullName, 
-                father_name: fatherName, 
-                mobile: mobile, 
-                district: district, 
-                role: role 
-            }
-        ]);
-
-    if (error) {
-        alert("प्राविधिक दर्ता गर्न सकिएन: " + error.message);
-    } else {
-        alert("बधाई छ! प्राविधिक सफलतापूर्वक दर्ता भयो।");
-        loadWorkersFromSupabase(); // लिस्ट रिफ्रेस गर्न
-    }
-}
-
-// २. डाटाबेसबाट स्वीकृत प्राविधिकहरूको सूची लोड गरेर वेबसाइटमा देखाउने (Fetch Workers)
-async function loadWorkersFromSupabase() {
-    const { data: workers, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('role', 'Worker'); // साधारण ग्राहक बाहेक प्राविधिकहरू मात्र तान्ने
-
-    if (error) {
-        console.error("प्राविधिकहरूको सूची लोड हुन सकेन:", error.message);
-        return;
-    }
-
-    console.log("Database bata aayeko workers:", workers);
-    
-    // वेबसाइटमा वर्करहरू देखिने ठाउँको क्लास वा ID (जस्तai: .workers-grid) छान्ने
-    const workersContainer = document.querySelector('.workers-grid') || document.getElementById('workers-container');
-    if (workersContainer && workers) {
-        workersContainer.innerHTML = ''; // पुरानो डेमो डाटा खाली गर्ने
-        
-        workers.forEach(worker => {
-            workersContainer.innerHTML += `
-                <div class="worker-card">
-                    <h3>${worker.full_name}</h3>
-                    <p><b>जिल्ला:</b> ${worker.district}</p>
-                    <p><b>सम्पर्क:</b> ${worker.mobile || 'उपलब्ध छैन'}</p>
-                    <span class="status-badge">प्रमाणित प्राविधिक</span>
-                    <br>
-                    <a href="https://wa.me{worker.mobile}" target="_blank" class="whatsapp-btn">WhatsApp मा कुरा गर्नुहोस्</a>
-                </div>
-            `;
-        });
-    }
-}
-
-// अघिको DOMContentLoaded भित्र यो लाइन पनि थपिदिनुहोस् ता कि साइट खुल्ने बित्तिकै वर्करहरू लोड हुन्
-document.addEventListener("DOMContentLoaded", () => {
-    loadWorkersFromSupabase();
-});
-// १. दर्ता फारम (Registration Form) सँग Supabase जडान गर्ने
-const regForm = document.querySelector('form') || document.getElementById('registration-form');
-if (regForm) {
-    regForm.addEventListener('submit', async (e) => {
-        e.preventDefault(); // पेज रिफ्रेस हुनबाट रोक्ने
-        
-        // फारमबाट डाटा तान्ने (तपाईंको वेबसाइटको इनपुट ID/Class अनुसार)
-        const fullName = document.getElementById('full-name')?.value || document.querySelector('[placeholder*="नाम"]')?.value;
-        const fatherName = document.getElementById('father-name')?.value || document.querySelector('[placeholder*="बुवा"]')?.value;
-        const mobile = document.getElementById('mobile')?.value || document.querySelector('[placeholder*="मोबाइल"]')?.value;
-        const district = document.getElementById('district')?.value || document.querySelector('select')?.value;
-        
-        if(fullName && mobile) {
-            // हामीले बनाएको Supabase फङ्सनलाई डाटा पठाइदिने
-            await registerWorkerToSupabase(fullName, fatherName, mobile, district, 'Worker');
-        } else {
-            alert("कृपया नाम र मोबाइल नम्बर अनिवार्य भर्नुहोस्।");
-        }
-    });
-}
+    <script>
         tailwind.config = {
             theme: {
                 extend: {
@@ -107,229 +31,10 @@ if (regForm) {
                     }
                 }
             }
-        } 
-        // १. मेसेज पठाउँदा Supabase मा सेभ गर्ने (Send Message)
-async function sendMessageToSupabase(senderId, receiverId, textMsg) {
-    if (!textMsg.trim()) return;
-    const { data, error } = await supabase
-        .from('messages')
-        .insert([{ sender_id: senderId, receiver_id: receiverId, message_text: textMsg }]);
-        
-    if (error) console.error("मेसेज पठाउन सकिएन:", error.message);
-    else {
-        console.log("मेसेज सर्भरमा सेभ भयो!");
-        loadMessagesFromSupabase(senderId, receiverId);
-    }
-}
-
-// २. पुराना मेसेजहरू लोड गरेर देखाउने (Fetch Messages)
-async function loadMessagesFromSupabase(senderId, receiverId) {
-    const { data: messages, error } = await supabase
-        .from('messages')
-        .select('*')
-        .or(`and(sender_id.eq.${senderId},receiver_id.eq.${receiverId}),and(sender_id.eq.${receiverId},receiver_id.eq.${senderId})`)
-        .order('created_at', { ascending: true });
-
-    if (error) {
-        console.error("मेसेज लोड हुन सकेन:", error.message);
-        return;
-    }
-
-    const chatContainer = document.querySelector('.chat-messages') || document.getElementById('chat-box');
-    if (chatContainer && messages) {
-        chatContainer.innerHTML = '';
-        messages.forEach(msg => {
-            const isMe = msg.sender_id === senderId;
-            chatContainer.innerHTML += `
-                <div class="message ${isMe ? 'sent' : 'received'}" style="text-align: ${isMe ? 'right' : 'left'}; margin: 10px; padding: 8px; background: ${isMe ? '#dcf8c6' : '#fff'}; border-radius: 5px;">
-                    <p style="margin: 0;">${msg.message_text}</p>
-                </div>
-            `;
-        });
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-    }
-}
-
-// ३. च्याट बटन ब्रिज एक्टिभ गर्ने
-function setupChatBridge() {
-    const chatForm = document.querySelector('.chat-input-form') || document.getElementById('chat-form');
-    const messageInput = document.querySelector('.chat-input') || document.getElementById('message-input');
-    if (chatForm && messageInput) {
-        chatForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            await sendMessageToSupabase('CEO-001', 'USER-002', messageInput.value);
-            messageInput.value = '';
-        });
-    }
-}
-document.addEventListener("DOMContentLoaded", () => {
-    setTimeout(setupChatBridge, 1500); 
-});
-// १. प्रयोगकर्ताको इमेलमा OTP कोड पठाउने फङ्सन (Sign Up / Send OTP)
-async function sendEmailOTP(email, password) {
-    const { data, error } = await supabase.auth.signUp({
-        email: email,
-        password: password,
-    });
-
-    if (error) {
-        alert("OTP पठाउन सकिएन: " + error.message);
-    } else {
-        alert("तपाईंको इमेलमा OTP कोड पठाइएको छ। कृपया चेक गर्नुहोस्!");
-        // यहाँ फ्रन्टइन्डमा OTP हाल्ने बक्स (Input Field) देखाउन सक्नुहुन्छ
-    }
-}
-
-// २. इमेलमा आएको OTP कोड प्रमाणित गरेर एकाउन्ट एक्टिव गर्ने (Verify OTP)
-async function verifyEmailOTP(email, tokenCode) {
-    const { data, error } = await supabase.auth.verifyOtp({
-        email: email,
-        token: tokenCode,
-        type: 'signup'
-    });
-
-    if (error) {
-        alert("गलत OTP! कृपया फेरि प्रयास गर्नुहोस्: " + error.message);
-    } else {
-        alert("बधाई छ! इमेल सफलतापूर्वक प्रमाणित भयो र तपाईं लगइन हुनुभयो।");
-        window.location.reload(); // पेज रिफ्रेस गरेर ड्यासबोर्ड खोल्न
-    }
-}
-
-// ३. फ्रन्टइन्डका बटनहरूसँग जडान (Form Action Bridge)
-function setupEmailAuthBridge() {
-    // तपाईंको कोडमा भएको इमेल OTP पठाउने बटनको ID/Class अनुसार
-    const sendOtpBtn = document.querySelector('.send-otp-btn') || document.getElementById('btn-send-otp');
-    const verifyOtpBtn = document.querySelector('.verify-otp-btn') || document.getElementById('btn-verify-otp');
-    
-    const emailField = document.querySelector('input[type="email"]');
-    const passField = document.querySelector('input[type="password"]');
-    const otpField = document.querySelector('.otp-input') || document.getElementById('otp-code');
-
-    if (sendOtpBtn && emailField && passField) {
-        sendOtpBtn.onclick = async function(e) {
-            e.preventDefault();
-            await sendEmailOTP(emailField.value, passField.value);
-        };
-    }
-
-    if (verifyOtpBtn && otpField && emailField) {
-        verifyOtpBtn.onclick = async function(e) {
-            e.preventDefault();
-            await verifyEmailOTP(emailField.value, otpField.value);
-        };
-    }
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-    setTimeout(setupEmailAuthBridge, 1500);
-});
-// Browser custom form format constraints verification bypass layer
-function bypassFormFormatConstraints() {
-    console.log("HTML validation bypass framework triggered...");
-    
-    // Website bhitra bhae ka sabai form inputs match garchha
-    const allFormInputs = document.querySelectorAll('input, select');
-    
-    allFormInputs.forEach(input => {
-        // Strict restrictions locks pattern remove garchha
-        if (input.hasAttribute('pattern')) {
-            input.removeAttribute('pattern');
         }
-        
-        // Character lengths restrictions optimize garchha
-        if (input.hasAttribute('minlength')) {
-            input.removeAttribute('minlength');
-        }
-        
-        // Input clean status toggle handler
-        input.oninvalid = function(e) {
-            e.preventDefault(); // Browser error popup block garchha
-        };
-    });
-}
-
-// Dom content wrapper update hook
-document.addEventListener("DOMContentLoaded", () => {
-    setTimeout(bypassFormFormatConstraints, 1800); // 1.8 sec delay to force clear initial UI restrictions
-});
-
     </script>
     <style>
-        body {<!-- १. Supabase JS Library (Yo script halna compulsory xa, natra client initialize hudaina) -->
-<script src="https://jsdelivr.net"></script>
-
-<!-- २. Tapaiko website connect garne core setup code -->
-<script>
-    // URL ma maile tapaiko real project URL ready banai dieko xu
-    const SUPABASE_URL = "https://nucejkobfimkfuexpcku.supabase.co";
-    
-    // Yahan chai tapaile Supabase Dashboard -> Project Settings -> API bata liyeko 'anon' public key paste garnuhos
-    const SUPABASE_ANON_KEY = "YAHAN_TAPAIKO_SUPABASE_ANON_KEY_PASTE_GARNUHOS";
-
-    // Supabase Engine Initialize vayo
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    // ३. Website khulda real time data backend server bata load garne connection
-    async function loadProductsFromSupabase() {
-        const { data: products, error } = await supabase
-            .from('products')
-            .select('*');
-
-        if (error) {
-            console.error("Saman load garna milena:", error.message);
-            return;
-        }
-
-        console.log("Database bata aayeko saman:", products);
-        
-        // Dynamic Frontend Connection Bridge
-        const storeGrid = document.querySelector('.products-grid') || document.getElementById('products-container');
-        if (storeGrid && products) {
-            storeGrid.innerHTML = ''; // Old browser local storage data grid clear garchha
-            products.forEach(item => {
-                // Tapaiko website ko UI layout card code automatically insert hunchha
-                storeGrid.innerHTML += `
-                    <div class="product-card">
-                        <img src="${item.image_url || 'placeholder.jpg'}" alt="${item.title}">
-                        <h3>${item.title}</h3>
-                        <p>${item.description}</p>
-                        <span class="price">रू. ${item.price}</span>
-                        <span class="category">${item.category}</span>
-                    </div>
-                `;
-            });
-        }
-    }
-
-    // ४. Website bata naya original saman post गर्दा use hune operational handler
-    async function addProductToSupabase(title, desc, price, imgUrl, cat) {
-        const { data, error } = await supabase
-            .from('products')
-            .insert([
-                { 
-                    title: title, 
-                    description: desc, 
-                    price: parseFloat(price), 
-                    image_url: imgUrl, 
-                    category: cat 
-                }
-            ]);
-
-        if (error) {
-            alert("Saman post garna sakiena: " + error.message);
-        } else {
-            alert("Saman Supabase Database ma safe vayo!");
-            loadProductsFromSupabase(); // Post hune bitikai refresh garxa
-        }
-    }
-
-    // Auto-run when the screen fully loads
-    document.addEventListener("DOMContentLoaded", () => {
-        loadProductsFromSupabase();
-    });
-</script>
-
+        body {
             font-family: 'Mukta', sans-serif;
             background-color: #FDFBF7;
             background-image: radial-gradient(#DC143C 0.5px, transparent 0.5px), radial-gradient(#003893 0.5px, #FDFBF7 0.5px);
@@ -394,6 +99,27 @@ document.addEventListener("DOMContentLoaded", () => {
 #auth-modal .ns-login-form input:focus{box-shadow:0 0 0 3px rgba(59,130,246,.15)}
 @media(min-width:640px){#auth-modal .ns-login-form{padding:1.5rem}}
 </style>
+
+    <script>
+      // Escape untrusted text before inserting it into HTML templates.
+      window.nsewaJsArg = window.nsewaJsArg || function (value) {
+        return JSON.stringify(String(value == null ? '' : value))
+          .replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+          .replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/'/g, '&#39;');
+      };
+      window.nsewaSafeImageUrl = window.nsewaSafeImageUrl || function (value) {
+        var url = String(value == null ? '' : value).trim();
+        if (/^(https?:\/\/|\/|\.\/)/i.test(url)) return url;
+        if (/^data:image\/(png|jpeg|jpg|webp);base64,/i.test(url)) return url;
+        return 'https://placehold.co/600x400/e2e8f0/334155?text=Nepali+Sewa';
+      };
+      window.nsewaEscapeHtml = window.nsewaEscapeHtml || function (value) {
+        return String(value == null ? '' : value).replace(/[&<>"']/g, function (ch) {
+          return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]);
+        });
+      };
+    </script>
+
 </head>
 <body class="text-gray-800 antialiased min-h-screen flex flex-col">
 <div id="nsewa-system-status" role="status" aria-live="polite" style="position:relative;z-index:9999;background:#fff7ed;color:#9a3412;padding:8px 12px;text-align:center;font:600 13px system-ui;border-bottom:1px solid #fed7aa">सुरक्षा जाँच हुँदैछ… भुक्तानी सफल भएको पुष्टि यो ब्राउजरले आफैँ गर्न सक्दैन।</div>
@@ -408,7 +134,8 @@ document.addEventListener("DOMContentLoaded", () => {
       el.style.background='#ecfdf5';el.style.color='#065f46';el.style.borderColor='#a7f3d0';
     } else throw new Error('backend not ready');
   } catch (_) {
-    el.textContent='डेमो/स्थानीय मोड: सुरक्षित Backend/Database जडान छैन। वास्तविक पैसा, संवेदनशील डाटा वा CEO अधिकारका लागि यो मोड प्रयोग नगर्नुहोस्।';
+    el.textContent='सर्भर जडान पुष्टि हुन सकेन। लगइन, अर्डर, भुक्तानी र निजी डाटा प्रयोग गर्नु अघि सेवा उपलब्धता जाँच्नुहोस्।';
+    el.style.background='#fff7ed';el.style.color='#9a3412';el.style.borderColor='#fed7aa';
   }
 })();
 </script>
@@ -430,12 +157,6 @@ document.addEventListener("DOMContentLoaded", () => {
       <div class="border-t px-4 py-2 text-[11px] leading-4 text-amber-800">नोट: यो HTML संस्करणका सूचनाहरू यही ब्राउजरमा मात्र सुरक्षित हुन्छन्। सबै प्रयोगकर्तालाई सूचना पुर्‍याउन server/push notification जडान गर्नुपर्छ।</div>
     </section>
 
-
-    <div id="prototype-status-banner" class="mx-auto mt-3 w-full max-w-7xl px-3 sm:px-6">
-      <div class="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
-        <strong>सर्भर जडान सूचना:</strong> सर्भरमा चलाउँदा दर्ता/लगइन, बजारका नयाँ सामान, निजी कागजात र Khalti checkout का लागि backend API प्रयोग हुन्छ। SMS OTP, eSewa/Fonepay, WebRTC call र केही पुराना प्रोफाइल/ड्यासबोर्ड सेटिङका लागि सम्बन्धित प्रदायक वा थप API जडान आवश्यक छ।
-      </div>
-    </div>
 
     <!-- top announcement bar -->
     <div class="dhaka-pattern h-2 w-full"></div>
@@ -471,19 +192,11 @@ document.addEventListener("DOMContentLoaded", () => {
             <!-- Role Selector / Profile Info -->
             <div class="flex items-center space-x-2">
                 <div id="user-role-badge" class="hidden sm:flex flex-col text-right">
-                    <span id="current-user-name" class="font-bold text-sm text-nepalRed">गणेश घिमिरे</span>
-                    <span id="current-user-role" class="text-xs bg-nepalGold text-nepalBlue font-bold px-2 py-0.5 rounded-full">CEO / Admin</span>
-                    <span id="current-user-id" class="text-[10px] text-gray-600">CEO ID: CEO-001</span>
+                    <span id="current-user-name" class="font-bold text-sm text-nepalRed">प्रयोगकर्ता</span>
+                    <span id="current-user-role" class="text-xs bg-nepalGold text-nepalBlue font-bold px-2 py-0.5 rounded-full">खाता स्थिति</span>
+                    <span id="current-user-id" class="text-[10px] text-gray-600">लगइन गरेपछि विवरण देखिन्छ</span>
                 </div>
                 
-                <!-- Demo-only role switch; production authorization must be server-side. -->
-                <select id="role-selector" onchange="changeActiveRole(this.value)" class="bg-nepalRed text-white font-semibold text-xs sm:text-sm py-2 px-3 rounded-lg border-2 border-nepalGold focus:outline-none shadow">
-                    <option value="CEO">👑 CEO (प्रबन्धक): गणेश घिमिरे</option>
-                    <option value="Worker">🔧 टेक्नीशियन (Worker Mode)</option>
-                    <option value="Seller">🏪 सामान बिक्रेता (Seller Mode)</option>
-                    <option value="Client" selected>👤 ग्राहक (Client Mode)</option>
-                </select>
-
                 <button onclick="openModal('auth-modal')" class="bg-nepalBlue text-white hover:bg-blue-900 text-xs sm:text-sm py-2 px-3 rounded-lg font-semibold border border-nepalGold transition">
                     <i class="fa-solid fa-user-plus mr-1"></i> नयाँ दर्ता
                 </button>
@@ -526,7 +239,7 @@ document.addEventListener("DOMContentLoaded", () => {
     <div id="user-menu-backdrop" onclick="toggleUserMenu(false)" class="fixed inset-0 bg-black/40 hidden z-40"></div>
     <aside id="user-menu" class="fixed top-0 right-0 h-full w-[min(88vw,370px)] bg-white shadow-2xl z-50 translate-x-full transition-transform duration-200 overflow-y-auto border-l-4 border-nepalGold" aria-label="प्रयोगकर्ता मेनु">
       <div class="bg-nepalBlue text-white p-5 flex items-center justify-between">
-        <div><p class="text-xs text-blue-100">नेपाली सेवा</p><h2 class="text-xl font-extrabold">प्रयोगकर्ता मेनु</h2><p id="menu-user-name" class="text-sm mt-1">गणेश घिमिरे</p></div>
+        <div><p class="text-xs text-blue-100">नेपाली सेवा</p><h2 class="text-xl font-extrabold">प्रयोगकर्ता मेनु</h2><p id="menu-user-name" class="text-sm mt-1">प्रयोगकर्ता</p></div>
         <button onclick="toggleUserMenu(false)" class="text-3xl leading-none" aria-label="मेनु बन्द">&times;</button>
       </div>
       <div class="p-4 space-y-2">
@@ -558,10 +271,10 @@ document.addEventListener("DOMContentLoaded", () => {
       <div class="mt-5"><div class="flex items-center justify-between gap-2 mb-2"><h4 class="font-extrabold">मेरा पोस्टहरू</h4></div><div class="mb-3 grid grid-cols-1 sm:grid-cols-2 gap-2"><label class="text-sm font-semibold">फोटो वा भिडियो पोस्ट <input id="profile-media-input" type="file" accept="image/*,video/*" class="mt-1 block w-full text-xs"></label><label class="text-sm font-semibold">पोस्ट लेख्नुहोस् <textarea id="profile-post-text" rows="2" maxlength="1000" class="mt-1 w-full rounded-lg border p-2 text-sm" placeholder="आफ्नो अपडेट लेख्नुहोस्..."></textarea></label><button type="button" onclick="createProfilePost()" class="sm:col-span-2 rounded-xl bg-nepalBlue px-4 py-2 font-bold text-white">पोस्ट प्रकाशित गर्नुहोस्</button></div><span class="text-xs text-gray-500">फोटो, भिडियो वा लेख</span></div><div id="profile-posts-preview" class="grid grid-cols-3 gap-2"></div><h4 class="font-extrabold mt-4 mb-2">Photo Gallery</h4><div id="profile-photo-gallery" class="grid grid-cols-3 gap-2"></div></div>
     </div></div>
 
-    <!-- Personal security settings: local demo only -->
+    <!-- Personal security settings -->
     <div id="personal-security-modal" class="fixed inset-0 bg-black/70 hidden z-[70] flex items-center justify-center p-3"><div class="bg-white rounded-2xl p-5 w-full max-w-lg shadow-xl max-h-[92vh] overflow-y-auto">
       <div class="flex justify-between items-center mb-3"><h3 class="text-xl font-extrabold text-nepalRed">व्यक्तिगत सुरक्षा</h3><button onclick="closeModal('personal-security-modal')" class="text-2xl">&times;</button></div>
-      <p class="text-xs bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">महत्त्वपूर्ण: यो एकल HTML डेमो हो। तलका परीक्षणहरू यही ब्राउजरमा मात्र हुन्छन्; वास्तविक OTP, खाता प्रमाणीकरण र password परिवर्तनका लागि server/backend आवश्यक छ।</p>
+      <p class="text-xs bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">महत्त्वपूर्ण: यो सुरक्षा पृष्ठले स्थानीय परीक्षण मात्र गर्छ;  वास्तविक OTP, खाता प्रमाणीकरण र password परिवर्तनका लागि server/backend आवश्यक छ।</p>
       <h4 class="font-bold mb-2">१. फोन नम्बर परिवर्तन — पुरानो नम्बर अनिवार्य</h4><label class="block text-sm mb-1">हालको फोन नम्बर</label><input id="security-old-phone" class="w-full border rounded-lg p-2 mb-2" inputmode="tel" placeholder="पुरानो नम्बर जस्ताको तस्तै लेख्नुहोस्"><label class="block text-sm mb-1">नयाँ फोन नम्बर</label><input id="security-new-phone" class="w-full border rounded-lg p-2 mb-2" inputmode="tel" placeholder="नयाँ नम्बर" maxlength="20"><button onclick="changeProfilePhone()" class="w-full bg-nepalBlue text-white rounded-lg p-2 font-bold mb-5">पुरानो नम्बर जाँचेर परिवर्तन गर्नुहोस्</button>
       <h4 class="font-bold mb-2">२. नाम र जन्ममिति</h4><label class="block text-sm mb-1">हालको नाम</label><input id="security-current-name" class="w-full border rounded-lg p-2 mb-2" placeholder="हालको नाम"><label class="block text-sm mb-1">नयाँ नाम</label><input id="security-new-name" class="w-full border rounded-lg p-2 mb-2" placeholder="नयाँ नाम"><label class="block text-sm mb-1">जन्ममिति</label><input id="security-birth-date" type="date" class="w-full border rounded-lg p-2 mb-2"><button onclick="saveIdentityDetails()" class="w-full bg-nepalBlue text-white rounded-lg p-2 font-bold mb-5">नाम/जन्ममिति सुरक्षित गर्नुहोस्</button>
       <h4 class="font-bold mb-2">३. पासवर्ड परिवर्तन</h4><input id="security-old-password" type="password" autocomplete="current-password" class="w-full border rounded-lg p-2 mb-2" placeholder="हालको पासवर्ड"><input id="security-new-password" type="password" autocomplete="new-password" class="w-full border rounded-lg p-2 mb-2" placeholder="नयाँ पासवर्ड (कम्तीमा १२ अक्षर)"><input id="security-confirm-password" type="password" autocomplete="new-password" class="w-full border rounded-lg p-2 mb-2" placeholder="नयाँ पासवर्ड फेरि लेख्नुहोस्"><button onclick="changeDemoPassword()" class="w-full bg-nepalRed text-white rounded-lg p-2 font-bold">पासवर्ड परिवर्तन गर्नुहोस्</button><p id="security-action-status" class="text-sm mt-3" role="status"></p>
@@ -579,11 +292,15 @@ document.addEventListener("DOMContentLoaded", () => {
         <h4 class="font-extrabold text-red-800"><i class="fa-solid fa-user-xmark mr-1"></i> प्रोफाइल ID स्थायी रूपमा मेटाउनुहोस्</h4>
         <p class="mt-1 mb-3 text-xs text-red-800">यो ब्राउजरमा दर्ता भएको तपाईंको खाता, हालको सत्र र यस प्रोफाइलसँग सम्बन्धित स्थानीय विवरण हटाउनेछ। यो काम फिर्ता गर्न सकिँदैन।</p>
         <button type="button" onclick="deleteProfilePermanently()" class="w-full rounded-lg bg-red-700 px-4 py-3 font-bold text-white hover:bg-red-800"><i class="fa-solid fa-trash mr-2"></i> प्रोफाइल ID स्थायी रूपमा मेटाउनुहोस्</button>
-        <p class="mt-2 text-xs text-gray-600">नोट: यो single-HTML demo मा स्थानीय ब्राउजरको डाटा मात्र मेटिन्छ; server/database मा रहेको डाटा मेटाउन backend आवश्यक हुन्छ।</p>
+        <p class="mt-2 text-xs text-gray-600">नोट: यस सुविधाले स्थानीय ब्राउजरको डाटा मात्र मेट्छ;  server/database मा रहेको डाटा मेटाउन backend आवश्यक हुन्छ।</p>
       </div>
       <div class="mt-5 border-t-2 border-nepalGold pt-4">
         <p class="mb-2 text-xs font-extrabold uppercase tracking-wide text-nepalRed"><i class="fa-solid fa-lock mr-1"></i> विशेष व्यवस्थापन — सूचीको अन्तिम विकल्प</p>
         <button type="button" onclick="closeModal('user-settings-modal');openCeoLayoutAccess()" class="menu-action border-nepalGold bg-blue-50 text-nepalBlue"><i class="fa-solid fa-user-shield w-6 text-nepalRed"></i> CEO सुरक्षित प्रवेश / निगरानी</button>
+        <div class="mt-3 rounded-xl border border-blue-200 bg-blue-50 p-3">
+          <button type="button" onclick="closeModal('user-settings-modal');openCeoLayoutAccess()" class="menu-action w-full border border-blue-200 bg-white text-blue-900"><i class="fa-solid fa-user-shield w-6 text-blue-700"></i> Admin Login / व्यवस्थापन प्रवेश</button>
+          <p class="mt-2 text-xs text-blue-900">यो प्रवेशले server बाट प्रमाणित CEO अनुमति माग्छ। वास्तविक Admin छुट्टै भूमिका चाहिने भए backend मा Admin role र API permission पनि लागू गर्नुपर्छ।</p>
+        </div>
         <p class="mt-2 text-xs text-gray-500">CEO पहुँचको प्रमाणीकरण प्रक्रिया यही सेटिङको अन्तिम विकल्पबाट खोलिन्छ।</p>
       </div>
     </div></div>
@@ -596,7 +313,7 @@ document.addEventListener("DOMContentLoaded", () => {
       <button onclick="openCodeEditor()" class="menu-action"><i class="fa-solid fa-code w-6"></i> २. सबै कोड Import / हेर्ने / परिवर्तन गर्ने</button>
       <button onclick="openSecurityStudio()" class="menu-action"><i class="fa-solid fa-shield-halved w-6"></i> ३. वेबसाइट सुरक्षा / Privacy & Security</button>
       <button onclick="openPersonalAccountsFolder()" class="menu-action"><i class="fa-solid fa-folder-open w-6 text-nepalBlue"></i> ४. Personal Accounts</button>
-      <p class="mt-4 text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">सुरक्षा सूचना: यो HTML डेमोमा मेनु लुकाउने काम मात्र गरिएको हो। वास्तविक CEO पहुँच नियन्त्रणका लागि server-side login, role permission र audit log अनिवार्य छन्।</p>
+      <p class="mt-4 text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg p-3">सुरक्षा सूचना: मेनु लुकाउनु मात्र वास्तविक अधिकार नियन्त्रण होइन। वास्तविक CEO पहुँच नियन्त्रणका लागि server-side login, role permission र audit log अनिवार्य छन्।</p>
     </div></div>
 
 
@@ -612,11 +329,11 @@ document.addEventListener("DOMContentLoaded", () => {
           <div class="flex items-center gap-3"><img id="ceo-account-image-preview" alt="खाताको प्रोफाइल तस्वीर" class="h-20 w-20 rounded-full object-cover border bg-gray-100" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Crect width='100%25' height='100%25' fill='%23e5e7eb'/%3E%3Ctext x='50%25' y='55%25' text-anchor='middle' font-size='28' fill='%236b7280'%3E%3F%3C/text%3E%3C/svg%3E"><label class="block text-sm font-semibold flex-1">प्रोफाइल इमेज राख्ने / परिवर्तन गर्ने<input id="ceo-account-image-file" type="file" accept="image/png,image/jpeg,image/webp" class="mt-1 block w-full text-sm" onchange="loadCeoAccountImage(event)"><span class="text-xs text-gray-500">PNG/JPG/WebP, अधिकतम 1 MB</span></label></div>
           <label class="block text-sm font-semibold">पूरा नाम<input id="ceo-account-name" required maxlength="100" class="mt-1 w-full rounded-lg border p-2" placeholder="खातावालाको नाम"></label>
           <label class="block text-sm font-semibold">मोबाइल नम्बर<input id="ceo-account-phone" required inputmode="tel" maxlength="20" class="mt-1 w-full rounded-lg border p-2" placeholder="98XXXXXXXX"></label>
-          <label class="block text-sm font-semibold">पासपोर्ट नम्बर <input id="ceo-account-passport" maxlength="40" class="mt-1 w-full rounded-lg border p-2" placeholder="पासपोर्ट नम्बर (आवश्यक भएमा)"></label>
+          <p class="rounded-lg border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900">पासपोर्ट वा अन्य संवेदनशील परिचयपत्र विवरण यो browser-only सूचीमा नराख्नुहोस्। सुरक्षित private database/storage जडान भएपछि मात्र सङ्कलन गर्नुहोस्।</p>
           <label class="block text-sm font-semibold">खाताको भूमिका<select id="ceo-account-role" class="mt-1 w-full rounded-lg border p-2"><option value="Client">ग्राहक</option><option value="Worker">प्राविधिक</option><option value="Seller">बिक्रेता</option></select></label>
           <div class="flex flex-wrap gap-2"><button class="rounded-lg bg-nepalBlue px-4 py-2 font-bold text-white" type="submit">खाता सुरक्षित गर्नुहोस्</button><button type="button" onclick="resetCeoManagedAccountForm()" class="rounded-lg border px-4 py-2">नयाँ फारम</button></div><p id="ceo-account-status" role="status" class="text-sm"></p>
         </form>
-        <div class="mt-4"><h4 class="font-extrabold mb-2">दर्ता भएका डेमो खाताहरू</h4><div class="flex flex-col sm:flex-row gap-2 mb-3"><input id="ceo-account-search" oninput="renderCeoManagedAccounts()" class="min-w-0 flex-1 rounded-lg border p-2" placeholder="नाम / नम्बर / पासपोर्टबाट खोज्नुहोस्"><button type="button" onclick="exportCeoManagedAccounts()" class="rounded-lg border px-3 py-2 text-sm font-bold">Backup Export</button><button type="button" onclick="document.getElementById('ceo-account-import-file').click()" class="rounded-lg border px-3 py-2 text-sm font-bold">Backup Restore</button><input id="ceo-account-import-file" type="file" accept="application/json,.json" class="hidden" onchange="importCeoManagedAccounts(event)"></div><p id="ceo-account-audit-summary" class="mb-3 text-xs text-gray-500"></p><div id="ceo-account-list" class="space-y-2"><p class="text-sm text-gray-500">खाताहरू लोड हुँदैछन्…</p></div></div>
+        <div class="mt-4"><h4 class="font-extrabold mb-2">यस ब्राउजरमा सुरक्षित खाताहरू</h4><div class="flex flex-col sm:flex-row gap-2 mb-3"><input id="ceo-account-search" oninput="renderCeoManagedAccounts()" class="min-w-0 flex-1 rounded-lg border p-2" placeholder="नाम / नम्बर / पासपोर्टबाट खोज्नुहोस्"><button type="button" onclick="exportCeoManagedAccounts()" class="rounded-lg border px-3 py-2 text-sm font-bold">Backup Export</button><button type="button" onclick="document.getElementById('ceo-account-import-file').click()" class="rounded-lg border px-3 py-2 text-sm font-bold">Backup Restore</button><input id="ceo-account-import-file" type="file" accept="application/json,.json" class="hidden" onchange="importCeoManagedAccounts(event)"></div><p id="ceo-account-audit-summary" class="mb-3 text-xs text-gray-500"></p><div id="ceo-account-list" class="space-y-2"><p class="text-sm text-gray-500">खाताहरू लोड हुँदैछन्…</p></div></div>
         <div class="flex justify-end mt-4"><button onclick="closeCeoAccountsFolder()" class="bg-nepalBlue text-white rounded-lg px-4 py-2 font-bold">बन्द गर्नुहोस्</button></div>
       </div>
     </div>
@@ -739,7 +456,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <button onclick="closeModal('ceo-code-editor-modal')" class="text-2xl px-3 py-1 rounded-lg hover:bg-gray-100" aria-label="Close">&times;</button>
         </div>
         <div class="bg-amber-50 border border-amber-300 text-amber-900 rounded-lg p-3 text-sm mb-3">
-          <b>महत्त्वपूर्ण:</b> यहाँ परिवर्तन गरेर <b>HTML डाउनलोड</b> गरेपछि पुरानो फाइलको सट्टा नयाँ डाउनलोड भएको फाइल राखेर खोल्नुहोस्। ब्राउजरले आफैँ चलिरहेको फाइललाई चुपचाप overwrite गर्न सक्दैन। यो एकल HTML डेमो हो; वास्तविक वेबसाइटमा CEO login र server-side permission बिना कोड सम्पादन सुरक्षित हुँदैन।
+          <b>महत्त्वपूर्ण:</b> यहाँ परिवर्तन गरेर <b>HTML डाउनलोड</b> गरेपछि पुरानो फाइलको सट्टा नयाँ डाउनलोड भएको फाइल राखेर खोल्नुहोस्। ब्राउजरले आफैँ चलिरहेको फाइललाई चुपचाप overwrite गर्न सक्दैन। वास्तविक CEO login र server-side permission बिना कोड सम्पादन सुरक्षित हुँदैन।
         </div>
         <div class="flex flex-wrap gap-2 mb-3">
           <label class="inline-flex items-center gap-2 bg-blue-700 hover:bg-blue-800 text-white rounded-lg px-3 py-2 text-sm font-bold cursor-pointer"><i class="fa-solid fa-file-import"></i> HTML फाइल Import <input id="ceo-code-file" type="file" accept=".html,.htm,text/html" class="hidden" onchange="importWebsiteCode(event)"></label>
@@ -829,35 +546,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     <!-- Main Content Area -->
     <main class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-6 flex-grow w-full">
-      <!-- Mero-Sewa single-file role hub: added without removing existing site features. -->
-      <section id="merosewa-role-hub" class="mb-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm" aria-labelledby="merosewa-role-hub-title">
-        <div class="bg-gradient-to-r from-red-700 via-red-600 to-blue-800 px-4 py-5 text-white sm:px-6">
-          <p class="text-xs font-bold uppercase tracking-widest text-amber-200">MERO-SEWA · SINGLE-FILE CONTROL HUB</p>
-          <h2 id="merosewa-role-hub-title" class="mt-1 text-2xl font-extrabold sm:text-3xl">नेपाली सेवा — मुख्य प्रवेशद्वार</h2>
-          <p class="mt-1 max-w-3xl text-sm text-white/90">पुरानो वेबसाइटका सुविधा यथावत् राख्दै CEO, Admin र Public का छिटो पहुँच विकल्प।</p>
-        </div>
-        <div class="grid grid-cols-1 gap-3 p-4 sm:grid-cols-3 sm:p-5">
-          <article class="rounded-xl border border-amber-200 bg-amber-50 p-4">
-            <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-100 text-amber-800"><i class="fa-solid fa-crown text-xl"></i></div>
-            <h3 class="mt-3 text-lg font-extrabold text-slate-900">CEO</h3>
-            <p class="mt-1 min-h-12 text-sm text-slate-600">CEO प्रवेश प्रमाणीकरणपछि उपलब्ध डिजाइन, थिम, कोड र सुरक्षा उपकरणहरू।</p>
-            <button type="button" onclick="openCeoLayoutAccess()" class="mt-4 w-full rounded-lg bg-amber-600 px-4 py-3 font-bold text-white hover:bg-amber-700"><i class="fa-solid fa-shield-halved mr-2"></i>CEO प्रवेश</button>
-          </article>
-          <article class="rounded-xl border border-blue-200 bg-blue-50 p-4">
-            <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-100 text-blue-800"><i class="fa-solid fa-sliders text-xl"></i></div>
-            <h3 class="mt-3 text-lg font-extrabold text-slate-900">Admin / व्यवस्थापन</h3>
-            <p class="mt-1 min-h-12 text-sm text-slate-600">सेवा र बजार भागमा जानुहोस्। वास्तविक छुट्टै Admin अनुमति हाल backend बाट पुष्टि गरिएको छैन।</p>
-            <button type="button" onclick="switchTab('market');document.getElementById('tab-market')?.scrollIntoView({behavior:'smooth',block:'start'});" class="mt-4 w-full rounded-lg bg-blue-700 px-4 py-3 font-bold text-white hover:bg-blue-800"><i class="fa-solid fa-store mr-2"></i>बजार / सेवा खोल्नुहोस्</button>
-          </article>
-          <article class="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-            <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800"><i class="fa-solid fa-users text-xl"></i></div>
-            <h3 class="mt-3 text-lg font-extrabold text-slate-900">Public</h3>
-            <p class="mt-1 min-h-12 text-sm text-slate-600">सामान्य प्रयोगकर्ताका लागि मुख्य पृष्ठ, प्राविधिक, बजार र उपलब्ध सेवाहरू।</p>
-            <button type="button" onclick="switchTab('home');window.scrollTo({top:0,behavior:'smooth'});" class="mt-4 w-full rounded-lg bg-emerald-700 px-4 py-3 font-bold text-white hover:bg-emerald-800"><i class="fa-solid fa-house mr-2"></i>मुख्य वेबसाइट खोल्नुहोस्</button>
-          </article>
-        </div>
-        <div class="border-t border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-950 sm:px-5"><strong>सुरक्षा/प्रकाशन सीमा:</strong> यो अपडेट एउटा मात्र HTML फाइलमा गरिएको छ। GitHub वा Supabase मा कुनै परिवर्तन गरिएको छैन। यस फाइलमा CEO/Admin का वास्तविक server-side अधिकार वा सबै प्रयोगकर्ताबीच साझा स्वतः प्रकाशन थपिएको दाबी गरिएको छैन।</div>
-      </section>
+      <!-- Removed the redundant home-page सेवा तथा बजार card as requested. -->
 
         <!-- Banner / Hero Section -->
         <section class="bg-gradient-to-r from-red-700 via-nepalRed to-blue-900 rounded-2xl p-6 mb-6 text-white shadow-xl relative overflow-hidden border-2 border-nepalGold">
@@ -872,7 +561,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <button onclick="switchTab('market')" class="bg-white text-nepalRed font-bold py-2 px-5 rounded-lg shadow-md hover:bg-gray-100 transition text-sm">
                         <i class="fa-solid fa-store mr-2"></i> सामान किन्नुहोस्
                     </button>
-                    <a href="https://wa.me/9779769259661" target="_blank" class="bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-green-700 transition text-sm flex items-center">
+                    <a href="https://wa.me/9779769259661" target="_blank" class="bg-green-600 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-green-700 transition text-sm flex items-center" rel="noopener noreferrer">
                         <i class="fa-brands fa-whatsapp text-lg mr-2"></i> WhatsApp direct
                     </a>
                 </div>
@@ -1015,7 +704,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 </div>
             </section>
             <section id="ns-cart-panel" class="hidden bg-white rounded-2xl border-2 border-blue-100 shadow-sm p-4 space-y-4">
-                <div class="flex items-center justify-between gap-2"><div><h4 class="font-black text-lg text-nepalBlue">मेरो किनमेल झोला</h4><p class="text-xs text-gray-500">अर्डरको विवरण जाँचेर अनुरोध पठाउनुहोस्। यो demo ले भुक्तानी लिँदैन।</p></div><button type="button" onclick="nsToggleCart(false)" class="rounded-lg border px-3 py-2 text-sm"><i class="fa-solid fa-xmark mr-1"></i>बन्द</button></div>
+                <div class="flex items-center justify-between gap-2"><div><h4 class="font-black text-lg text-nepalBlue">मेरो किनमेल झोला</h4><p class="text-xs text-gray-500">अर्डरको विवरण जाँचेर अनुरोध पठाउनुहोस्। भुक्तानी सेवा जडान र सर्भरबाट पुष्टि नभएसम्म अर्डर भुक्तानी भएको मानिँदैन।</p></div><button type="button" onclick="nsToggleCart(false)" class="rounded-lg border px-3 py-2 text-sm"><i class="fa-solid fa-xmark mr-1"></i>बन्द</button></div>
                 <div id="ns-cart-items" class="space-y-2"></div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3 border-t pt-3">
                     <div class="space-y-2"><label class="block text-sm font-bold">डेलिभरी ठेगाना</label><textarea id="ns-order-address" rows="2" class="w-full border rounded-xl p-3 text-sm" placeholder="टोल, वडा, जिल्ला"></textarea><label class="block text-sm font-bold">सम्पर्क मोबाइल</label><input id="ns-order-phone" type="tel" inputmode="numeric" class="w-full border rounded-xl p-3 text-sm" placeholder="९८XXXXXXXX" maxlength="10"></div>
@@ -1332,7 +1021,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     </div>
 
-    <!-- Advanced communication center: front-end demo; live multi-user delivery needs backend -->
+    <!-- Advanced communication center; live multi-user delivery needs backend -->
     <div id="communication-hub" class="hidden fixed inset-0 z-[70] bg-slate-950/70 backdrop-blur-sm p-2 sm:p-5" role="dialog" aria-modal="true" aria-labelledby="communication-title">
       <div class="mx-auto flex h-full max-h-[900px] w-full max-w-6xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
         <header class="flex items-center justify-between gap-3 bg-gradient-to-r from-nepalRed to-rose-700 px-4 py-3 text-white sm:px-6">
@@ -1345,28 +1034,28 @@ document.addEventListener("DOMContentLoaded", () => {
             <button class="comm-nav rounded-xl px-3 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-slate-100" data-comm-tab="friends" onclick="showCommTab('friends')"><i class="fa-solid fa-user-group mr-2"></i>साथीहरू</button>
             <button class="comm-nav rounded-xl px-3 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-slate-100" data-comm-tab="broadcast" onclick="showCommTab('broadcast')"><i class="fa-solid fa-bullhorn mr-2"></i>Company सूचना</button>
             <button class="comm-nav rounded-xl px-3 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-slate-100" data-comm-tab="calls" onclick="showCommTab('calls')"><i class="fa-solid fa-phone mr-2"></i>Call र OTP</button>
-            <div class="mt-auto hidden rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900 md:block">Demo मोड: यो फाइलमा सन्देश यही ब्राउजरमा मात्र सुरक्षित हुन्छ। सबै प्रयोगकर्तालाई पुर्‍याउन server/database जोड्नुपर्छ।</div>
+            <div class="mt-auto hidden rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900 md:block">सन्देश यही ब्राउजरमा मात्र सुरक्षित हुन्छ। सबै प्रयोगकर्तालाई पुर्‍याउन server/database जोड्नुपर्छ।</div>
           </nav>
           <main class="min-h-0 overflow-y-auto p-3 sm:p-5">
             <section id="comm-panel-chats" class="comm-panel flex h-full min-h-[450px] flex-col gap-4">
-              <div class="flex flex-wrap items-center justify-between gap-2"><div><h3 class="text-lg font-extrabold text-slate-900">सन्देशहरू</h3><p class="text-xs text-slate-500">साथी वा सेवा सहायता छान्नुहोस्</p></div><span class="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">स्थानीय Demo</span></div>
+              <div class="flex flex-wrap items-center justify-between gap-2"><div><h3 class="text-lg font-extrabold text-slate-900">सन्देशहरू</h3><p class="text-xs text-slate-500">साथी वा सेवा सहायता छान्नुहोस्</p></div><span class="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">स्थानीय सुविधा</span></div>
               <div class="grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-[230px_1fr]">
                 <div class="rounded-xl border p-2"><button onclick="selectCommContact('नेपाली सेवा सहायता')" class="w-full rounded-lg bg-slate-50 p-3 text-left hover:bg-red-50"><span class="mr-2 inline-flex h-9 w-9 items-center justify-center rounded-full bg-red-100 text-nepalRed"><i class="fa-solid fa-headset"></i></span><span class="inline-block align-middle"><b class="block text-sm">नेपाली सेवा सहायता</b><small class="text-slate-500">सपोर्ट</small></span></button><div id="comm-contact-list" class="mt-2 space-y-1"></div></div>
                 <div class="flex min-h-[360px] flex-col overflow-hidden rounded-xl border"><div class="border-b bg-slate-50 px-4 py-3"><b id="comm-current-contact">नेपाली सेवा सहायता</b><p class="text-xs text-slate-500">व्यक्तिगत कुराकानी</p></div><div id="comm-thread" class="flex-1 space-y-3 overflow-y-auto p-4 text-sm"><div class="max-w-[85%] rounded-xl rounded-tl-sm bg-blue-50 p-3 text-slate-700">नमस्ते! नेपाली सेवामा तपाईंलाई के सहयोग चाहिन्छ?</div></div><form onsubmit="sendCommMessage(event)" class="flex gap-2 border-t p-3"><input id="comm-message-input" class="min-w-0 flex-1 rounded-xl border px-3 py-2 text-sm focus:border-red-400 focus:outline-none" maxlength="2000" placeholder="सन्देश लेख्नुहोस्…" autocomplete="off" required><button class="rounded-xl bg-nepalRed px-4 py-2 font-bold text-white hover:bg-red-700" aria-label="सन्देश पठाउनुहोस्"><i class="fa-solid fa-paper-plane"></i></button></form></div>
               </div>
-              <p class="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900">ध्यान दिनुहोस्: यहाँ पठाइएका demo सन्देश अर्को प्रयोगकर्ताको मोबाइल/कम्प्युटरमा पुग्दैनन्। Live chat का लागि realtime database र server authentication जडान गर्नुपर्छ।</p>
+              <p class="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900">ध्यान दिनुहोस्: यहाँ पठाइएका सन्देश अर्को प्रयोगकर्ताको मोबाइल/कम्प्युटरमा पुग्दैनन्। Live chat का लागि realtime database र server authentication जडान गर्नुपर्छ।</p>
             </section>
             <section id="comm-panel-friends" class="comm-panel hidden space-y-4">
               <div><h3 class="text-lg font-extrabold">साथी खोज्नुहोस्</h3><p class="text-sm text-slate-500">दर्ता भएको प्रयोगकर्तालाई नाम वा मोबाइल नम्बरबाट खोजेर Request पठाउनुहोस्।</p></div>
               <div class="rounded-xl border p-4 space-y-3"><label for="friend-search" class="block text-sm font-bold">नाम / मोबाइल नम्बर</label><div class="flex gap-2"><input id="friend-search" class="min-w-0 flex-1 rounded-xl border px-3 py-2 text-sm" placeholder="जस्तै: राम वा 98XXXXXXXX" oninput="searchCommUsers()"><button type="button" onclick="searchCommUsers()" class="rounded-xl bg-nepalBlue px-4 py-2 text-sm font-bold text-white">खोज्नुहोस्</button></div><div id="friend-search-results" class="space-y-2 text-sm"><p class="text-slate-500">खोज्न नाम वा मोबाइल नम्बर लेख्नुहोस्।</p></div></div>
               <form onsubmit="addCommFriend(event)" class="grid gap-3 rounded-xl border p-4 sm:grid-cols-[1fr_1fr_auto]"><input id="friend-name" required maxlength="80" class="rounded-xl border px-3 py-2 text-sm" placeholder="नाम (दर्ता नभएको contact) "><input id="friend-phone" required inputmode="tel" maxlength="20" class="rounded-xl border px-3 py-2 text-sm" placeholder="मोबाइल नम्बर"><button class="rounded-xl bg-nepalBlue px-4 py-2 text-sm font-bold text-white">Request पठाउनुहोस्</button></form>
               <div class="rounded-xl border p-4"><h4 class="mb-3 font-bold">Friend Requests</h4><div id="comm-requests-list" class="space-y-2 text-sm"></div></div>
-              <div class="rounded-xl border p-4"><h4 class="mb-3 font-bold">तपाईंका साथीहरू</h4><div id="comm-friends-list" class="space-y-2 text-sm"></div></div><p class="rounded-lg bg-amber-50 p-3 text-xs leading-5 text-amber-900">Request/Accept/Block/Report यही ब्राउजरको दर्ता खाताहरूमा demo रूपमा चल्छ। अलग-अलग मोबाइलमा live चलाउन साझा backend चाहिन्छ।</p>
+              <div class="rounded-xl border p-4"><h4 class="mb-3 font-bold">तपाईंका साथीहरू</h4><div id="comm-friends-list" class="space-y-2 text-sm"></div></div><p class="rounded-lg bg-amber-50 p-3 text-xs leading-5 text-amber-900">Request/Accept/Block/Report यही ब्राउजरको दर्ता खाताहरूमा स्थानीय रूपमा चल्छ। अलग-अलग मोबाइलमा live चलाउन साझा backend चाहिन्छ।</p>
             </section>
             <section id="comm-panel-broadcast" class="comm-panel hidden space-y-4">
               <div><h3 class="text-lg font-extrabold">Company बाट सबैलाई सूचना</h3><p class="text-sm text-slate-500">Company ले सबै प्रयोगकर्तालाई एकतर्फी सूचना पठाउनका लागि लेख्ने ठाउँ। Company inbox मा प्रयोगकर्ताका सन्देश आउँदैनन्।</p></div>
               <div id="ceo-broadcast-access" class="space-y-3"><label for="ceo-broadcast-text" class="block text-sm font-bold">सूचनाको सन्देश</label><textarea id="ceo-broadcast-text" maxlength="3000" rows="5" class="w-full rounded-xl border p-3 text-sm focus:border-red-400 focus:outline-none" placeholder="सबै प्रयोगकर्ताका लागि सूचना लेख्नुहोस्…"></textarea><button onclick="createCeoBroadcast()" class="rounded-xl bg-nepalRed px-5 py-3 text-sm font-bold text-white"><i class="fa-solid fa-bullhorn mr-2"></i>सूचना तयार गर्नुहोस्</button><div id="ceo-broadcast-result" class="text-sm"></div></div>
-              <div class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900">Company सूचना अहिले स्थानीय demo draft मात्र हो—वास्तविक रूपमा सबैलाई पुग्न server-side CEO अनुमति, user database र push/in-app notification आवश्यक छ। HTML मा देखिने CEO role मात्र वास्तविक सुरक्षा होइन।</div>
+              <div class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900">कम्पनी सूचना अहिले स्थानीय मस्यौदा मात्र हो—वास्तविक रूपमा सबैलाई पुग्न server-side CEO अनुमति, user database र push/in-app notification आवश्यक छ। HTML मा देखिने CEO role मात्र वास्तविक सुरक्षा होइन।</div>
             </section>
             <div id="nsewa-live-chat" class="mx-3 my-3 rounded-xl border border-blue-200 bg-blue-50 p-4"><h3 class="font-bold text-blue-950">सर्भरमा आधारित Live Chat</h3><p id="nsewa-live-chat-status" class="my-1 text-xs text-blue-800">लगइन गरेपछि प्रयोगकर्ता ID र सन्देश पठाउन सक्नुहुन्छ।</p><div class="grid grid-cols-1 gap-2 sm:grid-cols-[130px_1fr_auto]"><input id="nsewa-live-chat-to" type="number" min="1" class="rounded-lg border px-3 py-2 text-sm" placeholder="प्राप्तकर्ता ID"><input id="nsewa-live-chat-body" maxlength="4000" class="rounded-lg border px-3 py-2 text-sm" placeholder="सन्देश लेख्नुहोस्…"><button id="nsewa-live-chat-send" type="button" class="rounded-lg bg-blue-800 px-4 py-2 text-sm font-bold text-white">पठाउनुहोस्</button></div><div id="nsewa-live-chat-log" class="mt-3 max-h-48 space-y-2 overflow-y-auto text-sm"></div></div>
 <section id="comm-panel-calls" class="comm-panel hidden space-y-4">
@@ -1645,9 +1334,9 @@ document.addEventListener("DOMContentLoaded", () => {
                     let marker = L.marker([w.lat, w.lng]).addTo(leafletMap)
                         .bindPopup(`
                             <div class="font-nepali text-xs">
-                                <b class="text-nepalRed">${w.name}</b> (${w.district})<br/>
-                                सेवा: ${w.spec}<br/>
-                                <a href="tel:${formatNepalDial(w.mobile)}" class="text-nepalBlue font-bold">📞 ${w.mobile}</a><br/>
+                                <b class="text-nepalRed">${window.nsewaEscapeHtml(w.name)}</b> (${window.nsewaEscapeHtml(w.district)})<br/>
+                                सेवा: ${window.nsewaEscapeHtml(w.spec)}<br/>
+                                <a href="tel:${formatNepalDial(w.mobile)}" class="text-nepalBlue font-bold">📞 ${window.nsewaEscapeHtml(w.mobile)}</a><br/>
                                 <a target="_blank" rel="noopener noreferrer" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent((w.lat||27.7172)+','+(w.lng||85.3240))}" class="text-green-700 font-bold">🧭 बाटो हेर्नुहोस्</a>
                             </div>
                         `);
@@ -1674,6 +1363,14 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         function changeActiveRole(role) {
+            // This selector is not an authorization mechanism. A user's role must come from
+            // the authenticated database profile, never from a browser-side selection.
+            if (role !== currentUserRole) {
+                const selector = document.getElementById('role-selector');
+                if (selector) selector.value = currentUserRole || 'Client';
+                alert('भूमिका आफैँ परिवर्तन गर्न मिल्दैन। दर्ता भएको खाताको भूमिका server/database बाट आउनुपर्छ।');
+                return;
+            }
             if (role === 'CEO' && !window.hasVerifiedCeoLayoutSession?.()) {
                 alert('CEO मोड खोल्न CEO मोबाइलमा आएको OTP प्रमाणित गर्नुहोस्।');
                 const selector = document.getElementById('role-selector');
@@ -1772,16 +1469,16 @@ document.addEventListener("DOMContentLoaded", () => {
                 card.innerHTML = `
                     <div class="p-4">
                         <div class="flex items-center space-x-3 mb-3">
-                            <img src="${w.photo}" class="w-14 h-14 rounded-full object-cover border-2 border-nepalGold" alt="${w.name}">
+                            <img src="${window.nsewaSafeImageUrl(w.photo)}" class="w-14 h-14 rounded-full object-cover border-2 border-nepalGold" alt="${window.nsewaEscapeHtml(w.name)}">
                             <div>
-                                <h4 class="font-bold text-base text-gray-900">${w.name}</h4>
+                                <h4 class="font-bold text-base text-gray-900">${window.nsewaEscapeHtml(w.name)}</h4>
                                 <span class="text-xs bg-blue-50 text-nepalBlue font-semibold px-2 py-0.5 rounded">
-                                    <i class="fa-solid fa-location-dot mr-1"></i>${w.district}
+                                    <i class="fa-solid fa-location-dot mr-1"></i>${window.nsewaEscapeHtml(w.district)}
                                 </span>
                                 ${isApproved ? '<span title="कागजात/सीप जाँच स्वीकृत" class="text-xs bg-green-100 text-green-800 font-bold px-1.5 py-0.5 rounded-full ml-1">स्वीकृत</span>' : '<span title="अहिलेसम्म प्रमाणित छैन" class="text-xs bg-red-100 text-red-700 font-bold px-1.5 py-0.5 rounded-full ml-1">जाँच बाँकी</span>'}
                             </div>
                         </div>
-                        <p class="text-xs text-gray-600 mb-2"><b>विशेषज्ञता:</b> ${w.spec}</p>
+                        <p class="text-xs text-gray-600 mb-2"><b>विशेषज्ञता:</b> ${window.nsewaEscapeHtml(w.spec)}</p>
                         <p class="text-xs text-gray-500"><b>अनुभव:</b> ${w.exp} | <b>रेटिङ:</b> ⭐ ${w.rating}</p>
                     </div>
 
@@ -1793,7 +1490,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             <i class="fa-brands fa-whatsapp mr-1"></i> WhatsApp Message/Call
                         </a>
                         <a href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent((w.lat||27.7172)+','+(w.lng||85.3240))}" target="_blank" rel="noopener noreferrer" class="w-full rounded-lg border border-blue-300 bg-blue-50 py-2 text-center text-xs font-bold text-blue-800"><i class="fa-solid fa-route mr-1"></i> यहाँसम्म बाटो देखाउनुहोस्</a>
-                        <button onclick="initiatePayment('WORKER', 1000, '${w.name}')" class="w-full mt-1 bg-nepalBlue text-white text-xs font-bold py-1.5 rounded-lg text-center hover:bg-blue-900 transition">
+                        <button onclick="initiatePayment('WORKER', 1000, ${window.nsewaJsArg(w.name)})" class="w-full mt-1 bg-nepalBlue text-white text-xs font-bold py-1.5 rounded-lg text-center hover:bg-blue-900 transition">
                             <i class="fa-solid fa-hand-holding-dollar mr-1"></i> सेवा शुल्क भुक्तानी (१०% कोष सहित)
                         </button>
                     </div>
@@ -1824,20 +1521,20 @@ document.addEventListener("DOMContentLoaded", () => {
                 card.innerHTML = `
                     <div>
                         <div class="h-40 bg-gray-100 overflow-hidden relative">
-                            <img src="${p.img}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/300x200/dc143c/white?text=Electrical+Item'">
+                            <img src="${window.nsewaSafeImageUrl(p.img)}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/300x200/dc143c/white?text=Electrical+Item'">
                             <span class="absolute top-2 right-2 bg-nepalGold text-nepalBlue font-black text-xs px-2 py-1 rounded-full">रू. ${p.price}</span>
                         </div>
                         <div class="p-3">
-                            <h4 class="font-bold text-sm text-gray-800 line-clamp-1">${p.title}</h4>
-                            <p class="text-xs text-gray-500 mt-1"><i class="fa-solid fa-store mr-1 text-nepalRed"></i>${p.seller} ${(() => { const sp = sellers.find(x => x.name === p.seller); return sp && sp.status === 'APPROVED' ? '<span class="text-green-700 font-bold">स्वीकृत</span>' : '<span class="text-red-600 font-bold">जाँच बाँकी</span>'; })()}</p>
+                            <h4 class="font-bold text-sm text-gray-800 line-clamp-1">${window.nsewaEscapeHtml(p.title)}</h4>
+                            <p class="text-xs text-gray-500 mt-1"><i class="fa-solid fa-store mr-1 text-nepalRed"></i>${window.nsewaEscapeHtml(p.seller)} ${(() => { const sp = sellers.find(x => x.name === p.seller); return sp && sp.status === 'APPROVED' ? '<span class="text-green-700 font-bold">स्वीकृत</span>' : '<span class="text-red-600 font-bold">जाँच बाँकी</span>'; })()}</p>
                             <p class="text-xs text-gray-500"><i class="fa-solid fa-location-dot mr-1 text-nepalBlue"></i>${p.district}</p>
                         </div>
                     </div>
                     <div class="p-3 border-t border-gray-100 bg-gray-50 space-y-1.5">
-                        <button onclick="initiatePayment('PRODUCT', ${p.price}, '${p.title}')" class="w-full bg-nepalRed text-white font-bold py-2 rounded-lg text-xs hover:bg-red-700 transition">
+                        <button onclick="initiatePayment('PRODUCT', ${Number(p.price) || 0}, ${window.nsewaJsArg(p.title)})" class="w-full bg-nepalRed text-white font-bold py-2 rounded-lg text-xs hover:bg-red-700 transition">
                             <i class="fa-solid fa-cart-shopping mr-1"></i> सिधै किन्नुहोस् (डिजिटल भुक्तानी)
                         </button>
-                        <a href="https://wa.me/9779769259661?text=नमस्ते,%20मलाई%20${p.title}%20सामानको%20जानकारी%20चाहियो" target="_blank" class="w-full border border-green-600 text-green-700 font-bold py-1.5 rounded-lg text-xs flex items-center justify-center hover:bg-green-50 transition">
+                        <a href="https://wa.me/9779769259661?text=नमस्ते,%20मलाई%20${window.nsewaEscapeHtml(p.title)}%20सामानको%20जानकारी%20चाहियो" target="_blank" class="w-full border border-green-600 text-green-700 font-bold py-1.5 rounded-lg text-xs flex items-center justify-center hover:bg-green-50 transition" rel="noopener noreferrer">
                             <i class="fa-brands fa-whatsapp text-sm mr-1"></i> बिक्रेतालाई सोध्नुहोस्
                         </a>
                     </div>
@@ -1876,7 +1573,7 @@ document.addEventListener("DOMContentLoaded", () => {
         function initiatePayment(type, amount, title) {
             currentPayDetails = { type, amount, title };
             
-            let commissionRate = type === 'PRODUCT' ? 0.05 : 0.10; // configurable local demo rate
+            let commissionRate = type === 'PRODUCT' ? 0.05 : 0.10; // local display setting only
             if(type === 'PRODUCT'){try{const cfg=JSON.parse(localStorage.getItem('nsewa-market-admin-v1')||'{}');const product=(typeof products!=='undefined'&&Array.isArray(products)?products:[]).find(p=>String(p.title)===String(title));const rule=product&&(cfg.sellerRules||{})[product.seller||''];commissionRate=(Number(rule&&rule.commission!=null?rule.commission:cfg.commission??5))/100;}catch(e){}}
             let commissionAmt = amount * commissionRate;
             let grandTotal = amount;
@@ -1948,7 +1645,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         ${escapeProfileText(p.caption||'')}
                     </div>
 
-                    ${p.image ? `<img src="${p.image}" alt="पोस्ट फोटो" class="w-full max-h-96 object-cover" onerror="this.style.display='none'">` : ''}
+                    ${p.image ? `<img src="${window.nsewaSafeImageUrl(p.image)}" alt="पोस्ट फोटो" class="w-full max-h-96 object-cover" onerror="this.style.display='none'">` : ''}
                     ${p.video ? `<video src="${p.video}" controls playsinline preload="metadata" class="w-full max-h-96 bg-black"></video>` : ''}
 
                     <div class="p-3 border-t border-gray-100 bg-gray-50">
@@ -2014,35 +1711,44 @@ document.addEventListener("DOMContentLoaded", () => {
         function renderCeoVerificationTable() {
             const tbody = document.getElementById('ceo-verification-table');
             if (!tbody) return;
-            tbody.innerHTML = '';
+            tbody.replaceChildren();
             const allProfiles = [
                 ...workers.map(w => ({...w, role: 'Worker', proof: w.proof || 'नागरिकता + फोटो + सीप प्रमाणपत्र/CV जाँच गर्नुपर्ने'})),
-                ...sellers.map(s => ({...s, proof: s.proof || 'PAN/व्यवसाय दर्ता + खरिद बिल जाँच गर्नुपर्ने'}))
+                ...sellers.map(s => ({...s, role: 'Seller', proof: s.proof || 'PAN/व्यवसाय दर्ता + खरिद बिल जाँच गर्नुपर्ने'}))
             ];
+            const cell = (tr, value, className='p-3') => {
+                const td = document.createElement('td');
+                td.className = className;
+                td.textContent = String(value == null || value === '' ? '—' : value);
+                tr.appendChild(td);
+                return td;
+            };
             allProfiles.forEach(profile => {
                 const approved = profile.status === 'APPROVED';
                 const tr = document.createElement('tr');
                 tr.className = 'border-b border-gray-200 hover:bg-gray-50';
-                const safeName = String(profile.name).replace(/'/g, "\\'");
-                tr.innerHTML = `
-                    <td class="p-3 font-bold text-nepalBlue">${profile.personalId || (profile.role === 'Worker' ? 'WRK-' : 'SEL-') + profile.id}</td>
-                    <td class="p-3 font-bold text-gray-800">${profile.name}</td>
-                    <td class="p-3">${profile.father || '—'}</td>
-                    <td class="p-3">${profile.mobile} / <span class="font-semibold text-nepalRed">${profile.district || '—'}</span></td>
-                    <td class="p-3"><span class="bg-blue-50 text-nepalBlue px-2 py-0.5 rounded font-bold text-[11px]">${profile.role}</span></td>
-                    <td class="p-3">${profile.proof}</td>
-                    <td class="p-3">${approved ? '<span class="bg-green-100 text-green-800 px-2 py-1 rounded font-bold">स्वीकृत</span>' : '<span class="bg-red-100 text-red-700 px-2 py-1 rounded font-bold">जाँच बाँकी</span>'}</td>
-                    <td class="p-3 space-x-1 min-w-[180px]">
-                        <button onclick="verifyProfile('${profile.role}', ${profile.id})" class="bg-blue-600 text-white font-bold px-2.5 py-1 rounded hover:bg-blue-700">कागजात जाँच्नुहोस्</button>
-                        <button onclick="rejectProfile('${profile.role}', ${profile.id})" class="bg-red-600 text-white font-bold px-2.5 py-1 rounded hover:bg-red-700">Reject</button>
-                        <button onclick="viewDocuments('${safeName}', '${profile.role}', '${profile.proof}')" class="border border-gray-300 px-2 py-1 rounded">Proof</button>
-                    </td>`;
-                tbody.appendChild(tr);
+                cell(tr, profile.personalId || ((profile.role === 'Worker' ? 'WRK-' : 'SEL-') + profile.id), 'p-3 font-bold text-nepalBlue');
+                cell(tr, profile.name, 'p-3 font-bold text-gray-800');
+                cell(tr, profile.father);
+                const contact = document.createElement('td'); contact.className='p-3';
+                contact.append(document.createTextNode(String(profile.mobile || '—') + ' / '));
+                const district = document.createElement('span'); district.className='font-semibold text-nepalRed'; district.textContent=String(profile.district || '—');
+                contact.appendChild(district); tr.appendChild(contact);
+                const roleCell=document.createElement('td');roleCell.className='p-3';
+                const roleBadge=document.createElement('span');roleBadge.className='bg-blue-50 text-nepalBlue px-2 py-0.5 rounded font-bold text-[11px]';roleBadge.textContent=String(profile.role);roleCell.appendChild(roleBadge);tr.appendChild(roleCell);
+                cell(tr, profile.proof);
+                const statusCell=document.createElement('td');statusCell.className='p-3';
+                const statusBadge=document.createElement('span');statusBadge.className=approved?'bg-green-100 text-green-800 px-2 py-1 rounded font-bold':'bg-red-100 text-red-700 px-2 py-1 rounded font-bold';statusBadge.textContent=approved?'स्वीकृत':'जाँच बाँकी';statusCell.appendChild(statusBadge);tr.appendChild(statusCell);
+                const actions=document.createElement('td');actions.className='p-3 space-x-1 min-w-[180px]';
+                const verify=document.createElement('button');verify.type='button';verify.className='bg-blue-600 text-white font-bold px-2.5 py-1 rounded hover:bg-blue-700';verify.textContent='कागजात जाँच्नुहोस्';verify.addEventListener('click',()=>verifyProfile(profile.role, Number(profile.id)));
+                const reject=document.createElement('button');reject.type='button';reject.className='bg-red-600 text-white font-bold px-2.5 py-1 rounded hover:bg-red-700';reject.textContent='Reject';reject.addEventListener('click',()=>rejectProfile(profile.role, Number(profile.id)));
+                const proof=document.createElement('button');proof.type='button';proof.className='border border-gray-300 px-2 py-1 rounded';proof.textContent='Proof';proof.addEventListener('click',()=>viewDocuments(String(profile.name||''),String(profile.role||''),String(profile.proof||'')));
+                actions.append(verify,reject,proof);tr.appendChild(actions);tbody.appendChild(tr);
             });
         }
 
         function viewDocuments(name, role, proof) {
-            alert(`CEO verification review\nName: ${name}\nRole: ${role}\nRequired proof: ${proof}\n\nDemo note: This page cannot access uploaded file contents unless a secure backend/storage is connected. Do not mark verified until original documents and skills/business evidence are actually checked.`);
+            alert(`CEO verification review\nName: ${name}\nRole: ${role}\nRequired proof: ${proof}\n\nनोट: This page cannot access uploaded file contents unless a secure backend/storage is connected. Do not mark verified until original documents and skills/business evidence are actually checked.`);
         }
 
         function verifyProfile(role, id) {
@@ -2053,7 +1759,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if (!confirm(`${profile.name} को कागजात र ${role === 'Worker' ? 'सीप' : 'व्यवसाय/बिक्रेता'} प्रमाण वास्तविक रूपमा जाँच गर्नुभएको छ? जाँच पूरा भएपछि मात्र स्वीकृत गर्नुहोस्।`)) return;
             profile.status = 'APPROVED';
             renderWorkers(); renderProfileVerificationPanel(); renderCeoVerificationTable();
-            alert('Verify status demo सूचीमा अपडेट भयो। वास्तविक स्थायी verification का लागि server-side database र सुरक्षित document storage चाहिन्छ।');
+            alert('स्थिति यस ब्राउजरको सूचीमा मात्र परिवर्तन भयो। स्थायी प्रमाणीकरणका लागि सुरक्षित server-side database र document storage चाहिन्छ।');
         }
 
         function rejectProfile(role, id) {
@@ -2171,18 +1877,22 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (profileError) throw profileError;
                 const name = profile?.full_name || user.user_metadata?.full_name || 'प्रयोगकर्ता';
                 if (!profile) {
+                    // Never accept role or district from client-editable user metadata.
                     const { error: createProfileError } = await window.nsewaSupabase.from('profiles').upsert({
                         id: user.id,
                         phone: user.phone || (method === 'mobile' ? phone : null),
                         full_name: name,
-                        role: user.user_metadata?.role || 'Client',
-                        district: user.user_metadata?.district || null,
+                        role: 'Client',
+                        district: null,
                         status: 'PENDING',
                         updated_at: new Date().toISOString()
                     }, { onConflict: 'id' });
                     if (createProfileError) throw createProfileError;
                 }
-                const role = profile?.role || user.user_metadata?.role || 'Client';
+                // Normal user login must never grant CEO/Admin privileges. CEO access is a separate
+                // server-verified OTP flow; the database RLS/API must independently enforce this.
+                const dbRole = String(profile?.role || 'Client');
+                const role = ['Client','Worker','Seller'].includes(dbRole) ? dbRole : 'Client';
                 const account = { id: user.id, phone: user.phone || (method === 'mobile' ? phone : ''), email: user.email || (method === 'email' ? identifier : ''), role, name };
                 localStorage.setItem('nsewa-auth-session', JSON.stringify(account));
                 currentUserRole = role; currentPersonalId = user.id;
@@ -2206,8 +1916,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 const { data: profile, error } = await window.nsewaSupabase.from('profiles')
                     .select('id,phone,full_name,role,district,status').eq('id', user.id).maybeSingle();
                 if (error) { console.warn('Could not restore Supabase profile:', error.message); return; }
-                const role = profile?.role || user.user_metadata?.role || 'Client';
-                const name = profile?.full_name || user.user_metadata?.full_name || 'प्रयोगकर्ता';
+                // Security: never grant a role from editable user metadata. The database profile
+                // is the source of truth; missing/unknown roles fall back to least privilege.
+                const allowedRoles = new Set(['Client', 'Worker', 'Seller']);
+                const role = profile && allowedRoles.has(profile.role) ? profile.role : 'Client';
+                const name = profile?.full_name || 'प्रयोगकर्ता';
                 const account = { id: user.id, phone: user.phone || profile?.phone || '', email: user.email || '', role, name };
                 localStorage.setItem('nsewa-auth-session', JSON.stringify(account));
                 currentUserRole = role; currentPersonalId = user.id;
@@ -2227,7 +1940,42 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
+        const NSEWA_PENDING_SIGNUP_KEY = 'nsewa-pending-email-signup-v1';
         let nsewaPendingEmailSignup = null;
+        function nsewaSavePendingEmailSignup(value) {
+            nsewaPendingEmailSignup = value;
+            try { sessionStorage.setItem(NSEWA_PENDING_SIGNUP_KEY, JSON.stringify(value)); } catch (_) {}
+        }
+        function nsewaReadPendingEmailSignup() {
+            if (nsewaPendingEmailSignup) return nsewaPendingEmailSignup;
+            try {
+                const saved = JSON.parse(sessionStorage.getItem(NSEWA_PENDING_SIGNUP_KEY) || 'null');
+                if (saved && typeof saved.email === 'string') nsewaPendingEmailSignup = saved;
+            } catch (_) {}
+            return nsewaPendingEmailSignup;
+        }
+        function nsewaClearPendingEmailSignup() {
+            nsewaPendingEmailSignup = null;
+            try { sessionStorage.removeItem(NSEWA_PENDING_SIGNUP_KEY); } catch (_) {}
+        }
+        // Keep only non-secret registration metadata for the current browser tab/session.
+        // Never store the password or OTP in browser storage.
+        (function restorePendingSignupForm() {
+            const pending = nsewaReadPendingEmailSignup();
+            if (!pending) return;
+            const values = {
+                'reg-role': pending.role, 'reg-fullname': pending.name,
+                'reg-fathername': pending.father, 'reg-mobile': pending.mobile || '',
+                'reg-email': pending.email, 'reg-district': pending.district
+            };
+            Object.entries(values).forEach(([id, value]) => {
+                const el = document.getElementById(id);
+                if (el && value != null && value !== '') el.value = value;
+            });
+            const status = document.getElementById('reg-otp-status');
+            if (status) status.textContent = 'अघिल्लो OTP अनुरोधको विवरण यस सत्रबाट पुनः प्राप्त भयो। OTP इमेलमा आएपछि कोड राख्नुहोस्; पुनः पठाउन सोही इमेल प्रयोग गर्नुहोस्।';
+        })();
+
         async function handleRegistration(e) {
             if (e && typeof e.preventDefault === 'function') e.preventDefault();
             const role = document.getElementById('reg-role').value;
@@ -2244,40 +1992,67 @@ document.addEventListener("DOMContentLoaded", () => {
             const passwordConfirm = document.getElementById('reg-password-confirm').value;
             const status = document.getElementById('reg-otp-status');
             if (!name || !father || !district || !email) { alert('कृपया नाम, बुवाको नाम, इमेल र जिल्ला भर्नुहोस्।'); return; }
-            if (role !== 'Client' && (!photoFile || !citizenshipFile || !proofFile)) { alert('Worker/Seller दर्ताका लागि फोटो, नागरिकता र सीप/व्यवसाय प्रमाण फाइल छान्नुहोस्।'); return; }
             if (!phone) { alert('कृपया ९८ वा ९७ बाट सुरु हुने सही १० अङ्कको नेपाली मोबाइल नम्बर राख्नुहोस्।'); return; }
             if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { alert('सही इमेल ठेगाना राख्नुहोस्।'); return; }
+            if (!window.nsewaSupabaseReady || !window.nsewaSupabase) { alert('Supabase जोडिएको छैन। Project URL, Publishable key र इन्टरनेट जाँच्नुहोस्।'); return; }
+
+            const savedPending = nsewaReadPendingEmailSignup();
+            // A resend should not require the password or re-uploading files after a refresh.
+            if (savedPending && savedPending.email === email) {
+                const updated = { ...savedPending, email, phone, mobile, role, name, father, district };
+                nsewaSavePendingEmailSignup(updated);
+                if (status) status.textContent = 'इमेल OTP पुनः पठाउने अनुरोध गर्दैछ…';
+                try {
+                    const result = await window.nsewaSupabase.auth.resend({
+                        type: 'signup', email,
+                        options: { emailRedirectTo: 'https://nmmerosewa5690-star.github.io/Mero-Sewa/' }
+                    });
+                    if (result.error) throw result.error;
+                    if (status) status.textContent = 'Supabase ले OTP पुनः पठाउने अनुरोध स्वीकार गर्‍यो। Inbox/Spam जाँच्नुहोस्; यो इमेल पुगेको पुष्टि होइन।';
+                    alert('OTP पुनः पठाउने अनुरोध स्वीकार भयो। Inbox/Spam जाँच्नुहोस्। बारम्बार अनुरोध गर्दा rate limit लाग्न सक्छ।');
+                } catch (err) {
+                    console.error('Supabase signup OTP resend failed:', err);
+                    if (status) status.textContent = 'OTP पुनः पठाउन सकिएन: ' + (err.message || 'त्रुटि');
+                    alert('OTP पुनः पठाउन सकिएन: ' + (err.message || 'त्रुटि') + '\nकेही समय पर्खेर Auth Logs र SMTP जाँच्नुहोस्।');
+                }
+                return;
+            }
+
+            if (role !== 'Client' && (!photoFile || !citizenshipFile || !proofFile)) { alert('Worker/Seller दर्ताका लागि फोटो, नागरिकता र सीप/व्यवसाय प्रमाण फाइल छान्नुहोस्।'); return; }
             if (password.length < 8) { alert('पासवर्ड कम्तीमा ८ अक्षरको हुनुपर्छ।'); return; }
             if (password !== passwordConfirm) { alert('दुवै पासवर्ड मिलेनन्।'); document.getElementById('reg-password-confirm').focus(); return; }
-            if (!window.nsewaSupabaseReady || !window.nsewaSupabase) { alert('Supabase जोडिएको छैन। Project URL, Publishable key र इन्टरनेट जाँच्नुहोस्।'); return; }
             try {
-                let data;
-                if (nsewaPendingEmailSignup && nsewaPendingEmailSignup.email === email) {
-                    // Supabase Auth resend endpoint supports requesting another signup confirmation email.
-                    if (status) status.textContent = 'इमेल OTP फेरि पठाउने अनुरोध गर्दैछ…';
-                    const result = await window.nsewaSupabase.auth.resend({ type: 'signup', email, options: { emailRedirectTo: 'https://nmmerosewa5690-star.github.io/Mero-Sewa/' } });
-                    if (result.error) throw result.error;
-                    // Keep the latest form details to save to profiles after successful verification.
-                    nsewaPendingEmailSignup = { email, phone, role, name, father, district };
-                    if (status) status.textContent = 'Supabase ले OTP पुनः पठाउने अनुरोध स्वीकार गर्‍यो। Inbox/Spam जाँच्नुहोस्; इमेल नआए SMTP र Auth Logs जाँच्नुहोस्।';
-                    alert('OTP पुनः पठाउने अनुरोध गरियो। Inbox/Spam जाँच्नुहोस्। बारम्बार अनुरोध गर्दा Supabase को rate limit लाग्न सक्छ।');
-                    return;
-                }
                 if (status) status.textContent = 'Supabase बाट इमेल OTP अनुरोध गर्दैछ…';
-                const { data: signupData, error } = await window.nsewaSupabase.auth.signUp({
+                const { data, error } = await window.nsewaSupabase.auth.signUp({
                     email, password,
-                    options: { emailRedirectTo: 'https://nmmerosewa5690-star.github.io/Mero-Sewa/', data: { full_name: name, father_name: father, phone, role, district } }
+                    options: {
+                        emailRedirectTo: 'https://nmmerosewa5690-star.github.io/Mero-Sewa/',
+                        data: { full_name: name, father_name: father, phone, role, district }
+                    }
                 });
-                if (error) throw error;
-                data = signupData;
-                nsewaPendingEmailSignup = { email, phone, role, name, father, district };
+                if (error) {
+                    // Recover older pending registrations that were created before this page stored session metadata.
+                    if (/already registered|already exists|user already/i.test(error.message || '')) {
+                        const resend = await window.nsewaSupabase.auth.resend({
+                            type: 'signup', email,
+                            options: { emailRedirectTo: 'https://nmmerosewa5690-star.github.io/Mero-Sewa/' }
+                        });
+                        if (resend.error) throw resend.error;
+                        nsewaSavePendingEmailSignup({ email, phone, mobile, role, name, father, district });
+                        if (status) status.textContent = 'यस इमेलको खाता पहिले नै छ। OTP पुनः पठाउने अनुरोध स्वीकार भयो; Inbox/Spam जाँच्नुहोस्।';
+                        alert('यस इमेलको दर्ता पहिले नै सुरु भएको हुन सक्छ। OTP पुनः पठाउने अनुरोध स्वीकार भयो। Inbox/Spam जाँच्नुहोस्।');
+                        return;
+                    }
+                    throw error;
+                }
+                nsewaSavePendingEmailSignup({ email, phone, mobile, role, name, father, district });
                 if (data?.session && data?.user) {
-                    if (status) status.textContent = 'यो Supabase परियोजनामा email confirmation बन्द छ। अनिवार्य OTP का लागि Authentication → Providers → Email मा Confirm email खोल्नुहोस्।';
-                    alert('Supabase मा Email confirmation बन्द देखिन्छ। Authentication → Providers → Email मा Confirm email खोल्नुहोस्, त्यसपछि फेरि परीक्षण गर्नुहोस्।');
+                    if (status) status.textContent = 'यो Supabase परियोजनामा email confirmation बन्द देखिन्छ। अनिवार्य OTP का लागि Authentication → Providers → Email मा Confirm email जाँच्नुहोस्।';
+                    alert('इमेल पुष्टि अनिवार्य भएको छैन जस्तो देखिन्छ। Supabase को Email confirmation सेटिङ जाँच्नुहोस्।');
                     return;
                 }
-                if (status) status.textContent = 'Supabase ले OTP अनुरोध स्वीकार गर्‍यो। Inbox/Spam जाँच्नुहोस्; इमेल नआए SMTP र Auth Logs जाँच्नुहोस्।';
-                alert('OTP अनुरोध पठाइयो। इमेल आउनु निश्चित भएको पुष्टि अझै भएको छैन—Inbox/Spam जाँच्नुहोस्। नआए Supabase Authentication Logs र SMTP सेटिङ जाँच्नुहोस्।');
+                if (status) status.textContent = 'OTP अनुरोध स्वीकार भयो। Inbox/Spam जाँच्नुहोस्; इमेल पुगेको पुष्टि अझै भएको छैन। विवरण यस ब्राउजर सत्रमा सुरक्षित छ।';
+                alert('OTP अनुरोध स्वीकार भयो। Inbox/Spam जाँच्नुहोस्। इमेल नआए SMTP र Auth Logs जाँच्नुपर्छ।');
             } catch (err) {
                 console.error('Supabase email OTP request failed:', err);
                 if (status) status.textContent = 'OTP अनुरोध असफल: ' + (err.message || 'त्रुटि');
@@ -2285,11 +2060,12 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        async function verifyRegistrationEmailOtp() {
+                async function verifyRegistrationEmailOtp() {
             const status = document.getElementById('reg-otp-status');
             const email = document.getElementById('reg-email').value.trim().toLowerCase();
             const token = document.getElementById('reg-otp-code').value.replace(/\s+/g, '').trim();
-            if (!nsewaPendingEmailSignup || nsewaPendingEmailSignup.email !== email) {
+            const pendingSignup = nsewaReadPendingEmailSignup();
+            if (!pendingSignup || pendingSignup.email !== email) {
                 alert('पहिले विवरण भरेर “इमेल OTP पठाउनुहोस्” थिच्नुहोस्।'); return;
             }
             if (!/^\d{6,8}$/.test(token)) { alert('इमेलमा आएको ६–८ अङ्कको OTP लेख्नुहोस्।'); return; }
@@ -2298,14 +2074,15 @@ document.addEventListener("DOMContentLoaded", () => {
                 const { data, error } = await window.nsewaSupabase.auth.verifyOtp({ email, token, type: 'signup' });
                 if (error) throw error;
                 if (!data?.user) throw new Error('प्रमाणित प्रयोगकर्ता भेटिएन।');
-                const pending = nsewaPendingEmailSignup;
+                const pending = pendingSignup;
                 const user = data.user;
+                const safeSignupRole = ['Worker','Seller','Client'].includes(pending?.role) ? pending.role : 'Client';
                 const profilePayload = {
                     id: user.id,
                     phone: pending.phone,
                     full_name: pending.name,
                     father_name: pending.father || null,
-                    role: pending.role,
+                    role: safeSignupRole,
                     district: pending.district,
                     status: 'PENDING',
                     updated_at: new Date().toISOString()
@@ -2319,14 +2096,14 @@ document.addEventListener("DOMContentLoaded", () => {
                     alert('इमेल प्रमाणित भयो तर प्रोफाइल database मा सुरक्षित भएन। Supabase SQL/RLS जाँच्नुहोस्।\n' + profileSaveError.message);
                     return;
                 }
-                const account = { id: user.id, phone: pending.phone, email: pending.email, role: pending.role, name: pending.name };
+                const account = { id: user.id, phone: pending.phone, email: pending.email, role: safeSignupRole, name: pending.name };
                 localStorage.setItem('nsewa-auth-session', JSON.stringify(account));
-                currentUserRole = pending.role; currentPersonalId = user.id;
+                currentUserRole = safeSignupRole; currentPersonalId = user.id;
                 const n = document.getElementById('current-user-name'); if (n) n.textContent = pending.name;
-                const r = document.getElementById('current-user-role'); if (r) r.textContent = pending.role;
+                const r = document.getElementById('current-user-role'); if (r) r.textContent = safeSignupRole;
                 const i = document.getElementById('current-user-id'); if (i) i.textContent = 'My ID: ' + user.id;
-                const rs = document.getElementById('role-selector'); if (rs) rs.value = pending.role;
-                nsewaPendingEmailSignup = null;
+                const rs = document.getElementById('role-selector'); if (rs) rs.value = safeSignupRole;
+                nsewaClearPendingEmailSignup();
                 if (status) status.textContent = 'इमेल OTP प्रमाणित भयो। दर्ता सफल भयो।';
                 alert(`इमेल प्रमाणित भयो र दर्ता सफल भयो, ${pending.name}! मोबाइल नम्बर ${pending.phone} तपाईंको खातासँग राखिएको छ।`);
                 closeModal('auth-modal'); if (window.finishEntryAuth) window.finishEntryAuth();
@@ -2340,7 +2117,7 @@ document.addEventListener("DOMContentLoaded", () => {
         /* ----------------------------------------------------
            12. Live Chat Simulator
         ---------------------------------------------------- */
-        /* Nepali Sewa Connect: browser-local social demo. Live cross-device delivery requires a secured backend. */
+        /* Nepali Sewa Connect: browser-local social features. Live cross-device delivery requires a secured backend. */
         let commSelectedContact = 'नेपाली सेवा सहायता';
         const commStore = (key, fallback=[]) => { try { const v=JSON.parse(localStorage.getItem(key)||'null'); return v===null?fallback:v; } catch(e) { return fallback; } };
         const commSave = (key, value) => localStorage.setItem(key, JSON.stringify(value));
@@ -2372,7 +2149,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const messages=commStore(commKey(commSelectedContact));
             if(!messages.length){const d=document.createElement('div');d.className='max-w-[85%] rounded-xl rounded-tl-sm bg-blue-50 p-3 text-slate-700';d.textContent=commSelectedContact==='नेपाली सेवा सहायता'?'नमस्ते! नेपाली सेवामा तपाईंलाई के सहयोग चाहिन्छ?':'कुराकानी सुरु गर्नुहोस्।';box.appendChild(d);}
             messages.forEach(m=>{const wrap=document.createElement('div');wrap.className='flex '+(m.mine?'justify-end':'justify-start');const b=document.createElement('div');b.className='max-w-[85%] rounded-xl p-3 '+(m.mine?'bg-nepalRed text-white':'bg-slate-100 text-slate-800');b.textContent=m.text;wrap.appendChild(b);box.appendChild(wrap);});
-            const note=document.createElement('p');note.className='pt-2 text-center text-[11px] text-amber-700';note.textContent='स्थानीय demo: अर्को device मा live delivery का लागि server चाहिन्छ';box.appendChild(note);box.scrollTop=box.scrollHeight;
+            const note=document.createElement('p');note.className='pt-2 text-center text-[11px] text-amber-700';note.textContent='अर्को device मा सन्देश पुर्‍याउन सुरक्षित server जडान आवश्यक छ';box.appendChild(note);box.scrollTop=box.scrollHeight;
         }
         function sendCommMessage(e) { e.preventDefault();const input=document.getElementById('comm-message-input');const text=input.value.trim();if(!text)return;if(commBlocked().some(b=>b.owner===commUserId()&&b.target===commSelectedContact)){alert('Block गरिएको contact लाई सन्देश पठाउन मिल्दैन।');return;}const key=commKey(commSelectedContact);const list=commStore(key);list.push({text,mine:true,at:Date.now(),sender:commUserId()});commSave(key,list.slice(-200));input.value='';renderCommThread();addNsewaNotification('सन्देश सुरक्षित भयो',commSelectedContact+' सँगको सन्देश यो ब्राउजरमा सुरक्षित भयो।','chat'); }
         function searchCommUsers() {
@@ -2382,14 +2159,14 @@ document.addEventListener("DOMContentLoaded", () => {
             const filtered=accounts.filter(a=>!blocked.includes(a.id));if(!filtered.length){out.textContent='यस ब्राउजरमा मिल्दो दर्ता खाता भेटिएन।';return;}
             filtered.slice(0,20).forEach(a=>{const row=document.createElement('div');row.className='flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3';const label=document.createElement('span');label.textContent=(a.name||'प्रयोगकर्ता')+' · '+(a.phone||'');const btn=document.createElement('button');btn.className='rounded-lg bg-nepalBlue px-3 py-2 text-xs font-bold text-white';const req=commRequests().find(r=>r.from===commUserId()&&r.to===a.id&&r.status==='pending');btn.textContent=req?'Request पठाइसकियो':'Friend Request';btn.disabled=!!req;btn.onclick=()=>sendCommRequest(a);row.append(label,btn);out.appendChild(row);});
         }
-        function sendCommRequest(account){const requests=commRequests();if(requests.some(r=>r.from===commUserId()&&r.to===account.id&&['pending','accepted'].includes(r.status))){alert('Request पहिले नै पठाइएको छ वा साथी बनिसक्नुभएको छ।');return;}requests.unshift({id:'req-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),from:commUserId(),to:account.id,fromName:(commAccounts().find(a=>a.id===commUserId())||{}).name||'यो प्रयोगकर्ता',toName:account.name,at:Date.now(),status:'pending'});commSave('nsewa-social-requests-v1',requests);renderCommRequests();searchCommUsers();addNsewaNotification('Friend Request पठाइयो',account.name+' लाई अनुरोध पठाइएको छ (यस ब्राउजरमा demo)।','info');}
+        function sendCommRequest(account){const requests=commRequests();if(requests.some(r=>r.from===commUserId()&&r.to===account.id&&['pending','accepted'].includes(r.status))){alert('Request पहिले नै पठाइएको छ वा साथी बनिसक्नुभएको छ।');return;}requests.unshift({id:'req-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),from:commUserId(),to:account.id,fromName:(commAccounts().find(a=>a.id===commUserId())||{}).name||'यो प्रयोगकर्ता',toName:account.name,at:Date.now(),status:'pending'});commSave('nsewa-social-requests-v1',requests);renderCommRequests();searchCommUsers();addNsewaNotification('Friend Request पठाइयो',account.name+' लाई अनुरोध पठाइएको छ (यस ब्राउजरमा स्थानीय रूपमा)।','info');}
         function addCommFriend(e) { e.preventDefault();const name=document.getElementById('friend-name').value.trim();const phoneRaw=document.getElementById('friend-phone').value.trim();const phone=normalizeNepalPhone(phoneRaw)||phoneRaw.replace(/\s/g,'');if(!name||!phone)return;const account=commAccounts().find(a=>a.phone===phone||a.phone===phoneRaw);if(account){sendCommRequest(account);}else{const list=commStore('nsewa-comm-friends');if(list.some(f=>String(f.phone).replace(/\s/g,'')===phone.replace(/\s/g,''))){alert('यो नम्बर contact सूचीमा पहिल्यै छ।');return;}list.push({name,phone,status:'contact-only'});commSave('nsewa-comm-friends',list);addNsewaNotification('Contact सुरक्षित भयो',name+' को contact स्थानीय सूचीमा थपियो।','info');alert('यो नम्बरको दर्ता खाता भेटिएन। Contact मात्र सुरक्षित भयो; Friend Request पठाउन प्रयोगकर्ता दर्ता हुनुपर्छ।');}e.target.reset();renderCommFriends();renderCommContacts();}
         function renderCommRequests(){const box=document.getElementById('comm-requests-list');if(!box)return;box.textContent='';const id=commUserId();const list=commRequests().filter(r=>r.from===id||r.to===id);if(!list.length){box.textContent='अहिलेसम्म request छैन।';return;}list.forEach(r=>{const incoming=r.to===id&&r.status==='pending';const row=document.createElement('div');row.className='flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3';const label=document.createElement('span');label.textContent=(incoming?'आएको: '+r.fromName:r.to===id?'':'पठाएको: '+(r.toName||'प्रयोगकर्ता'))+' · '+(r.status==='accepted'?'स्वीकार भयो':r.status==='pending'?'Pending':'अस्वीकार भयो');const actions=document.createElement('div');actions.className='flex flex-wrap gap-2';if(incoming){const accept=document.createElement('button');accept.className='rounded-lg bg-green-700 px-3 py-1.5 text-xs font-bold text-white';accept.textContent='Accept';accept.onclick=()=>acceptCommRequest(r.id);actions.appendChild(accept);const decline=document.createElement('button');decline.className='rounded-lg border px-3 py-1.5 text-xs';decline.textContent='Decline';decline.onclick=()=>declineCommRequest(r.id);actions.appendChild(decline);}if(r.status==='accepted'){const block=document.createElement('button');block.className='rounded-lg border border-red-300 px-3 py-1.5 text-xs text-red-700';block.textContent='Block';block.onclick=()=>blockCommUser(r.from===id?r.to:r.from,r.fromName||r.toName);actions.appendChild(block);const report=document.createElement('button');report.className='rounded-lg border px-3 py-1.5 text-xs';report.textContent='Report';report.onclick=()=>reportCommUser(r.from===id?r.to:r.from,r.fromName||r.toName);actions.appendChild(report);}row.append(label,actions);box.appendChild(row);});}
         function acceptCommRequest(id){const list=commRequests();const r=list.find(x=>x.id===id&&x.to===commUserId()&&x.status==='pending');if(!r)return;r.status='accepted';r.acceptedAt=Date.now();commSave('nsewa-social-requests-v1',list);const friends=commFriends();if(!friends.some(f=>f.users&&f.users.includes(r.from)&&f.users.includes(r.to)))friends.push({users:[r.from,r.to],name:r.fromName,createdAt:Date.now()});commSave('nsewa-social-friends-v1',friends);renderCommRequests();renderCommFriends();renderCommContacts();addNsewaNotification('Friend Request स्वीकार भयो',r.fromName+' अब साथी सूचीमा छन्।','info');}
         function declineCommRequest(id){const list=commRequests();const r=list.find(x=>x.id===id&&x.to===commUserId()&&x.status==='pending');if(!r)return;r.status='declined';commSave('nsewa-social-requests-v1',list);renderCommRequests();}
         function renderCommFriends(){const box=document.getElementById('comm-friends-list');if(!box)return;box.textContent='';const id=commUserId();const list=commFriends().filter(f=>f.users&&f.users.includes(id));const accounts=commAccounts();list.forEach(f=>{const other=f.users.find(u=>u!==id);const a=accounts.find(x=>x.id===other);const name=a?.name||f.name||'साथी';const phone=a?.phone||'';const row=document.createElement('div');row.className='flex flex-wrap items-center justify-between gap-2 rounded-lg bg-slate-50 p-3';const label=document.createElement('span');label.textContent=name+(phone?' · '+phone:'');const actions=document.createElement('div');actions.className='flex flex-wrap gap-2';const chat=document.createElement('button');chat.className='rounded-lg bg-nepalBlue px-3 py-1.5 text-xs font-bold text-white';chat.textContent='च्याट';chat.onclick=()=>{selectCommContact(name);showCommTab('chats');};const block=document.createElement('button');block.className='rounded-lg border border-red-300 px-3 py-1.5 text-xs text-red-700';block.textContent='Block';block.onclick=()=>blockCommUser(other,name);const report=document.createElement('button');report.className='rounded-lg border px-3 py-1.5 text-xs';report.textContent='Report';report.onclick=()=>reportCommUser(other,name);actions.append(chat,block,report);row.append(label,actions);box.appendChild(row);});if(!list.length)box.textContent='अहिलेसम्म स्वीकार गरिएको साथी छैन।';const contacts=commStore('nsewa-comm-friends');contacts.forEach((f,i)=>{const row=document.createElement('div');row.className='flex items-center justify-between gap-2 rounded-lg border p-3';const label=document.createElement('span');label.textContent=f.name+' · '+f.phone+' (Contact मात्र)';const del=document.createElement('button');del.className='rounded-lg border px-3 py-1.5 text-xs';del.textContent='हटाउनुहोस्';del.onclick=()=>{const a=commStore('nsewa-comm-friends');a.splice(i,1);commSave('nsewa-comm-friends',a);renderCommFriends();};row.append(label,del);box.appendChild(row);});}
         function blockCommUser(target,name){if(!target)return;const list=commBlocked();if(!list.some(b=>b.owner===commUserId()&&b.target===target))list.push({owner:commUserId(),target,name,at:Date.now()});commSave('nsewa-social-blocked-v1',list);commSave('nsewa-social-friends-v1',commFriends().filter(f=>!(f.users&&f.users.includes(commUserId())&&f.users.includes(target))));renderCommFriends();renderCommRequests();renderCommContacts();renderCommThread();addNsewaNotification('प्रयोगकर्ता Block भयो',name+' लाई block गरिएको छ।','info');}
-        function reportCommUser(target,name){if(!target)return;const reason=prompt(name+' को report गर्ने कारण लेख्नुहोस्:');if(!reason||!reason.trim())return;const reports=commStore('nsewa-social-reports-v1');reports.unshift({reporter:commUserId(),target,name,reason:reason.trim().slice(0,500),at:Date.now(),status:'pending-review'});commSave('nsewa-social-reports-v1',reports);addNsewaNotification('Report दर्ता भयो','तपाईंको report यस ब्राउजरमा सुरक्षित भयो।','info');alert('Report demo record मा सुरक्षित भयो। कम्पनीको moderation टोलीसम्म पुर्‍याउन backend आवश्यक छ।');}
+        function reportCommUser(target,name){if(!target)return;const reason=prompt(name+' को report गर्ने कारण लेख्नुहोस्:');if(!reason||!reason.trim())return;const reports=commStore('nsewa-social-reports-v1');reports.unshift({reporter:commUserId(),target,name,reason:reason.trim().slice(0,500),at:Date.now(),status:'pending-review'});commSave('nsewa-social-reports-v1',reports);addNsewaNotification('Report दर्ता भयो','तपाईंको report यस ब्राउजरमा सुरक्षित भयो।','info');alert('उजुरी स्थानीय सूचीमा सुरक्षित भयो। कम्पनीको moderation टोलीसम्म पुर्‍याउन backend आवश्यक छ।');}
         function createCeoBroadcast() { if(currentUserRole!=='CEO'||!window.hasVerifiedCeoLayoutSession?.()){alert('अनुमति छैन। Company account ले मात्र सूचना पठाउन सक्छ।');return;}const input=document.getElementById('ceo-broadcast-text');const text=input.value.trim();if(!text){alert('कृपया सूचना लेख्नुहोस्।');return;}const list=commStore('nsewa-ceo-broadcasts');list.unshift({text,at:Date.now(),role:'Company',sender:commUserId(),oneWay:true});commSave('nsewa-ceo-broadcasts',list.slice(0,50));document.getElementById('ceo-broadcast-result').textContent='Company सूचना यस ब्राउजरको draft मा सुरक्षित भयो। प्रयोगकर्ताका reply Company inbox मा देखिँदैनन्। सबै खातामा पुर्‍याउन server broadcast जडान आवश्यक छ।';input.value='';addNsewaNotification('Company सूचना draft बन्यो',text,'ceo'); }
         async function startCommCall(kind) { alert('Live call सुविधा server bridge बाट सुरु हुन्छ। कृपया लगइन गरी प्राप्तकर्ता प्रयोगकर्ता ID राख्नुहोस्।'); }
         async function requestRealOtpInfo() { const input=document.getElementById('comm-otp-phone');const phone=normalizeNepalPhone(input?.value||'');if(!phone){alert('मान्य नेपाली मोबाइल नम्बर राख्नुहोस्।');return;}try{const sent=await fetch('/api/send-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone})});let data={};try{data=await sent.json();}catch(_){}if(!sent.ok)throw new Error(data.error||'SMS पठाउन सकिएन');const code=prompt(phone+' मा आएको SMS OTP लेख्नुहोस्:');if(!code)return;const checked=await fetch('/api/verify-otp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,code:code.trim()})});let result={};try{result=await checked.json();}catch(_){}if(!checked.ok||!result.verified)throw new Error(result.error||'OTP प्रमाणित भएन');addNsewaNotification('SMS OTP प्रमाणित भयो',phone+' को OTP सफलतापूर्वक प्रमाणित भयो।','info');alert('OTP सफलतापूर्वक प्रमाणित भयो।');}catch(err){alert('वास्तविक SMS OTP पठाउन/प्रमाणित गर्न सकिएन: '+err.message+'। /api/send-otp र /api/verify-otp backend तथा SMS provider सक्रिय हुनुपर्छ। कुनै नक्कली OTP प्रयोग गरिएको छैन।');}}
@@ -2419,7 +2196,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 replyDiv.innerHTML = `<b class="text-nepalBlue block mb-0.5">नेपाली सेवा सहायता:</b> धन्यवाद! तपाईंको सन्देश प्राप्त भयो। हाम्रा प्राविधिक वा Admin ले शीघ्र सम्पर्क गर्नुहुनेछ।`;
                 container.appendChild(replyDiv);
                 container.scrollTop = container.scrollHeight;
-                addNsewaNotification('नेपाली सेवा सहायता', 'तपाईंको सन्देश प्राप्त भयो। यो auto-reply demo हो।', 'chat');
+                addNsewaNotification('नेपाली सेवा सहायता', 'तपाईंको सन्देश स्थानीय रूपमा प्राप्त भयो।', 'chat');
             }, 800);
         }
 
@@ -2459,16 +2236,35 @@ document.addEventListener("DOMContentLoaded", () => {
         function renderProfileGallery(){
             const gallery=document.getElementById('profile-photo-gallery'), preview=document.getElementById('profile-posts-preview');if(!gallery||!preview)return;
             const photos=(posts||[]).filter(p=>p.image).map(p=>({image:p.image,caption:p.caption||'पोस्ट फोटो',time:p.time||''}));
-            const tile=x=>`<div class="relative"><img src="${x.image}" alt="${escapeProfileText(x.caption)}" loading="lazy" class="w-full aspect-square object-cover rounded-lg border" onerror="this.parentElement.style.display='none'"><span class="block text-[10px] truncate mt-1">${escapeProfileText(x.caption)}</span></div>`;
+            const tile=x=>`<div class="relative"><img src="${window.nsewaEscapeHtml(x.image)}" alt="${escapeProfileText(x.caption)}" loading="lazy" class="w-full aspect-square object-cover rounded-lg border" onerror="this.parentElement.style.display='none'"><span class="block text-[10px] truncate mt-1">${escapeProfileText(x.caption)}</span></div>`;
             gallery.innerHTML=photos.length?photos.map(tile).join(''):'<p class="col-span-3 text-sm text-gray-500">अहिलेसम्म फोटो छैन। फोटोसहित पोस्ट गर्दा यहाँ स्वतः देखिन्छ।</p>';
             preview.innerHTML=(posts||[]).slice(0,6).map(p=>p.image?tile({image:p.image,caption:p.caption||'पोस्ट'}):`<div class="aspect-square rounded-lg bg-gray-50 border p-2 text-xs overflow-hidden">${escapeProfileText(p.caption||'पोस्ट')}</div>`).join('')||'<p class="col-span-3 text-sm text-gray-500">पोस्ट छैन।</p>';
         }
         function toggleProfileFollow(){const key='nsewa-profile-following';const followed=localStorage.getItem(key)==='yes';localStorage.setItem(key,followed?'no':'yes');const b=document.getElementById('profile-follow-button');if(b){b.textContent=followed?'+ Follow':'✓ Following';b.classList.toggle('bg-nepalBlue',!followed);b.classList.toggle('bg-nepalRed',followed);} }
         function createProfilePost(){const caption=document.getElementById('profile-post-text').value.trim();const input=document.getElementById('profile-media-input');const file=input.files?.[0];if(!caption&&!file){alert('लेख, फोटो वा भिडियोमध्ये केही थप्नुहोस्।');return;}if(file&&!((file.type.startsWith('image/')&&file.size<=2*1024*1024)||(file.type.startsWith('video/')&&file.size<=8*1024*1024))){alert('फोटो २ MB र भिडियो ८ MB भित्र हुनुपर्छ।');return;}const publish=(url,type)=>{posts.unshift({id:Date.now(),author:localStorage.getItem('nsewa-profile-name')||document.getElementById('current-user-name')?.textContent||'प्रयोगकर्ता',role:currentUserRole,district:document.getElementById('global-district-select').value==='ALL'?'स्थान उल्लेख छैन':document.getElementById('global-district-select').value,caption,image:type==='image'?url:'',video:type==='video'?url:'',likes:0,comments:[],time:new Intl.DateTimeFormat('ne-NP',{timeZone:'Asia/Kathmandu',hour:'2-digit',minute:'2-digit'}).format(new Date())});try{localStorage.setItem('nsewa-posts',JSON.stringify(posts));}catch(e){alert('ब्राउजर भण्डारण भरियो; सानो फाइल छान्नुहोस्।');}document.getElementById('profile-post-text').value='';input.value='';renderPosts();renderProfileGallery();};if(!file){publish('','text');return;}const r=new FileReader();r.onload=()=>publish(r.result,file.type.startsWith('video/')?'video':'image');r.onerror=()=>alert('फाइल पढ्न सकिएन।');r.readAsDataURL(file);}
         function openSecuritySettings(){closeModal('user-settings-modal');closeModal('profile-edit-modal');document.getElementById('security-old-phone').value='';document.getElementById('security-new-phone').value='';document.getElementById('security-current-name').value=localStorage.getItem('nsewa-profile-name')||document.getElementById('current-user-name').textContent;document.getElementById('security-new-name').value='';document.getElementById('security-birth-date').value=localStorage.getItem('nsewa-birth-date')||'';document.getElementById('security-action-status').textContent='';openModal('personal-security-modal');}
-        function changeProfilePhone(){const old= document.getElementById('security-old-phone').value.trim(), current=localStorage.getItem('nsewa-profile-phone')||'';const next=document.getElementById('security-new-phone').value.trim();const status=document.getElementById('security-action-status');if(!current){status.textContent='हालको नम्बर प्रोफाइलमा सेट छैन। पहिले प्रोफाइल विवरण जाँच्नुहोस्।';return;}if(old!==current){status.textContent='पुरानो नम्बर मिलेन। नम्बर परिवर्तन गरिएन।';return;}if(!/^\+?[0-9 ()-]{7,20}$/.test(next)||next===old){status.textContent='नयाँ नम्बर जाँच्नुहोस्; पुरानै नम्बर राख्न मिल्दैन।';return;}localStorage.setItem('nsewa-profile-phone',next);status.textContent='यो ब्राउजरको डेमोमा नम्बर परिवर्तन भयो। वास्तविक सुरक्षाका लागि पुरानो नम्बरमा OTP backend बाट पठाउनुपर्छ।';}
-        function saveIdentityDetails(){const oldName=document.getElementById('security-current-name').value.trim(), stored=localStorage.getItem('nsewa-profile-name')||document.getElementById('current-user-name').textContent, next=document.getElementById('security-new-name').value.trim(), dob=document.getElementById('security-birth-date').value,status=document.getElementById('security-action-status');if(oldName!==stored){status.textContent='हालको नाम मिलेन। परिवर्तन गरिएन।';return;}if(next){localStorage.setItem('nsewa-profile-name',next);document.getElementById('current-user-name').textContent=next;document.getElementById('menu-user-name').textContent=next;}if(dob)localStorage.setItem('nsewa-birth-date',dob);status.textContent='नाम/जन्ममिति स्थानीय रूपमा सुरक्षित भयो। पहिचान पुष्टि र वास्तविक सुरक्षा backend बाट गर्नुपर्छ।';}
-        function changeDemoPassword(){const old=document.getElementById('security-old-password').value, next=document.getElementById('security-new-password').value, confirmPass=document.getElementById('security-confirm-password').value,status=document.getElementById('security-action-status');if(!old||!next||!confirmPass){status.textContent='सबै password field भर्नुहोस्।';return;}if(next.length<12){status.textContent='नयाँ पासवर्ड कम्तीमा १२ अक्षरको बनाउनुहोस्।';return;}if(next!==confirmPass){status.textContent='नयाँ पासवर्डहरू मेल खाएनन्।';return;}status.textContent='यो HTML फाइलमा वास्तविक password hash/login database छैन, त्यसैले password परिवर्तन लागू गर्न सकिँदैन। उत्पादनमा पुरानो password server मा verify गरी Argon2id/bcrypt hash update गर्नुपर्छ।';}
+        async function changeProfilePhone(){
+          const old=document.getElementById('security-old-phone').value.trim(), next=document.getElementById('security-new-phone').value.trim(), status=document.getElementById('security-action-status');
+          if(!/^\+?[0-9 ()-]{7,20}$/.test(old)||!/^[+]?[0-9 ()-]{7,20}$/.test(next)||next===old){status.textContent='पुरानो र नयाँ मोबाइल नम्बर जाँच्नुहोस्।';return;}
+          if(!window.nsewaSupabaseReady||!window.nsewaSupabase){status.textContent='फोन परिवर्तन सुरक्षित गर्न प्रमाणीकरण भएको server/OTP सेवा उपलब्ध छैन। नम्बर परिवर्तन गरिएको छैन।';return;}
+          status.textContent='सुरक्षित फोन परिवर्तन API जाँचिँदैछ…';
+          try{const r=await fetch('/api/profile/change-phone',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},credentials:'same-origin',body:JSON.stringify({oldPhone:old,newPhone:next})});const d=await r.json().catch(()=>({}));if(!r.ok||d.updated!==true)throw new Error(d.error||'पुरानो नम्बरमा OTP प्रमाणीकरण गर्ने backend उपलब्ध छैन।');status.textContent='फोन नम्बर सुरक्षित रूपमा परिवर्तन भयो।';}
+          catch(e){status.textContent=(e.message||'सुरक्षित फोन परिवर्तन असफल भयो।')+' नम्बर परिवर्तन गरिएको छैन।';}
+        }
+        async function saveIdentityDetails(){
+          const oldName=document.getElementById('security-current-name').value.trim(), stored=document.getElementById('current-user-name')?.textContent?.trim()||'', next=document.getElementById('security-new-name').value.trim(), dob=document.getElementById('security-birth-date').value, status=document.getElementById('security-action-status');
+          if(!window.nsewaSupabaseReady||!window.nsewaSupabase){status.textContent='सर्भर प्रमाणीकरण उपलब्ध छैन। व्यक्तिगत विवरण परिवर्तन गरिएको छैन।';return;}
+          if(!next||next.length<2){status.textContent='नयाँ नाम कम्तीमा २ अक्षरको राख्नुहोस्।';return;}
+          if(oldName!==stored){status.textContent='हालको नाम मिलेन। परिवर्तन गरिएन।';return;}
+          try{const {data:{user},error:userError}=await window.nsewaSupabase.auth.getUser();if(userError||!user)throw new Error('पहिले लगइन गर्नुहोस्।');const {error}=await window.nsewaSupabase.from('profiles').update({full_name:next,updated_at:new Date().toISOString()}).eq('id',user.id);if(error)throw error;document.getElementById('current-user-name').textContent=next;const menuName=document.getElementById('menu-user-name');if(menuName)menuName.textContent=next;status.textContent='नाम database मा सुरक्षित भयो। जन्ममिति सुरक्षित गर्न छुट्टै schema/policy पुष्टि आवश्यक छ।';}
+          catch(e){status.textContent='विवरण सुरक्षित भएन: '+(e.message||'database/RLS जाँच्नुहोस्।');}
+        }
+        async function changeDemoPassword(){
+          const old=document.getElementById('security-old-password').value, next=document.getElementById('security-new-password').value, confirmPass=document.getElementById('security-confirm-password').value,status=document.getElementById('security-action-status');
+          if(!old||!next||!confirmPass){status.textContent='सबै password field भर्नुहोस्।';return;}if(next.length<12){status.textContent='नयाँ पासवर्ड कम्तीमा १२ अक्षरको बनाउनुहोस्।';return;}if(next!==confirmPass){status.textContent='नयाँ पासवर्डहरू मेल खाएनन्।';return;}
+          try{if(!window.nsewaSupabaseReady||!window.nsewaSupabase)throw new Error('Authentication server उपलब्ध छैन।');const {data:{user},error:userError}=await window.nsewaSupabase.auth.getUser();if(userError||!user)throw new Error('पहिले लगइन गर्नुहोस्।');const identifier=user.email?{email:user.email,password:old}:user.phone?{phone:user.phone,password:old}:null;if(!identifier)throw new Error('हालको खातामा email/phone छैन।');const {error:verifyError}=await window.nsewaSupabase.auth.signInWithPassword(identifier);if(verifyError)throw new Error('हालको पासवर्ड गलत छ वा यस login विधिमा पुनःप्रमाणीकरण उपलब्ध छैन।');const {error:updateError}=await window.nsewaSupabase.auth.updateUser({password:next});if(updateError)throw updateError;status.textContent='पासवर्ड सफलतापूर्वक परिवर्तन भयो।';document.getElementById('security-old-password').value='';document.getElementById('security-new-password').value='';document.getElementById('security-confirm-password').value='';}
+          catch(e){status.textContent='पासवर्ड परिवर्तन भएन: '+(e.message||'Authentication सेटिङ जाँच्नुहोस्।');}
+        }
         function inviteFriends() {
             toggleUserMenu(false);
             const invite = 'नेपाली सेवा — विद्युतीय तथा नेटवर्किङ सेवा र सामानका लागि हाम्रो वेबसाइट हेर्नुहोस्।';
@@ -2489,8 +2285,8 @@ document.addEventListener("DOMContentLoaded", () => {
             if (modal) modal.classList.add('hidden');
             alert('लगआउट भयो। फेरि वेबसाइट प्रयोग गर्न लगिन गर्नुहोस्।');
         }
-        function showSecurityInfo() { alert('व्यक्तिगत सुरक्षा: बलियो पासवर्ड प्रयोग गर्नुहोस् र OTP कसैलाई नदिनुहोस्। यो HTML फाइलले आफैँ खाता सुरक्षा लागू गर्दैन।'); }
-        function showServerInfo() { alert('डाटा सर्भर: यो एकल HTML डेमोमा वास्तविक database/server जोडिएको छैन। उत्पादनमा सुरक्षित backend र database आवश्यक हुन्छ।'); }
+        function showSecurityInfo() { alert('व्यक्तिगत सुरक्षा: बलियो पासवर्ड प्रयोग गर्नुहोस् र OTP कसैलाई नदिनुहोस्। खाता सुरक्षा server-side authentication र authorization मा निर्भर हुन्छ।'); }
+        function showServerInfo() { alert('डाटा सर्भर: जडित backend र database को अवस्था API जाँचबाट मात्र पुष्टि हुन्छ। वास्तविक प्रयोगका लागि सुरक्षित server-side authentication, database access policies र monitoring आवश्यक छन्।'); }
         function clearSpace() {
             if (!confirm('यस वेबसाइटको स्थानीय प्रोफाइल/थिम प्राथमिकता हटाउने? अर्डर वा खाताको सर्भर डाटा यसले मेटाउँदैन।')) return;
             ['nsewa-profile-name','nsewa-profile-phone','nsewa-dark-mode','nsewa-language'].forEach(k=>localStorage.removeItem(k));
@@ -2843,7 +2639,7 @@ document.addEventListener("DOMContentLoaded", () => {
 @media(prefers-reduced-motion:reduce){.ns-product-card{transition:none}}
 </style>
 <script>
-/* Nepali Sewa Smart Marketplace: browser-local prototype; production orders/payments need a trusted backend. */
+/* Nepali Sewa Smart Marketplace: browser-side UI; trusted backend required for orders/payments. */
 (function(){
  'use strict';
  const $ = id => document.getElementById(id);
@@ -2884,8 +2680,8 @@ document.addEventListener("DOMContentLoaded", () => {
     <div class="grid grid-cols-2 gap-2 mt-auto pt-4"><button type="button" class="ns-action-btn ns-action-primary col-span-2" onclick="nsAddToCart('${id}')" ${p.stock===0?'disabled':''}><i class="fa-solid fa-basket-shopping mr-2"></i>झोलामा राख्नुहोस्</button><button type="button" class="ns-action-btn" onclick="nsViewProduct('${id}')"><i class="fa-regular fa-eye mr-1"></i>विवरण</button><button type="button" class="ns-action-btn" onclick="nsAskSeller('${id}')"><i class="fa-regular fa-comments mr-1"></i>बिक्रेतालाई सोध्नुहोस्</button><button type="button" class="ns-action-btn ${inCompare?'bg-purple-50 text-purple-800 border-purple-300':''} col-span-2" onclick="nsToggleCompare('${id}')"><i class="fa-solid fa-scale-balanced mr-1"></i>${inCompare?'तुलनाबाट हटाउनुहोस्':'तुलनामा थप्नुहोस्'}</button></div></div></article>`}).join('');renderCart();renderCompare();updateCartCount();}
  function renderCart(){const box=$('ns-cart-items');if(!box)return;const all=allProducts();const items=Object.entries(cart).map(([id,qty])=>({p:all.find(p=>String(p.id)===String(id)),qty:Number(qty)})).filter(x=>x.p&&x.qty>0);if(!items.length){box.innerHTML='<div class="rounded-xl bg-gray-50 p-5 text-sm text-gray-500 text-center">तपाईंको झोला खाली छ। मन परेको सामानमा “झोलामा राख्नुहोस्” थिच्नुहोस्।</div>'}else{box.innerHTML=items.map(({p,qty})=>`<div class="flex items-center gap-3 border rounded-xl p-3"><img src="${escapeHTML(p.img||'')}" alt="" class="w-16 h-16 rounded-lg object-cover bg-gray-100" onerror="this.style.display='none'"><div class="flex-1 min-w-0"><b class="text-sm">${escapeHTML(p.title)}</b><div class="text-sm text-nepalBlue font-bold">${money(p.price)}</div><div class="flex items-center gap-2 mt-2"><button onclick="nsChangeQty('${escapeHTML(p.id)}',-1)" class="border rounded px-2" aria-label="मात्रा घटाउनुहोस्">−</button><span class="text-sm">${qty}</span><button onclick="nsChangeQty('${escapeHTML(p.id)}',1)" class="border rounded px-2" aria-label="मात्रा बढाउनुहोस्">+</button><button onclick="nsRemoveCartItem('${escapeHTML(p.id)}')" class="text-red-600 text-xs ml-2">हटाउनुहोस्</button></div></div><b class="text-sm">${money(Number(p.price)*qty)}</b></div>`).join('')};const subtotal=items.reduce((sum,x)=>sum+Number(x.p.price)*x.qty,0);if($('ns-cart-subtotal'))$('ns-cart-subtotal').textContent=money(subtotal);}
  function renderCompare(){const panel=$('ns-compare-panel'),box=$('ns-compare-items');if(!panel||!box)return;const list=compareIds.map(id=>allProducts().find(p=>String(p.id)===id)).filter(Boolean);panel.classList.toggle('hidden',!list.length);box.innerHTML=list.map(p=>`<div class="border border-purple-100 rounded-xl p-3"><b>${escapeHTML(p.title)}</b><p class="text-lg font-black text-purple-900 mt-1">${money(p.price)}</p><p class="text-xs text-gray-500">${escapeHTML(p.district||'स्थान उपलब्ध छैन')}</p><button onclick="nsAddToCart('${escapeHTML(p.id)}')" class="mt-2 text-xs font-bold text-blue-700 underline">झोलामा राख्नुहोस्</button></div>`).join('')}
- window.nsPlaceOrderRequest=function(){const items=Object.entries(cart).map(([id,qty])=>({productId:id,quantity:Number(qty),product:allProducts().find(p=>String(p.id)===String(id))})).filter(x=>x.product);if(!items.length){toast('पहिले झोलामा सामान राख्नुहोस्।');return}const address=$('ns-order-address')?.value.trim()||'',phone=($('ns-order-phone')?.value||'').replace(/\D/g,'');if(address.length<5){toast('कृपया पूरा डेलिभरी ठेगाना लेख्नुहोस्।');$('ns-order-address')?.focus();return}if(!/^9[78]\d{8}$/.test(phone)){toast('१० अङ्कको नेपाली मोबाइल नम्बर लेख्नुहोस्।');$('ns-order-phone')?.focus();return}const order={id:'NS-'+Date.now().toString().slice(-8),createdAt:new Date().toISOString(),items:items.map(x=>({productId:x.productId,title:x.product.title,price:Number(x.product.price),quantity:x.quantity,seller:x.product.seller||'',commissionRatePct:(()=>{try{const cfg=JSON.parse(localStorage.getItem('nsewa-market-admin-v1')||'{}');const rule=(cfg.sellerRules||{})[x.product.seller||''];return rule&&rule.commission!=null?Number(rule.commission):(Number(cfg.commission)||5)}catch(e){return 5}})()})),address,phone,total:items.reduce((n,x)=>n+Number(x.product.price)*x.quantity,0),status:'स्थानीय demo अनुरोध — बिक्रेतासँग पुष्टि बाँकी'};orders.unshift(order);safeWrite(STORE.orders,orders);cart={};persistCart();renderCart();if($('ns-order-status'))$('ns-order-status').textContent='अनुरोध '+order.id+' यस ब्राउजरमा सुरक्षित भयो। यो वास्तविक बिक्रेतालाई पठाइएको छैन।';toast('Demo अर्डर अनुरोध सुरक्षित भयो: '+order.id);};
- window.handleAddProduct=function(e){e.preventDefault();const title=$('prod-title')?.value.trim(),price=Number($('prod-price')?.value),district=$('prod-district')?.value||'काठमाडौँ',img=$('prod-img')?.value.trim()||'https://placehold.co/600x400/e2e8f0/334155?text=Nepali+Sewa';if(!title||!Number.isFinite(price)||price<=0){toast('सामानको नाम र सही मूल्य राख्नुहोस्।');return}const product={id:'L'+Date.now(),title,price,seller:(typeof currentUserRole!=='undefined'&&currentUserRole==='Seller')?'हालको बिक्रेता':'नेपाली सेवा प्रयोगकर्ता',mobile:'',district,img,category:categoryOf({title}),stock:1,createdAt:new Date().toISOString()};const listings=safeRead(STORE.listings,[]);listings.unshift(product);if(!safeWrite(STORE.listings,listings)){toast('ब्राउजर स्टोरेज भरिएको हुन सक्छ; सामान सुरक्षित गर्न सकिएन।');return}if(typeof products!=='undefined'&&Array.isArray(products))products.unshift(product);render();if(typeof window.closeModal==='function')window.closeModal('add-product-modal');$('prod-title').value='';$('prod-price').value='';$('prod-img').value='';toast('सामान यस ब्राउजरको demo बजारमा राखियो। सबै प्रयोगकर्ताले देख्ने गरी प्रकाशित भएको होइन।')};
+ window.nsPlaceOrderRequest=function(){const items=Object.entries(cart).map(([id,qty])=>({productId:id,quantity:Number(qty),product:allProducts().find(p=>String(p.id)===String(id))})).filter(x=>x.product);if(!items.length){toast('पहिले झोलामा सामान राख्नुहोस्।');return}const address=$('ns-order-address')?.value.trim()||'',phone=($('ns-order-phone')?.value||'').replace(/\D/g,'');if(address.length<5){toast('कृपया पूरा डेलिभरी ठेगाना लेख्नुहोस्।');$('ns-order-address')?.focus();return}if(!/^9[78]\d{8}$/.test(phone)){toast('१० अङ्कको नेपाली मोबाइल नम्बर लेख्नुहोस्।');$('ns-order-phone')?.focus();return}const order={id:'NS-'+Date.now().toString().slice(-8),createdAt:new Date().toISOString(),items:items.map(x=>({productId:x.productId,title:x.product.title,price:Number(x.product.price),quantity:x.quantity,seller:x.product.seller||'',commissionRatePct:(()=>{try{const cfg=JSON.parse(localStorage.getItem('nsewa-market-admin-v1')||'{}');const rule=(cfg.sellerRules||{})[x.product.seller||''];return rule&&rule.commission!=null?Number(rule.commission):(Number(cfg.commission)||5)}catch(e){return 5}})()})),address,phone,total:items.reduce((n,x)=>n+Number(x.product.price)*x.quantity,0),status:'स्थानीय अर्डर अनुरोध — बिक्रेतासँग पुष्टि बाँकी'};orders.unshift(order);safeWrite(STORE.orders,orders);cart={};persistCart();renderCart();if($('ns-order-status'))$('ns-order-status').textContent='अनुरोध '+order.id+' यस ब्राउजरमा सुरक्षित भयो। यो वास्तविक बिक्रेतालाई पठाइएको छैन।';toast('स्थानीय अर्डर अनुरोध सुरक्षित भयो: '+order.id);};
+ window.handleAddProduct=function(e){e.preventDefault();const title=$('prod-title')?.value.trim(),price=Number($('prod-price')?.value),district=$('prod-district')?.value||'काठमाडौँ',img=$('prod-img')?.value.trim()||'https://placehold.co/600x400/e2e8f0/334155?text=Nepali+Sewa';if(!title||!Number.isFinite(price)||price<=0){toast('सामानको नाम र सही मूल्य राख्नुहोस्।');return}const product={id:'L'+Date.now(),title,price,seller:(typeof currentUserRole!=='undefined'&&currentUserRole==='Seller')?'हालको बिक्रेता':'नेपाली सेवा प्रयोगकर्ता',mobile:'',district,img,category:categoryOf({title}),stock:1,createdAt:new Date().toISOString()};const listings=safeRead(STORE.listings,[]);listings.unshift(product);if(!safeWrite(STORE.listings,listings)){toast('ब्राउजर स्टोरेज भरिएको हुन सक्छ; सामान सुरक्षित गर्न सकिएन।');return}if(typeof products!=='undefined'&&Array.isArray(products))products.unshift(product);render();if(typeof window.closeModal==='function')window.closeModal('add-product-modal');$('prod-title').value='';$('prod-price').value='';$('prod-img').value='';toast('सामान यस ब्राउजरको स्थानीय बजारमा राखियो। सबै प्रयोगकर्ताले देख्ने गरी प्रकाशित भएको होइन।')};
  function bind(){window.renderProducts=render;window.nsGetAllProducts=allProducts;window.nsGetCart=()=>({...cart});window.nsClearCart=()=>{cart={};persistCart();renderCart()};try{renderProducts=render}catch(_){} const search=$('ns-market-search'),cat=$('ns-market-category'),sort=$('ns-market-sort');if(search)search.addEventListener('input',()=>{marketQuery=search.value.trim();render()});if(cat)cat.addEventListener('change',()=>{favoritesOnly=false;render()});if(sort)sort.addEventListener('change',render);updateCartCount();render();}
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
  // Re-render whenever the existing navigation opens the marketplace.
@@ -2894,7 +2690,7 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 
 
-<!-- Entry gate: local-demo login or registration required before using the website -->
+<!-- Entry gate: sign-in or registration required before using protected features -->
 <div id="entry-gate" class="fixed inset-0 z-[45] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="entry-gate-title">
   <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border-t-4 border-nepalRed">
     <div class="text-center">
@@ -2928,7 +2724,7 @@ document.addEventListener("DOMContentLoaded", () => {
           <article class="help-faq rounded-xl border p-4" data-search="दर्ता नयाँ खाता registration account"><h3 class="font-extrabold">१. नयाँ खाता कसरी बनाउने?</h3><p class="mt-1 text-sm text-gray-600">प्रवेश पृष्ठको “नयाँ दर्ता” थिच्नुहोस्, विवरण भर्नुहोस् र फारम बुझाउनुहोस्।</p></article>
           <article class="help-faq rounded-xl border p-4" data-search="लगिन login password पासवर्ड"><h3 class="font-extrabold">२. लगिन कसरी गर्ने?</h3><p class="mt-1 text-sm text-gray-600">प्रवेश पृष्ठमा लगिन छान्नुहोस् र दर्ता गर्दा प्रयोग गरेको मोबाइल नम्बर तथा पासवर्ड राख्नुहोस्।</p></article>
           <article class="help-faq rounded-xl border p-4" data-search="मेनु menu hamburger खुल्दैन"><h3 class="font-extrabold">३. मुख्य मेनु नखुलेमा?</h3><p class="mt-1 text-sm text-gray-600">पृष्ठ Reload गर्नुहोस्। समस्या दोहोरिएमा Report मा “मेनु/नेभिगेसन” छानेर विवरण पठाउनुहोस्।</p></article>
-          <article class="help-faq rounded-xl border p-4" data-search="पासवर्ड password सुरक्षा OTP"><h3 class="font-extrabold">४. सुरक्षा सम्बन्धी जानकारी</h3><p class="mt-1 text-sm text-gray-600">आफ्नो पासवर्ड वा OTP कसैसँग साझा नगर्नुहोस्। यो HTML demo मा वास्तविक SMS OTP/server authentication लागू हुँदैन।</p></article>
+          <article class="help-faq rounded-xl border p-4" data-search="पासवर्ड password सुरक्षा OTP"><h3 class="font-extrabold">४. सुरक्षा सम्बन्धी जानकारी</h3><p class="mt-1 text-sm text-gray-600">आफ्नो पासवर्ड वा OTP कसैसँग साझा नगर्नुहोस्। यो HTML संस्करणमा वास्तविक SMS OTP/server authentication लागू हुँदैन।</p></article>
         </div>
         <p id="help-no-results" class="hidden rounded-lg bg-amber-50 p-3 text-sm text-amber-900">मिल्दो सहायता भेटिएन। Report पठाएर समस्या जानकारी दिनुहोस्।</p>
         <button type="button" onclick="showHelpReportTab('report')" class="rounded-xl bg-nepalBlue px-4 py-3 font-bold text-white">समस्या रिपोर्ट गर्नुहोस्</button>
@@ -3053,15 +2849,15 @@ document.addEventListener("DOMContentLoaded", () => {
 <!-- CEO-only Layout Control: separate entry flow, not dependent on regular website login -->
 <div id="ceo-layout-access-modal" class="fixed inset-0 z-[110] hidden items-center justify-center bg-slate-950/90 p-4 backdrop-blur-md" role="dialog" aria-modal="true" aria-labelledby="ceo-layout-access-title">
   <div class="w-full max-w-md rounded-2xl border-t-4 border-amber-500 bg-white p-6 shadow-2xl">
-    <div class="mb-4 flex items-start justify-between gap-3"><div><p class="text-xs font-bold uppercase tracking-widest text-amber-700">CEO secure access</p><h2 id="ceo-layout-access-title" class="mt-1 text-2xl font-extrabold text-slate-900">CEO Admin Login</h2><p class="mt-2 text-sm text-slate-600">CEO को छुट्टै लगइनबाट मात्र नियन्त्रण केन्द्र खोल्नुहोस्।</p></div><button onclick="closeCeoLayoutAccess()" class="rounded-lg px-3 py-1 text-2xl text-slate-500 hover:bg-slate-100" aria-label="बन्द">&times;</button></div>
-    <div id="ceo-layout-step-password" class="rounded-2xl border border-violet-200 bg-gradient-to-br from-indigo-50 via-white to-fuchsia-50 p-4 shadow-inner">
+    <div class="mb-4 flex items-start justify-between gap-3"><div><p class="text-xs font-bold uppercase tracking-widest text-amber-700">CEO secure access</p><h2 id="ceo-layout-access-title" class="mt-1 text-2xl font-extrabold text-slate-900">CEO Admin Login</h2><p class="mt-2 text-sm text-slate-600">Server बाट प्रमाणित CEO अनुमति र समयसीमित OTP सत्रबाट मात्र नियन्त्रण केन्द्र खोलिन्छ।</p></div><button onclick="closeCeoLayoutAccess()" class="rounded-lg px-3 py-1 text-2xl text-slate-500 hover:bg-slate-100" aria-label="बन्द">&times;</button></div>
+    <div id="ceo-layout-step-password" class="hidden rounded-2xl border border-violet-200 bg-gradient-to-br from-indigo-50 via-white to-fuchsia-50 p-4 shadow-inner">
       <div class="mb-4 flex items-center gap-3"><div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white shadow-lg"><i class="fa-solid fa-key text-xl"></i></div><div><p class="text-xs font-extrabold uppercase tracking-[0.18em] text-violet-700">CEO private gateway</p><h3 class="text-lg font-extrabold text-slate-900">पहिलो सुरक्षा पासवर्ड</h3></div></div>
       <label for="ceo-layout-username" class="mb-2 block text-sm font-bold text-slate-700">CEO मोबाइल नम्बर</label>
-      <input id="ceo-layout-username" type="tel" inputmode="numeric" autocomplete="tel" maxlength="16" placeholder="9769259661" class="mb-3 w-full rounded-xl border border-violet-200 bg-white px-4 py-3 text-base font-semibold text-slate-900 outline-none focus:ring-2 focus:ring-violet-300" />
+      <input id="ceo-layout-username" type="tel" inputmode="numeric" autocomplete="tel" maxlength="16" placeholder="CEO मोबाइल नम्बर" class="mb-3 w-full rounded-xl border border-violet-200 bg-white px-4 py-3 text-base font-semibold text-slate-900 outline-none focus:ring-2 focus:ring-violet-300" />
       <label for="ceo-layout-password" class="mb-2 block text-sm font-bold text-slate-700">CEO पासवर्ड</label>
       <div class="rounded-xl bg-gradient-to-r from-violet-600 via-indigo-600 to-fuchsia-600 p-[2px] shadow-lg shadow-violet-200"><input id="ceo-layout-password" type="password" autocomplete="current-password" maxlength="128" placeholder="पासवर्ड लेख्नुहोस् ••••••••" class="w-full rounded-[10px] border-0 bg-white px-4 py-4 text-base font-semibold tracking-widest text-slate-900 outline-none placeholder:font-normal placeholder:tracking-normal focus:ring-2 focus:ring-violet-300" /></div>
       <button id="ceo-layout-password-btn" onclick="verifyCeoLayoutPassword()" class="mt-3 w-full rounded-xl bg-gradient-to-r from-violet-700 via-indigo-700 to-fuchsia-700 px-4 py-3 font-extrabold text-white shadow-lg transition hover:brightness-110 focus:outline-none focus:ring-4 focus:ring-violet-200"><i class="fa-solid fa-lock mr-2"></i>CEO Login गर्नुहोस्</button>
-      <p class="mt-3 text-xs leading-5 text-slate-600"><i class="fa-solid fa-eye-slash mr-1 text-violet-700"></i>पासवर्ड टाइप गर्दा अक्षर देखिँदैन। यो एकल HTML को स्थानीय परीक्षण login हो; सार्वजनिक प्रयोगमा server-side authentication आवश्यक हुन्छ।</p>
+      <p class="mt-3 text-xs leading-5 text-slate-600">स्थानीय HTML पासवर्ड लगइन सुरक्षा कारणले बन्द गरिएको छ।</p>
     </div>
     <div id="ceo-layout-step-phone" class="hidden">
       <label for="ceo-layout-phone" class="mb-1 block text-sm font-bold text-slate-700">CEO को दर्ता भएको मोबाइल नम्बर</label>
@@ -3075,7 +2871,7 @@ document.addEventListener("DOMContentLoaded", () => {
       <button onclick="resetCeoLayoutOtp()" class="mt-2 w-full rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">अर्को नम्बर / पुनः प्रयास</button>
     </div>
     <p id="ceo-layout-auth-status" role="status" aria-live="polite" class="mt-4 hidden rounded-xl p-3 text-sm"></p>
-    <p class="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900"><b>परीक्षण मोड:</b> SMS OTP अहिले जडान गरिएको छैन। यो पासवर्ड ब्राउजरभित्रै जाँचिन्छ, त्यसैले सार्वजनिक वेबसाइटमा वास्तविक सुरक्षा मान्नु हुँदैन। Live प्रयोगअघि server-side password र OTP verification जोड्नुहोस्।</p>
+    <p class="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900"><b>सुरक्षा सूचना:</b> CEO SMS OTP का लागि server-side API र SMS provider आवश्यक छ। GitHub Pages मा यी API नभए प्रवेश बन्द रहनेछ; यसले गलत सुरक्षा देखाउने वा स्थानीय पासवर्डबाट bypass गर्ने छैन।</p>
   </div>
 </div>
 
@@ -3122,11 +2918,11 @@ document.addEventListener("DOMContentLoaded", () => {
         <div class="rounded-xl border border-white/10 bg-slate-800 p-4"><h4 class="font-extrabold text-sky-200">१. मूल्य सीमा र बिक्रेता सूची सीमा</h4><div class="mt-3 grid grid-cols-2 gap-2"><label class="text-xs">न्यूनतम मूल्य (रू.)<input id="nma-min-price" type="number" min="0" class="mt-1 w-full rounded-lg border border-slate-600 bg-slate-900 p-2 text-white" placeholder="0"></label><label class="text-xs">अधिकतम मूल्य (रू.)<input id="nma-max-price" type="number" min="0" class="mt-1 w-full rounded-lg border border-slate-600 bg-slate-900 p-2 text-white" placeholder="सीमा छैन"></label><label class="text-xs col-span-2">सामान्य विक्रेताको अधिकतम सूची संख्या<input id="nma-seller-limit" type="number" min="1" max="10000" class="mt-1 w-full rounded-lg border border-slate-600 bg-slate-900 p-2 text-white" value="50"></label></div><button onclick="nsewaMarketSaveSettings()" class="mt-3 rounded-lg bg-sky-700 px-4 py-2 text-sm font-bold">मूल्य/सीमा सुरक्षित</button><p class="mt-2 text-xs text-slate-400">मूल्य सीमा सार्वजनिक सूचीमा फिल्टर हुन्छ; यसले आफैँ बजारको मूल्य निर्धारण वा मिलेमतो रोक्दैन।</p></div>
         <div class="rounded-xl border border-white/10 bg-slate-800 p-4"><h4 class="font-extrabold text-emerald-200">२. कमिसन र स्टोर ब्याज</h4><div class="mt-3 grid grid-cols-2 gap-2"><label class="text-xs">पूर्वनिर्धारित कमिसन (%)<input id="nma-commission" type="number" min="0" max="100" step="0.1" class="mt-1 w-full rounded-lg border border-slate-600 bg-slate-900 p-2 text-white" value="5"></label><label class="text-xs">बिक्रेता नाम (विशेष दर/ब्याज)<input id="nma-seller-name" class="mt-1 w-full rounded-lg border border-slate-600 bg-slate-900 p-2 text-white" placeholder="स्टोर/बिक्रेता नाम"></label><label class="text-xs">बिक्रेताको विशेष कमिसन (%)<input id="nma-seller-commission" type="number" min="0" max="100" step="0.1" class="mt-1 w-full rounded-lg border border-slate-600 bg-slate-900 p-2 text-white" placeholder="खाली = पूर्वनिर्धारित"></label><label class="text-xs">ब्याज<select id="nma-badge" class="mt-1 w-full rounded-lg border border-slate-600 bg-slate-900 p-2 text-white"><option value="">कुनै ब्याज छैन</option><option value="Verified">Verified</option><option value="Super Seller">Super Seller</option></select></label></div><button onclick="nsewaMarketSaveSellerRules()" class="mt-3 rounded-lg bg-emerald-700 px-4 py-2 text-sm font-bold">कमिसन/ब्याज सुरक्षित</button><p class="mt-2 text-xs text-slate-400">ब्याज र कमिसन स्थानीय सेटिङ मात्र हुन्; भुक्तानी वा सदस्यता शुल्क स्वतः उठ्दैन।</p></div>
         <div class="rounded-xl border border-white/10 bg-slate-800 p-4"><h4 class="font-extrabold text-amber-200">३. जिल्लाअनुसार डेलिभरी शुल्क</h4><div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2"><label class="text-xs">जिल्ला<select id="nma-delivery-district" class="mt-1 w-full rounded-lg border border-slate-600 bg-slate-900 p-2 text-white"><option>काठमाडौँ</option><option>ललितपुर</option><option>भक्तपुर</option><option>कास्की</option><option>मोरङ</option><option>चितवन</option><option>कैलाली</option><option>कञ्चनपुर</option><option>अन्य जिल्ला</option></select></label><label class="text-xs">शुल्क (रू.)<input id="nma-delivery-fee" type="number" min="0" class="mt-1 w-full rounded-lg border border-slate-600 bg-slate-900 p-2 text-white" value="100"></label></div><button onclick="nsewaMarketSaveDelivery()" class="mt-3 rounded-lg bg-amber-700 px-4 py-2 text-sm font-bold">डेलिभरी शुल्क सुरक्षित</button><div id="nma-delivery-list" class="mt-3 space-y-1 text-xs text-slate-300"></div></div>
-        <div class="rounded-xl border border-white/10 bg-slate-800 p-4"><h4 class="font-extrabold text-violet-200">४. अर्डर र डेलिभरी स्थिति</h4><p class="mt-1 text-xs text-slate-300">स्थानीय demo अर्डरहरूको गणना र स्थिति परिवर्तन।</p><div class="mt-3 grid grid-cols-3 gap-2 text-center"><div class="rounded-lg bg-slate-900 p-2"><small class="text-slate-400">डेलिभर</small><div id="nma-delivered" class="text-xl font-black">0</div></div><div class="rounded-lg bg-slate-900 p-2"><small class="text-slate-400">रद्द</small><div id="nma-cancelled" class="text-xl font-black">0</div></div><div class="rounded-lg bg-slate-900 p-2"><small class="text-slate-400">अन्य</small><div id="nma-other-orders" class="text-xl font-black">0</div></div></div><div id="nma-order-list" class="mt-3 space-y-2"></div></div>
+        <div class="rounded-xl border border-white/10 bg-slate-800 p-4"><h4 class="font-extrabold text-violet-200">४. अर्डर र डेलिभरी स्थिति</h4><p class="mt-1 text-xs text-slate-300">यस ब्राउजरमा देखिएका अर्डरको गणना र स्थिति।</p><div class="mt-3 grid grid-cols-3 gap-2 text-center"><div class="rounded-lg bg-slate-900 p-2"><small class="text-slate-400">डेलिभर</small><div id="nma-delivered" class="text-xl font-black">0</div></div><div class="rounded-lg bg-slate-900 p-2"><small class="text-slate-400">रद्द</small><div id="nma-cancelled" class="text-xl font-black">0</div></div><div class="rounded-lg bg-slate-900 p-2"><small class="text-slate-400">अन्य</small><div id="nma-other-orders" class="text-xl font-black">0</div></div></div><div id="nma-order-list" class="mt-3 space-y-2"></div></div>
       </div>
       <div class="mt-4 rounded-xl border border-white/10 bg-slate-800 p-4"><div class="flex flex-wrap items-center justify-between gap-2"><h4 class="font-extrabold text-white">५. Product Approval, Featured Listing र उजुरी</h4><input id="nma-product-search" oninput="nsewaMarketAdminRender()" class="rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white" placeholder="सामान/बिक्रेता खोज्नुहोस्"></div><div id="nma-product-list" class="mt-3 grid grid-cols-1 gap-3"></div></div>
       <div class="mt-4 rounded-xl border border-white/10 bg-slate-800 p-4"><h4 class="font-extrabold text-rose-200">६. Product Report System</h4><p class="mt-1 text-xs text-slate-300">नक्कली सामान वा अत्यधिक मूल्यको उजुरी यहाँ देखिन्छ। उजुरी उत्पादनसँग जोडिएर यही ब्राउजरमा मात्र रहन्छ।</p><div id="nma-report-list" class="mt-3 space-y-2"></div></div>
-      <div class="mt-4 rounded-xl border border-amber-400/30 bg-amber-950/40 p-3 text-xs leading-5 text-amber-100"><b>सीमा स्पष्ट:</b> यो single-HTML prototype हो। सबै ग्राहक/बिक्रेताबीच साझा डेटा, वास्तविक विज्ञापन भुक्तानी, server-side CEO permission, courier API, विश्वसनीय commission settlement, र server बाट सामान हटाउन backend/database चाहिन्छ। यो प्यानलले स्थानीय ब्राउजरमा कार्यहरू परीक्षण गर्न दिन्छ, live server मा प्रकाशित गर्दैन।</div>
+      <div class="mt-4 rounded-xl border border-amber-400/30 bg-amber-950/40 p-3 text-xs leading-5 text-amber-100"><b>सीमा स्पष्ट:</b> यो frontend मात्र हो। सबै ग्राहक/बिक्रेताबीच साझा डेटा, वास्तविक विज्ञापन भुक्तानी, server-side CEO permission, courier API, विश्वसनीय commission settlement, र server बाट सामान हटाउन backend/database चाहिन्छ। यो प्यानलले स्थानीय ब्राउजरमा कार्यहरू परीक्षण गर्न दिन्छ, live server मा प्रकाशित गर्दैन।</div>
     </section>
     <div class="rounded-2xl border border-amber-500/30 bg-amber-950/40 p-4 text-sm leading-6 text-amber-100"><b>महत्त्वपूर्ण:</b> हालको HTML संस्करणमा layout/theme सेटिङ यही ब्राउजरमा सुरक्षित हुन्छ। वास्तविक live वेबसाइटमा स्वतः प्रकाशित गर्न, shared database/configuration र server-side deploy API छुट्टै जोड्नुपर्छ। यहाँबाट डाउनलोड गरिएको backup सुरक्षित ठाउँमा राख्नुहोस्।</div>
     <div class="mt-4 flex flex-wrap gap-3"><button onclick="closeCeoLayoutHub()" class="rounded-xl border border-white/20 px-4 py-3 font-bold text-white hover:bg-white/10">ड्यासबोर्ड बन्द गर्नुहोस्</button><button onclick="ceoLayoutLockNow()" class="rounded-xl bg-rose-600 px-5 py-3 font-extrabold text-white shadow-lg hover:bg-rose-500"><i class="fa-solid fa-right-from-bracket mr-2"></i>CEO सुरक्षित Logout</button></div>
@@ -3153,8 +2949,6 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById('ceo-layout-hub')?.scrollTo({top:0,behavior:'smooth'});
   };
   // Temporary client-side gate for immediate local use. Replace with server-side password verification before public deployment.
-  let ceoPasswordAttempts = 0;
-  let ceoPasswordLockUntil = 0;
   let ceoOtpPhone = '';
   let ceoLayoutSessionExpiresAt = 0;
   const statusBox = () => document.getElementById('ceo-layout-auth-status');
@@ -3170,37 +2964,20 @@ document.addEventListener("DOMContentLoaded", () => {
     modal.classList.remove('hidden'); modal.classList.add('flex');
     const gate=document.getElementById('entry-gate'); if(gate)gate.classList.remove('hidden');
     const hub=document.getElementById('ceo-layout-hub'); if(hub)hub.classList.add('hidden');
-    document.getElementById('ceo-layout-step-password')?.classList.remove('hidden');
-    document.getElementById('ceo-layout-step-phone')?.classList.add('hidden');
+    document.getElementById('ceo-layout-step-password')?.classList.add('hidden');
+    document.getElementById('ceo-layout-step-phone')?.classList.remove('hidden');
     document.getElementById('ceo-layout-step-otp')?.classList.add('hidden');
     const pass=document.getElementById('ceo-layout-password'); if(pass)pass.value=''; const user=document.getElementById('ceo-layout-username'); if(user){user.value='';setTimeout(()=>user.focus(),50);}
     statusBox()?.classList.add('hidden');
   };
   window.verifyCeoLayoutPassword = function(){
-    const rawPhone=(document.getElementById('ceo-layout-username')?.value||'').trim();
-    const phone=rawPhone.replace(/\D/g,'');
-    const password=document.getElementById('ceo-layout-password')?.value||'';
-    if(Date.now()<ceoPasswordLockUntil){status('धेरै पटक गलत प्रयास भयो। केही समयपछि फेरि प्रयास गर्नुहोस्।');return;}
-    // Local-file demo credentials only. Do NOT use this client-side check for a public/live website.
-    const CEO_PHONE='9769259661';
-    const CEO_PASSWORD='Ganesh@1234';
-    if(phone!==CEO_PHONE || password!==CEO_PASSWORD){
-      ceoPasswordAttempts++;
-      if(ceoPasswordAttempts>=5){ceoPasswordLockUntil=Date.now()+60000;ceoPasswordAttempts=0;status('५ पटक गलत प्रयास भयो। १ मिनेटपछि पुनः प्रयास गर्नुहोस्।');}
-      else status('मोबाइल नम्बर वा पासवर्ड मिलेन। कृपया फेरि जाँच्नुहोस्।');
-      return;
-    }
-    ceoPasswordAttempts=0;ceoPasswordLockUntil=0;
-    ceoLayoutSessionExpiresAt=Date.now()+30*60*1000;
-    window.nsewaCeoLayoutSessionToken='local-ceo-demo-'+Date.now()+'-'+Math.random().toString(36).slice(2);
-    currentUserRole='CEO';
-    const gate=document.getElementById('entry-gate'); if(gate)gate.classList.add('hidden');
-    const roleSelect=document.getElementById('role-selector'); if(roleSelect){roleSelect.value='CEO'; if(typeof changeActiveRole==='function')changeActiveRole('CEO');}
-    closeCeoLayoutAccess();
-    document.getElementById('ceo-layout-hub')?.classList.remove('hidden');
+    // Fail closed: no CEO password or trusted session may be embedded in public HTML.
+    const pass=document.getElementById('ceo-layout-password'); if(pass) pass.value='';
+    status('सुरक्षित CEO login backend जोडिएको छैन। HTML भित्रको पासवर्डबाट प्रवेश बन्द गरिएको छ। वास्तविक CEO प्रवेशका लागि server-side authentication र OTP सेवा आवश्यक छ।');
+    console.warn('CEO password login disabled: public static HTML cannot securely verify CEO credentials.');
   };
   window.closeCeoLayoutAccess = function(){ const m=document.getElementById('ceo-layout-access-modal'); if(m){m.classList.add('hidden');m.classList.remove('flex');} };
-  window.resetCeoLayoutOtp = function(){ ceoOtpPhone=''; document.getElementById('ceo-layout-step-password')?.classList.remove('hidden'); document.getElementById('ceo-layout-step-phone')?.classList.add('hidden'); document.getElementById('ceo-layout-step-otp')?.classList.add('hidden'); const p=document.getElementById('ceo-layout-password');if(p)p.value='';const o=document.getElementById('ceo-layout-otp');if(o)o.value='';statusBox()?.classList.add('hidden'); };
+  window.resetCeoLayoutOtp = function(){ ceoOtpPhone=''; document.getElementById('ceo-layout-step-password')?.classList.add('hidden'); document.getElementById('ceo-layout-step-phone')?.classList.remove('hidden'); document.getElementById('ceo-layout-step-otp')?.classList.add('hidden'); const p=document.getElementById('ceo-layout-password');if(p)p.value='';const o=document.getElementById('ceo-layout-otp');if(o)o.value='';statusBox()?.classList.add('hidden'); };
   window.sendCeoLayoutOtp = async function(){
     const raw=(document.getElementById('ceo-layout-phone')?.value||'').trim();
     const digits=raw.replace(/[^0-9]/g,'');
@@ -3320,7 +3097,7 @@ button[aria-label="बन्द"]:hover,button[aria-label="बन्द गर�
     const modal=document.getElementById('auth-modal');if(modal)modal.classList.remove('hidden');
   };
   window.syncNsewaRoleVisibility=function(){
-    const isCeo=document.getElementById('role-selector')?.value==='CEO' && !!window.hasVerifiedCeoLayoutSession?.();
+    const isCeo=currentUserRole==='CEO' && !!window.hasVerifiedCeoLayoutSession?.();
     const ceoNav=document.getElementById('btn-ceo');if(ceoNav)ceoNav.classList.toggle('hidden',!isCeo);
     const ceoPrivate=document.getElementById('ceo-private-menu');if(ceoPrivate)ceoPrivate.classList.toggle('hidden',!isCeo);
   };
@@ -3433,7 +3210,7 @@ button[aria-label="बन्द"]:hover,button[aria-label="बन्द गर�
     return result;
   }
   function persist(list){localStorage.setItem(STORE,JSON.stringify(list));}
-  function logAction(r,action,reason){let log=[];try{log=JSON.parse(localStorage.getItem(LOG)||'[]')}catch(e){}log.unshift({at:new Date().toISOString(),id:r.id,name:r.name,type:r.type,action,reason:reason||'',by:'CEO (local demo)'});localStorage.setItem(LOG,JSON.stringify(log.slice(0,1000)));}
+  function logAction(r,action,reason){let log=[];try{log=JSON.parse(localStorage.getItem(LOG)||'[]')}catch(e){}log.unshift({at:new Date().toISOString(),id:r.id,name:r.name,type:r.type,action,reason:reason||'',by:'CEO (local browser)'});localStorage.setItem(LOG,JSON.stringify(log.slice(0,1000)));}
   function allowed(){return typeof window.hasVerifiedCeoLayoutSession==='function'&&window.hasVerifiedCeoLayoutSession();}
   window.nsewaRenderApprovalCenter=function(){
     const listEl=document.getElementById('nsewa-approval-list');if(!listEl)return;
@@ -3455,7 +3232,7 @@ button[aria-label="बन्द"]:hover,button[aria-label="बन्द गर�
     let reason='';
     if(['REJECTED','SUSPENDED','BANNED'].includes(status)){reason=prompt('निर्णयको कारण लेख्नुहोस् (रेकर्डका लागि):','');if(reason===null)return;if(!reason.trim()){alert('कृपया निर्णयको कारण लेख्नुहोस्।');return;}}
     const label={APPROVED:'स्वीकृत',REJECTED:'अस्वीकृत',SUSPENDED:'अस्थायी रोक',BANNED:'स्थायी प्रतिबन्ध',PENDING:'पुनः जाँचका लागि खुला'}[status];
-    if(status==='BANNED'&&!confirm(`${r.name} लाई स्थायी प्रतिबन्ध लगाउने? यो स्थानीय demo मा मात्र लागू हुन्छ।`))return;
+    if(status==='BANNED'&&!confirm(`${r.name} लाई स्थायी प्रतिबन्ध लगाउने? यो परिवर्तन यस ब्राउजरको सूचीमा मात्र लागू हुन्छ।`))return;
     r.status=status;r.reviewReason=reason;r.reviewedAt=new Date().toISOString();persist(all);logAction(r,label,reason);
     if(r.key.startsWith('worker:')&&Array.isArray(window.workers)){const x=workers.find(v=>'worker:'+v.id===key);if(x)x.status=status;}
     if(r.key.startsWith('seller:')&&Array.isArray(window.sellers)){const x=sellers.find(v=>'seller:'+v.id===key);if(x)x.status=status;}
@@ -3485,9 +3262,9 @@ button[aria-label="बन्द"]:hover,button[aria-label="बन्द गर�
  function statusOf(p,s){return s.productStatus[String(p.id)]||((String(p.id).startsWith('L'))?'PENDING':'APPROVED')}
  function requireCeo(){if(!allowed()){alert('यो सुविधा प्रयोग गर्न CEO सुरक्षित सत्रमा प्रवेश गर्नुहोस्।');return false}return true}
  function persist(s){write(KEY,s)}
- window.nsewaMarketSaveSettings=function(){if(!requireCeo())return;const s=state(),min=Number($('nma-min-price').value)||0,max=Number($('nma-max-price').value)||0,lim=Math.max(1,Math.min(10000,Number($('nma-seller-limit').value)||50));if(max&&min>max){alert('अधिकतम मूल्य न्यूनतमभन्दा कम हुन मिल्दैन।');return}s.minPrice=min;s.maxPrice=max;s.sellerLimit=lim;persist(s);nsewaApplyPublicMarketRules();nsewaMarketAdminRender();alert('मूल्य र विक्रेता सूची सीमा सुरक्षित भयो (स्थानीय demo)।')};
+ window.nsewaMarketSaveSettings=function(){if(!requireCeo())return;const s=state(),min=Number($('nma-min-price').value)||0,max=Number($('nma-max-price').value)||0,lim=Math.max(1,Math.min(10000,Number($('nma-seller-limit').value)||50));if(max&&min>max){alert('अधिकतम मूल्य न्यूनतमभन्दा कम हुन मिल्दैन।');return}s.minPrice=min;s.maxPrice=max;s.sellerLimit=lim;persist(s);nsewaApplyPublicMarketRules();nsewaMarketAdminRender();alert('मूल्य र विक्रेता सूची सीमा सुरक्षित भयो (यस ब्राउजरमा मात्र)।')};
  window.nsewaMarketSaveSellerRules=function(){if(!requireCeo())return;const s=state(),name=$('nma-seller-name').value.trim(),rate=Number($('nma-seller-commission').value),badge=$('nma-badge').value,base=Number($('nma-commission').value);if(!Number.isFinite(base)||base<0||base>100||($('nma-seller-commission').value!==''&&(!Number.isFinite(rate)||rate<0||rate>100))){alert('कमिसन ० देखि १०० प्रतिशतभित्र राख्नुहोस्।');return}s.commission=base;if(name)s.sellerRules[name]={commission:$('nma-seller-commission').value===''?null:rate,badge};persist(s);nsewaMarketAdminRender();alert('कमिसन/ब्याज सेटिङ सुरक्षित भयो। यसले पैसा वा subscription आफैँ असुल्दैन।')};
- window.nsewaMarketSaveDelivery=function(){if(!requireCeo())return;const s=state(),district=$('nma-delivery-district').value,fee=Number($('nma-delivery-fee').value);if(!Number.isFinite(fee)||fee<0){alert('डेलिभरी शुल्क शून्य वा सोभन्दा बढी हुनुपर्छ।');return}s.delivery[district]=fee;persist(s);nsewaMarketAdminRender();alert('डेलिभरी शुल्क सुरक्षित भयो (स्थानीय demo)।')};
+ window.nsewaMarketSaveDelivery=function(){if(!requireCeo())return;const s=state(),district=$('nma-delivery-district').value,fee=Number($('nma-delivery-fee').value);if(!Number.isFinite(fee)||fee<0){alert('डेलिभरी शुल्क शून्य वा सोभन्दा बढी हुनुपर्छ।');return}s.delivery[district]=fee;persist(s);nsewaMarketAdminRender();alert('डेलिभरी शुल्क सुरक्षित भयो (यस ब्राउजरमा मात्र)।')};
  window.nsewaMarketProductAction=function(id,action){if(!requireCeo())return;const s=state(),p=allProducts().find(x=>String(x.id)===String(id));if(!p)return;if(action==='APPROVED'){s.productStatus[String(id)]='APPROVED'}else if(action==='REJECTED'){const why=prompt('अस्वीकृत गर्नुको कारण लेख्नुहोस्:','');if(why===null)return;if(!why.trim()){alert('कारण आवश्यक छ।');return}s.productStatus[String(id)]='REJECTED';s.productStatus[String(id)+'_reason']=why}else if(action==='REMOVE'){if(!confirm('यो सामानलाई यस ब्राउजरको बजारबाट हटाउने?'))return;s.productStatus[String(id)]='REMOVED'}else if(action==='FEATURE'){const fee=prompt('Featured Listing शुल्क/सम्झौता रकम (रू.) लेख्नुहोस्। भुक्तानी यहाँ स्वतः हुँदैन:','0');if(fee===null)return;s.featured[String(id)]={active:!s.featured[String(id)]?.active,fee:Number(fee)||0,at:new Date().toISOString()}}else if(action==='STOCK'){const n=prompt('हालको स्टक संख्या लेख्नुहोस्:',String(s.stockOverrides[String(id)]??p.stock??1));if(n===null)return;if(!/^\d+$/.test(n)){alert('० वा धनात्मक पूर्ण संख्या राख्नुहोस्।');return}s.stockOverrides[String(id)]=Number(n)}persist(s);nsewaMarketAdminRender();try{if(typeof window.renderProducts==='function')window.renderProducts()}catch(e){}}
  window.nsewaMarketResolveReport=function(i,action){if(!requireCeo())return;const s=state();if(!s.reports[i])return;if(action==='REMOVE'){const id=s.reports[i].productId;s.productStatus[String(id)]='REMOVED'}s.reports[i].status=action==='REMOVE'?'ACTION_TAKEN':'REVIEWED';s.reports[i].resolvedAt=new Date().toISOString();persist(s);nsewaMarketAdminRender();try{window.renderProducts?.()}catch(e){}};
  window.nsewaMarketUpdateOrder=function(id,status){if(!requireCeo())return;const s=state();s.ordersStatus[id]=status;persist(s);const orders=read(ORDERS,[]);const x=orders.find(o=>o.id===id);if(x){x.status=status;write(ORDERS,orders)}nsewaMarketAdminRender()};
@@ -3500,7 +3277,7 @@ button[aria-label="बन्द"]:hover,button[aria-label="बन्द गर�
  const shown=ps.filter(p=>!q||[p.title,p.seller,p.id,p.district].some(v=>String(v||'').toLowerCase().includes(q)));
  box.innerHTML=shown.map(p=>{const id=String(p.id),st=statusOf(p,s),stock=Number(s.stockOverrides[id]??p.stock??1),featured=!!s.featured[id]?.active,rule=s.sellerRules[p.seller||'']||{};return `<article class="rounded-xl border border-white/10 bg-slate-900 p-3"><div class="flex flex-col gap-3 sm:flex-row"><img src="${esc(p.img||'')}" alt="" class="h-20 w-24 rounded-lg bg-slate-700 object-cover" onerror="this.style.display='none'"><div class="min-w-0 flex-1"><div class="flex flex-wrap items-center gap-2"><b>${esc(p.title)}</b><span class="rounded-full bg-slate-700 px-2 py-1 text-xs">${esc(st)}</span>${featured?'<span class="rounded-full bg-amber-300 px-2 py-1 text-xs font-black text-slate-900">FEATURED</span>':''}${rule.badge?`<span class="rounded-full bg-emerald-900 px-2 py-1 text-xs text-emerald-100">${esc(rule.badge)}</span>`:''}</div><p class="mt-1 text-xs text-slate-300">ID ${esc(id)} · ${esc(p.seller||'बिक्रेता अज्ञात')} · ${esc(p.district||'जिल्ला छैन')} · रू. ${esc(p.price)} · स्टक ${stock}</p><p class="mt-1 text-xs text-slate-400">कमिसन दर: ${esc(rule.commission==null?(s.commission??5):rule.commission)}% · ${reports.filter(r=>r.productId===id&&r.status==='OPEN').length} खुला उजुरी</p><div class="mt-2 flex flex-wrap gap-2">${st!=='APPROVED'?`<button onclick="nsewaMarketProductAction('${esc(id)}','APPROVED')" class="rounded-lg bg-emerald-700 px-3 py-2 text-xs font-bold">स्वीकृत/Live</button>`:''}<button onclick="nsewaMarketProductAction('${esc(id)}','REJECTED')" class="rounded-lg bg-orange-700 px-3 py-2 text-xs font-bold">अस्वीकृत</button><button onclick="nsewaMarketProductAction('${esc(id)}','FEATURE')" class="rounded-lg bg-amber-500 px-3 py-2 text-xs font-bold text-slate-900">${featured?'Featured हटाउनुहोस्':'Featured Listing'}</button><button onclick="nsewaMarketProductAction('${esc(id)}','STOCK')" class="rounded-lg bg-sky-700 px-3 py-2 text-xs font-bold">स्टक सेट</button><button onclick="nsewaMarketProductAction('${esc(id)}','REMOVE')" class="rounded-lg bg-rose-800 px-3 py-2 text-xs font-bold">बजारबाट हटाउनुहोस्</button></div></div></div></article>`}).join('')||'<p class="rounded-lg bg-slate-900 p-4 text-sm text-slate-300">कुनै सामान भेटिएन।</p>';
  $('nma-report-list').innerHTML=reports.filter(r=>r.status==='OPEN').map(r=>`<article class="rounded-lg border border-rose-400/20 bg-slate-900 p-3"><b>${esc(r.productTitle)}</b><p class="text-xs text-slate-300">बिक्रेता: ${esc(r.seller)} · ${esc(new Date(r.at).toLocaleString())}</p><p class="mt-1 text-sm">उजुरी: ${esc(r.reason)}</p><div class="mt-2 flex gap-2"><button onclick="nsewaMarketResolveReport(${reports.indexOf(r)},'REVIEWED')" class="rounded-lg bg-sky-700 px-3 py-2 text-xs font-bold">समीक्षा भयो</button><button onclick="nsewaMarketResolveReport(${reports.indexOf(r)},'REMOVE')" class="rounded-lg bg-rose-700 px-3 py-2 text-xs font-bold">सामान हटाउनुहोस्</button></div></article>`).join('')||'<p class="rounded-lg bg-slate-900 p-3 text-sm text-slate-400">खुला उजुरी छैन।</p>';
- $('nma-order-list').innerHTML=orders.slice(0,12).map(o=>{const st=s.ordersStatus[o.id]||o.status||'PENDING';return `<div class="rounded-lg border border-white/10 p-2"><div class="flex flex-wrap justify-between gap-2"><b class="text-xs">${esc(o.id)} · रू. ${esc(o.total||0)}</b><select onchange="nsewaMarketUpdateOrder('${esc(o.id)}',this.value)" class="rounded border border-slate-600 bg-slate-900 p-1 text-xs"><option value="PENDING" ${st==='PENDING'?'selected':''}>पुष्टि बाँकी</option><option value="PROCESSING" ${st==='PROCESSING'?'selected':''}>तयारीमा</option><option value="SHIPPED" ${st==='SHIPPED'?'selected':''}>पठाइयो</option><option value="DELIVERED" ${st==='DELIVERED'?'selected':''}>डेलिभर</option><option value="CANCELLED" ${st==='CANCELLED'?'selected':''}>रद्द</option></select></div><p class="mt-1 text-xs text-slate-400">${esc((o.items||[]).map(i=>i.title+' × '+i.quantity).join(', '))}</p></div>`}).join('')||'<p class="text-xs text-slate-400">अहिलेसम्म स्थानीय demo अर्डर छैन।</p>';
+ $('nma-order-list').innerHTML=orders.slice(0,12).map(o=>{const st=s.ordersStatus[o.id]||o.status||'PENDING';return `<div class="rounded-lg border border-white/10 p-2"><div class="flex flex-wrap justify-between gap-2"><b class="text-xs">${esc(o.id)} · रू. ${esc(o.total||0)}</b><select onchange="nsewaMarketUpdateOrder('${esc(o.id)}',this.value)" class="rounded border border-slate-600 bg-slate-900 p-1 text-xs"><option value="PENDING" ${st==='PENDING'?'selected':''}>पुष्टि बाँकी</option><option value="PROCESSING" ${st==='PROCESSING'?'selected':''}>तयारीमा</option><option value="SHIPPED" ${st==='SHIPPED'?'selected':''}>पठाइयो</option><option value="DELIVERED" ${st==='DELIVERED'?'selected':''}>डेलिभर</option><option value="CANCELLED" ${st==='CANCELLED'?'selected':''}>रद्द</option></select></div><p class="mt-1 text-xs text-slate-400">${esc((o.items||[]).map(i=>i.title+' × '+i.quantity).join(', '))}</p></div>`}).join('')||'<p class="text-xs text-slate-400">अहिलेसम्म स्थानीय अर्डर छैन।</p>';
  nsewaApplyPublicMarketRules();};
  // Add report buttons and premium badges after the original marketplace renderer draws cards.
  function decorate(){const s=state();document.querySelectorAll('#products-grid [data-product]').forEach(card=>{const id=card.getAttribute('data-product');if(card.querySelector('[data-nsewa-report]'))return;const p=allProducts().find(x=>String(x.id)===String(id));if(!p)return;const feat=s.featured[id]?.active,rule=s.sellerRules[p.seller||'']||{};if(feat){const badge=document.createElement('span');badge.className='absolute bottom-3 left-3 rounded-full bg-amber-300 px-2 py-1 text-xs font-black text-slate-900';badge.textContent='★ Featured';const im=card.querySelector('.ns-product-image');if(im)im.appendChild(badge)}if(rule.badge){const seller=card.querySelector('.text-xs.text-gray-600');if(seller&&!seller.textContent.includes(rule.badge)){const b=document.createElement('span');b.className='ml-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800';b.textContent=rule.badge;seller.appendChild(b)}}const btn=document.createElement('button');btn.type='button';btn.dataset.nsewaReport='1';btn.className='mt-2 w-full rounded-lg border border-rose-200 px-3 py-2 text-xs font-bold text-rose-700';btn.textContent='उजुरी गर्नुहोस्';btn.onclick=()=>nsewaReportProduct(id);const area=card.querySelector('.p-4.flex.flex-col.flex-1');if(area)area.appendChild(btn)});}
@@ -3523,7 +3300,7 @@ button[aria-label="बन्द"]:hover,button[aria-label="बन्द गर�
  const sessionOk=()=>typeof window.hasVerifiedCeoLayoutSession==='function'&&window.hasVerifiedCeoLayoutSession()&&typeof currentUserRole!=='undefined'&&currentUserRole==='CEO';
  const phoneNorm=v=>String(v||'').replace(/[\s()-]/g,'');
  function read(key,fallback){try{const v=JSON.parse(localStorage.getItem(key)||'null');return v==null?fallback:v}catch(_){return fallback}}
- function get(){const a=read(KEY,[]);return Array.isArray(a)?a:[]}
+ function get(){const a=read(KEY,[]);if(!Array.isArray(a))return [];const clean=a.map(({passport,...rest})=>rest);if(a.some(x=>Object.prototype.hasOwnProperty.call(x||{},'passport'))){try{localStorage.setItem(KEY,JSON.stringify(clean))}catch(_){}}return clean}
  function put(a){try{localStorage.setItem(KEY,JSON.stringify(a));return true}catch(e){alert('ब्राउजर storage भरिएको वा उपलब्ध नभएको हुन सक्छ। डेटा सुरक्षित भएन।');return false}}
  function audit(action,record,extra=''){const logs=read(AUDIT,[]);logs.unshift({at:new Date().toISOString(),action,accountId:record?.id||'',name:record?.name||'',phone:record?.phone||'',details:extra});try{localStorage.setItem(AUDIT,JSON.stringify(logs.slice(0,1000)))}catch(_){};}
  function requireCeo(){if(!sessionOk()){alert('यो काम CEO को सक्रिय login बाट मात्र गर्न सकिन्छ।');return false}return true}
@@ -3532,11 +3309,11 @@ button[aria-label="बन्द"]:hover,button[aria-label="बन्द गर�
    const host=$('ceo-account-list');if(!host)return;
    if(!sessionOk()){host.textContent='CEO login आवश्यक छ।';return}
    const q=($('ceo-account-search')?.value||'').trim().toLocaleLowerCase();
-   const all=get(), arr=all.filter(a=>[a.name,a.phone,a.passport,a.role].join(' ').toLocaleLowerCase().includes(q));
+   const all=get(), arr=all.filter(a=>[a.name,a.phone,a.role].join(' ').toLocaleLowerCase().includes(q));
    host.replaceChildren();
    const summary=$('ceo-account-audit-summary');if(summary)summary.textContent=`कुल खाता: ${all.length} · पछिल्लो गतिविधि: ${(read(AUDIT,[])[0]?.at||'अहिलेसम्म छैन')}`;
    if(!arr.length){const p=document.createElement('p');p.className='rounded-lg border p-3 text-sm text-gray-500';p.textContent='कुनै खाता भेटिएन।';host.append(p);return}
-   arr.forEach(a=>{const card=document.createElement('article');card.className='rounded-xl border border-gray-200 p-3';const head=document.createElement('div');head.className='flex items-center gap-3';if(a.imageData&&/^data:image\/(png|jpeg|webp);base64,/.test(a.imageData)){const avatar=document.createElement('img');avatar.src=a.imageData;avatar.alt='प्रोफाइल तस्वीर';avatar.className='h-14 w-14 rounded-full object-cover border';head.append(avatar)}const info=document.createElement('div');info.className='font-bold break-words';info.textContent=a.name+' · '+a.role;head.append(info);const sub=document.createElement('p');sub.className='text-xs text-gray-600 mt-1 break-words';sub.textContent='मोबाइल: '+a.phone+' · पासपोर्ट: '+(a.passport||'उपलब्ध छैन');const meta=document.createElement('p');meta.className='text-[11px] text-gray-400 mt-1';meta.textContent='ID: '+a.id+' · अद्यावधिक: '+(a.updatedAt||a.createdAt||'');const actions=document.createElement('div');actions.className='flex flex-wrap gap-2 mt-3';const edit=document.createElement('button');edit.type='button';edit.className='rounded-lg border px-3 py-2 text-sm font-bold';edit.textContent='सम्पादन';edit.onclick=()=>window.editCeoManagedAccount(a.id);const del=document.createElement('button');del.type='button';del.className='rounded-lg bg-red-700 px-3 py-2 text-sm font-bold text-white';del.textContent='स्थायी रूपमा मेटाउनुहोस्';del.onclick=()=>window.deleteCeoManagedAccount(a.id);actions.append(edit,del);card.append(head,sub,meta,actions);host.append(card)});
+   arr.forEach(a=>{const card=document.createElement('article');card.className='rounded-xl border border-gray-200 p-3';const head=document.createElement('div');head.className='flex items-center gap-3';if(a.imageData&&/^data:image\/(png|jpeg|webp);base64,/.test(a.imageData)){const avatar=document.createElement('img');avatar.src=a.imageData;avatar.alt='प्रोफाइल तस्वीर';avatar.className='h-14 w-14 rounded-full object-cover border';head.append(avatar)}const info=document.createElement('div');info.className='font-bold break-words';info.textContent=a.name+' · '+a.role;head.append(info);const sub=document.createElement('p');sub.className='text-xs text-gray-600 mt-1 break-words';sub.textContent='मोबाइल: '+a.phone+' · संवेदनशील कागजात: सुरक्षित server जडानपछि मात्र';const meta=document.createElement('p');meta.className='text-[11px] text-gray-400 mt-1';meta.textContent='ID: '+a.id+' · अद्यावधिक: '+(a.updatedAt||a.createdAt||'');const actions=document.createElement('div');actions.className='flex flex-wrap gap-2 mt-3';const edit=document.createElement('button');edit.type='button';edit.className='rounded-lg border px-3 py-2 text-sm font-bold';edit.textContent='सम्पादन';edit.onclick=()=>window.editCeoManagedAccount(a.id);const del=document.createElement('button');del.type='button';del.className='rounded-lg bg-red-700 px-3 py-2 text-sm font-bold text-white';del.textContent='स्थायी रूपमा मेटाउनुहोस्';del.onclick=()=>window.deleteCeoManagedAccount(a.id);actions.append(edit,del);card.append(head,sub,meta,actions);host.append(card)});
  };
  window.loadCeoAccountImage=function(e){
    const file=e.target.files?.[0];if(!file)return;
@@ -3545,22 +3322,22 @@ button[aria-label="बन्द"]:hover,button[aria-label="बन्द गर�
  };
  window.saveCeoManagedAccount=function(e){
    e?.preventDefault?.();if(!requireCeo())return;
-   const id=$('ceo-account-edit-id').value,name=$('ceo-account-name').value.trim(),phone=phoneNorm($('ceo-account-phone').value),passport=$('ceo-account-passport').value.trim(),role=$('ceo-account-role').value,imageData=$('ceo-account-image-data').value;
+   const id=$('ceo-account-edit-id').value,name=$('ceo-account-name').value.trim(),phone=phoneNorm($('ceo-account-phone').value),role=$('ceo-account-role').value,imageData=$('ceo-account-image-data').value;
    if(name.length<2){msg('कृपया कम्तीमा २ अक्षरको पूरा नाम राख्नुहोस्।');return}
    if(!/^\+?[0-9]{7,15}$/.test(phone)){msg('मोबाइल नम्बरमा ७–१५ अङ्क राख्नुहोस्।');return}
    if(!['Client','Worker','Seller'].includes(role)){msg('मान्य खाता भूमिका छान्नुहोस्।');return}
    const arr=get();if(arr.some(a=>phoneNorm(a.phone)===phone&&a.id!==id)){msg('यो मोबाइल नम्बर अर्को खातामा प्रयोग भएको छ।');return}
    if(passport&&arr.some(a=>String(a.passport||'').toLowerCase()===passport.toLowerCase()&&a.id!==id)){msg('यो पासपोर्ट नम्बर अर्को खातामा प्रयोग भएको छ।');return}
    const now=new Date().toISOString();let record;
-   if(id){const i=arr.findIndex(a=>a.id===id);if(i<0){msg('सम्पादन गर्न खोजिएको खाता भेटिएन।');return}record={...arr[i],name,phone,passport,role,imageData:imageData||arr[i].imageData||'',updatedAt:now};arr[i]=record;}
-   else {record={id:(crypto.randomUUID?crypto.randomUUID():'NS-'+Date.now()+'-'+Math.random().toString(36).slice(2,8)),name,phone,passport,role,imageData:imageData||'',createdAt:now,updatedAt:now};arr.unshift(record)}
+   if(id){const i=arr.findIndex(a=>a.id===id);if(i<0){msg('सम्पादन गर्न खोजिएको खाता भेटिएन।');return}record={...arr[i],name,phone,role,imageData:imageData||arr[i].imageData||'',updatedAt:now};arr[i]=record;}
+   else {record={id:(crypto.randomUUID?crypto.randomUUID():'NS-'+Date.now()+'-'+Math.random().toString(36).slice(2,8)),name,phone,role,imageData:imageData||'',createdAt:now,updatedAt:now};arr.unshift(record)}
    if(!put(arr))return;audit(id?'UPDATE':'CREATE',record);msg(id?'खाता विवरण परिवर्तन गरी सुरक्षित गरियो।':'नयाँ खाता दर्ता गरी सुरक्षित गरियो।',true);window.resetCeoManagedAccountForm();window.renderCeoManagedAccounts();
  };
- window.editCeoManagedAccount=function(id){if(!requireCeo())return;const a=get().find(x=>x.id===id);if(!a){msg('खाता भेटिएन।');return}$('ceo-account-edit-id').value=a.id;$('ceo-account-image-data').value=a.imageData||'';$('ceo-account-image-preview').src=a.imageData||'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22%3E%3Crect width=%22100%25%22 height=%22100%25%22 fill=%22%23e5e7eb%22/%3E%3Ctext x=%2250%25%22 y=%2255%25%22 text-anchor=%22middle%22 font-size=%2228%22 fill=%22%236b7280%22%3E%3F%3C/text%3E%3C/svg%3E';$('ceo-account-image-file').value='';$('ceo-account-name').value=a.name;$('ceo-account-phone').value=a.phone;$('ceo-account-passport').value=a.passport||'';$('ceo-account-role').value=a.role;$('ceo-account-form-title').textContent='खाता सम्पादन';msg('विवरण परिवर्तन गरी सुरक्षित गर्नुहोस्।',true);$('ceo-account-name').focus()};
+ window.editCeoManagedAccount=function(id){if(!requireCeo())return;const a=get().find(x=>x.id===id);if(!a){msg('खाता भेटिएन।');return}$('ceo-account-edit-id').value=a.id;$('ceo-account-image-data').value=a.imageData||'';$('ceo-account-image-preview').src=a.imageData||'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22%3E%3Crect width=%22100%25%22 height=%22100%25%22 fill=%22%23e5e7eb%22/%3E%3Ctext x=%2250%25%22 y=%2255%25%22 text-anchor=%22middle%22 font-size=%2228%22 fill=%22%236b7280%22%3E%3F%3C/text%3E%3C/svg%3E';$('ceo-account-image-file').value='';$('ceo-account-name').value=a.name;$('ceo-account-phone').value=a.phone;$('ceo-account-role').value=a.role;$('ceo-account-form-title').textContent='खाता सम्पादन';msg('विवरण परिवर्तन गरी सुरक्षित गर्नुहोस्।',true);$('ceo-account-name').focus()};
  window.deleteCeoManagedAccount=function(id){if(!requireCeo())return;const arr=get(),a=arr.find(x=>x.id===id);if(!a)return;const confirmation=prompt(`खाता स्थायी रूपमा मेटाउन DELETE लेख्नुहोस्।\nखातावालाको नाम: ${a.name}`);if(confirmation!=='DELETE'){msg('मेटाउने प्रक्रिया रद्द गरियो।');return}if(!put(arr.filter(x=>x.id!==id)))return;audit('PERMANENT_DELETE',a,'CEO confirmed DELETE');window.renderCeoManagedAccounts();msg('खाता यस ब्राउजरको सूचीबाट स्थायी रूपमा मेटाइयो।',true)};
  window.resetCeoManagedAccountForm=function(){if(!$('ceo-account-form'))return;$('ceo-account-form').reset();$('ceo-account-edit-id').value='';$('ceo-account-image-data').value='';$('ceo-account-image-preview').src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22%3E%3Crect width=%22100%25%22 height=%22100%25%22 fill=%22%23e5e7eb%22/%3E%3Ctext x=%2250%25%22 y=%2255%25%22 text-anchor=%22middle%22 font-size=%2228%22 fill=%22%236b7280%22%3E%3F%3C/text%3E%3C/svg%3E';$('ceo-account-form-title').textContent='नयाँ खाता दर्ता / Personal Account';msg('',true)};
  window.exportCeoManagedAccounts=function(){if(!requireCeo())return;const payload={product:'Nepali Sewa CEO Account Backup',version:2,exportedAt:new Date().toISOString(),accounts:get(),audit:read(AUDIT,[]),note:'Local browser backup. Protect this file; it may contain personal/passport information.'};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='nepali-sewa-ceo-account-backup.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);audit('EXPORT',null,'Account backup exported');};
- window.importCeoManagedAccounts=function(e){if(!requireCeo()){e.target.value='';return}const file=e.target.files?.[0];if(!file)return;if(file.size>5*1024*1024){msg('Backup फाइल ५ MB भन्दा सानो हुनुपर्छ।');e.target.value='';return}const reader=new FileReader();reader.onload=()=>{try{const obj=JSON.parse(String(reader.result||''));const incoming=Array.isArray(obj)?obj:obj.accounts;if(!Array.isArray(incoming))throw new Error('Backup मा accounts सूची भेटिएन।');if(!confirm(`${incoming.length} वटा खाता हालको सूचीसँग बदल्ने? हालको सूची पहिला Backup Export गर्नुहोस्।`))return;const seenPhones=new Set(),seenPassports=new Set();const cleaned=incoming.map((a,i)=>{if(!a||typeof a.name!=='string'||typeof a.phone!=='string'||!['Client','Worker','Seller'].includes(a.role))throw new Error(`खाता ${i+1} मा विवरण अमान्य छ।`);const phone=phoneNorm(a.phone);if(!/^\+?[0-9]{7,15}$/.test(phone)||seenPhones.has(phone))throw new Error(`खाता ${i+1} को मोबाइल नम्बर अमान्य वा दोहोरिएको छ।`);seenPhones.add(phone);const passport=String(a.passport||'').trim();if(passport&&seenPassports.has(passport.toLowerCase()))throw new Error(`खाता ${i+1} को पासपोर्ट नम्बर दोहोरिएको छ।`);if(passport)seenPassports.add(passport.toLowerCase());return {id:String(a.id||('NS-'+Date.now()+'-'+i)),name:a.name.trim(),phone,passport,role:a.role,createdAt:a.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()}});if(!put(cleaned))return;if(Array.isArray(obj.audit))localStorage.setItem(AUDIT,JSON.stringify(obj.audit.slice(0,1000)));audit('RESTORE',null,`${cleaned.length} accounts restored`);window.renderCeoManagedAccounts();msg('Backup बाट खाता सूची Restore भयो।',true)}catch(err){msg(err.message||'Backup पढ्न सकिएन।')}finally{e.target.value=''}};reader.readAsText(file)};
+ window.importCeoManagedAccounts=function(e){if(!requireCeo()){e.target.value='';return}const file=e.target.files?.[0];if(!file)return;if(file.size>5*1024*1024){msg('Backup फाइल ५ MB भन्दा सानो हुनुपर्छ।');e.target.value='';return}const reader=new FileReader();reader.onload=()=>{try{const obj=JSON.parse(String(reader.result||''));const incoming=Array.isArray(obj)?obj:obj.accounts;if(!Array.isArray(incoming))throw new Error('Backup मा accounts सूची भेटिएन।');if(!confirm(`${incoming.length} वटा खाता हालको सूचीसँग बदल्ने? हालको सूची पहिला Backup Export गर्नुहोस्।`))return;const seenPhones=new Set();const cleaned=incoming.map((a,i)=>{if(!a||typeof a.name!=='string'||typeof a.phone!=='string'||!['Client','Worker','Seller'].includes(a.role))throw new Error(`खाता ${i+1} मा विवरण अमान्य छ।`);const phone=phoneNorm(a.phone);if(!/^\+?[0-9]{7,15}$/.test(phone)||seenPhones.has(phone))throw new Error(`खाता ${i+1} को मोबाइल नम्बर अमान्य वा दोहोरिएको छ।`);seenPhones.add(phone);return {id:String(a.id||('NS-'+Date.now()+'-'+i)),name:a.name.trim(),phone,role:a.role,createdAt:a.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()}});if(!put(cleaned))return;if(Array.isArray(obj.audit))localStorage.setItem(AUDIT,JSON.stringify(obj.audit.slice(0,1000)));audit('RESTORE',null,`${cleaned.length} accounts restored`);window.renderCeoManagedAccounts();msg('Backup बाट खाता सूची Restore भयो।',true)}catch(err){msg(err.message||'Backup पढ्न सकिएन।')}finally{e.target.value=''}};reader.readAsText(file)};
  window.openCeoAccountFolderFromHub=function(){if(!requireCeo())return;document.getElementById('ceo-layout-hub')?.classList.add('hidden');window.openPersonalAccountsFolder()};
  window.closeCeoAccountsFolder=function(){const m=$('personal-accounts-folder-modal');if(m){m.classList.add('hidden');m.classList.remove('flex')}if(sessionOk())$('ceo-layout-hub')?.classList.remove('hidden')};
  const oldOpen=window.openPersonalAccountsFolder;window.openPersonalAccountsFolder=function(){if(!requireCeo())return;if(typeof oldOpen==='function')oldOpen();const m=$('personal-accounts-folder-modal');if(m){m.classList.remove('hidden');m.classList.add('flex')}window.renderCeoManagedAccounts()};
@@ -3674,7 +3451,17 @@ button[aria-label="बन्द"]:hover,button[aria-label="बन्द गर�
       function get(){const s={...read(),schemaVersion:4,savedAt:new Date().toISOString()};fieldIds.forEach(k=>{const e=$('nsewa-ai-'+k);if(e)s[k]=boolIds.has(k)?!!e.checked:e.value;});return s;}
       function audit(action,detail=''){try{const a=safeParse(localStorage.getItem(AUDIT),'[]');a.unshift({at:new Date().toISOString(),action,detail:String(detail).slice(0,240)});localStorage.setItem(AUDIT,JSON.stringify(a.slice(0,100)));}catch(_){}}
       function applyPresentation(s){const root=document.documentElement;const theme=s.theme||'nepal';const colors={nepal:['#dc143c','#003893','#ffffff'],dark:['#0f172a','#6366f1','#111827'],light:['#2563eb','#0f766e','#ffffff'],violet:['#6d28d9','#4338ca','#faf5ff'],green:['#047857','#0f766e','#f0fdf4'],contrast:['#000000','#ffff00','#ffffff']};const c=colors[theme]||colors.nepal;root.style.setProperty('--nsewa-ai-primary',c[0]);root.style.setProperty('--nsewa-ai-secondary',c[1]);root.dataset.nsewaAiTheme=theme;root.dataset.nsewaAiTemplate=s.template||'balanced';root.dataset.nsewaAiDensity=(s.density||'Balanced').toLowerCase().replace(/\s+/g,'-');root.dataset.nsewaAiFont=(s.fontsize||'Standard').toLowerCase().replace(/\s+/g,'-');root.dataset.nsewaAiMotion=(s.motion||'Reduced motion').toLowerCase().replace(/\s+/g,'-');}
-      function sync(){const s=getFromFormOrRead();const on=s.enabled!==false,img=on&&s['images-enabled']!==false,chat=on&&s['chat-enabled']!==false;const b=$('nsewa-ai-status-badge');if(b){b.textContent=on?'AI ON':'AI OFF';b.className='rounded-full px-3 py-1 text-sm font-bold '+(on?'bg-emerald-100 text-emerald-800':'bg-red-100 text-red-800');}document.querySelectorAll('[data-nsewa-ai-requires="chat"]').forEach(e=>e.disabled=!chat);document.querySelectorAll('[data-nsewa-ai-requires="image"]').forEach(e=>e.disabled=!img);$('nsewa-ai-off-notice')?.classList.toggle('hidden',on);applyPresentation(s);}
+      function sync(){
+        const s=getFromFormOrRead(),on=s.enabled!==false,img=on&&s['images-enabled']!==false,chat=on&&s['chat-enabled']!==false;
+        const b=$('nsewa-ai-status-badge');
+        if(b){b.textContent=on?'AI ON':'AI OFF';b.className='rounded-full px-3 py-1 text-sm font-bold '+(on?'bg-emerald-100 text-emerald-800':'bg-red-100 text-red-800');}
+        document.querySelectorAll('[data-nsewa-ai-requires="chat"]').forEach(e=>e.disabled=!chat);
+        document.querySelectorAll('[data-nsewa-ai-requires="image"]').forEach(e=>e.disabled=!img);
+        $('nsewa-ai-off-notice')?.classList.toggle('hidden',on);
+        const menuAI=document.querySelector('#user-menu button[onclick="openNsewaAI()"]');
+        if(menuAI){menuAI.disabled=!on;menuAI.setAttribute('aria-disabled',String(!on));menuAI.classList.toggle('opacity-50',!on);menuAI.title=on?'Nepali Sewa AI खोल्नुहोस्':'AI CEO सेटिङबाट बन्द गरिएको छ';const label=menuAI.lastChild;if(label&&label.nodeType===3)label.textContent=on?' ७. Nepali Sewa AI':' ७. Nepali Sewa AI (OFF)';}
+        applyPresentation(s);
+      }
       function getFromFormOrRead(){const s=read();fieldIds.forEach(k=>{const e=$('nsewa-ai-'+k);if(e)s[k]=boolIds.has(k)?!!e.checked:e.value;});const en=$('nsewa-ai-enabled');if(en)s.enabled=en.checked;const im=$('nsewa-ai-images-enabled');if(im)s['images-enabled']=im.checked;return s;}
       async function api(path,options={}){const r=await fetch(path,{credentials:'same-origin',...options,headers:{'Content-Type':'application/json','Accept':'application/json',...(options.headers||{})}});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||('HTTP '+r.status));return d;}
       function load(){const s=read();fieldIds.forEach(k=>{const e=$('nsewa-ai-'+k);if(e&&Object.prototype.hasOwnProperty.call(s,k)){if(boolIds.has(k))e.checked=s[k]===true;else if(s[k]!=null)e.value=String(s[k]);}});sync();const st=$('nsewa-ai-settings-status');if(st&&s.savedAt)st.textContent='अन्तिम सुरक्षित: '+new Date(s.savedAt).toLocaleString()+' · ब्राउजर प्रति';}
@@ -3703,15 +3490,20 @@ button[aria-label="बन्द"]:hover,button[aria-label="बन्द गर�
       };
       window.nsewaAIView=function(v){if(v!=='settings'&&read().enabled===false){alert('AI OFF छ। CEO Dashboard को AI Control & Settings बाट ON गर्नुहोस्।');return;}if(v==='image'&&read()['images-enabled']===false){alert('Image AI OFF छ। CEO Dashboard सेटिङ जाँच्नुहोस्।');return;}['chat','image','settings'].forEach(k=>$('nsewa-ai-'+k+'-view')?.classList.toggle('hidden',k!==v));if(v==='settings'){load();api('/api/ceo/ai-settings').then(d=>{if(d&&d.settings&&typeof d.settings==='object'){localStorage.setItem(KEY,JSON.stringify({...read(),...d.settings}));load();const st=$('nsewa-ai-settings-status');if(st)st.textContent='Server settings लोड भयो।';}}).catch(()=>{});}};
       window.previewNsewaAIToggles=sync;
-      window.sendNsewaAIChat=async function(e){e.preventDefault();const s=read();if(s.enabled===false||s['chat-enabled']===false){alert('AI Chat OFF छ। CEO Dashboard सेटिङ जाँच्नुहोस्।');return;}const box=$('nsewa-ai-chat-log'),p=$('nsewa-ai-prompt'),q=p?.value.trim();if(!q||!box)return;const u=document.createElement('p');u.className='rounded-lg bg-slate-100 p-3 text-sm';u.textContent='तपाईं: '+q;box.appendChild(u);p.value='';const a=document.createElement('p');a.className='rounded-lg bg-amber-50 p-3 text-sm';a.textContent='AI बाट उत्तर ल्याउँदै…';box.appendChild(a);box.scrollTop=box.scrollHeight;try{const d=await api('/api/ai/chat',{method:'POST',body:JSON.stringify({message:q,language:s.language,style:s.style,answerLength:s.length,purpose:s.purpose})});a.textContent=String(d.answer||d.message||'सर्भरले खाली उत्तर दियो।');a.className='rounded-lg bg-emerald-50 p-3 text-sm';}catch(err){a.textContent='वास्तविक AI सेवा उपलब्ध भएन। /api/ai/chat backend जडान र CEO/प्रयोगकर्ता अनुमति जाँच्नुहोस्। ('+err.message+')';a.className='rounded-lg bg-amber-50 p-3 text-sm';}box.scrollTop=box.scrollHeight;};
+      window.sendNsewaAIChat=async function(e){e.preventDefault();const s=read();if(s.enabled===false||s['chat-enabled']===false){alert('AI Chat OFF छ। CEO Dashboard सेटिङ जाँच्नुहोस्।');return;}const box=$('nsewa-ai-chat-log'),p=$('nsewa-ai-prompt'),q=p?.value.trim();if(!q||!box)return;const u=document.createElement('p');u.className='rounded-lg bg-slate-100 p-3 text-sm';u.textContent='तपाईं: '+q;box.appendChild(u);p.value='';const a=document.createElement('p');a.className='rounded-lg bg-amber-50 p-3 text-sm';a.textContent='AI बाट उत्तर ल्याउँदै…';box.appendChild(a);box.scrollTop=box.scrollHeight;try{const d=await api('/api/ai/chat',{method:'POST',body:JSON.stringify({message:q,language:s.language,style:s.style,answerLength:s.length,purpose:s.purpose,assistantName:s.name,model:s.model,features:{search:s.search===true,translation:s.translate===true,writing:s.writing===true,images:s['images-enabled']!==false},responsePolicy:'Be accurate, clearly distinguish verified facts from uncertainty, answer in the selected language and style, ask clarifying questions when needed, protect personal data, refuse harmful requests, and never claim a tool/action succeeded unless the server confirms it.'})});a.textContent=String(d.answer||d.message||'सर्भरले खाली उत्तर दियो।');a.className='rounded-lg bg-emerald-50 p-3 text-sm';}catch(err){a.textContent='वास्तविक AI सेवा उपलब्ध भएन। /api/ai/chat backend जडान र CEO/प्रयोगकर्ता अनुमति जाँच्नुहोस्। ('+err.message+')';a.className='rounded-lg bg-amber-50 p-3 text-sm';}box.scrollTop=box.scrollHeight;};
       window.prepareNsewaAIImagePrompt=function(){const s=read();if(s.enabled===false||s['images-enabled']===false){alert('Image AI OFF छ। CEO Dashboard सेटिङ जाँच्नुहोस्।');return;}const p=$('nsewa-ai-image-prompt')?.value.trim(),o=$('nsewa-ai-image-output');if(o)o.value=p?('Create a polished Nepali Sewa marketplace promotional image. Context: '+p+'. Use a clear composition, culturally appropriate Nepal context, professional lighting, and avoid fake logos or illegible text.') : '';};
       window.copyNsewaAIImagePrompt=function(){const t=$('nsewa-ai-image-output')?.value;if(t&&navigator.clipboard)navigator.clipboard.writeText(t).then(()=>alert('Prompt copy भयो।')).catch(()=>alert('Prompt चयन गरेर copy गर्नुहोस्।'));else alert('पहिले prompt तयार गर्नुहोस्।');};
-      window.saveNsewaAISettings=async function(){const st=$('nsewa-ai-settings-status');try{const s=get();localStorage.setItem(KEY,JSON.stringify(s));sync();audit('SAVE_SETTINGS','Browser settings saved');if(st)st.textContent='ब्राउजरमा सुरक्षित भयो। Server मा सुरक्षित गर्ने प्रयास हुँदैछ…';try{await api('/api/ceo/ai-settings',{method:'PUT',body:JSON.stringify({settings:s,changeNote:s['change-note']||'',riskNote:s['risk-note']||''})});audit('SERVER_SAVE','Server settings saved');if(st)st.textContent='ब्राउजर र Server दुवैमा सुरक्षित भयो।';}catch(err){if(st)st.textContent='ब्राउजरमा सुरक्षित भयो; Server save भएन। CEO-authenticated backend endpoint आवश्यक छ।';}}catch(_){if(st)st.textContent='सेभ असफल भयो। ब्राउजर storage उपलब्ध छ कि जाँच्नुहोस्।';}};
+      window.saveNsewaAISettings=async function(){const st=$('nsewa-ai-settings-status');try{const s=get();localStorage.setItem(KEY,JSON.stringify(s));sync();window.dispatchEvent(new CustomEvent('nsewa-ai-settings-updated',{detail:{enabled:s.enabled!==false,theme:s.theme,template:s.template}}));audit('SAVE_SETTINGS','Browser settings saved');if(st)st.textContent='ब्राउजरमा सुरक्षित भयो। Server मा सुरक्षित गर्ने प्रयास हुँदैछ…';try{await api('/api/ceo/ai-settings',{method:'PUT',body:JSON.stringify({settings:s,changeNote:s['change-note']||'',riskNote:s['risk-note']||''})});audit('SERVER_SAVE','Server settings saved');if(st)st.textContent='ब्राउजर र Server दुवैमा सुरक्षित भयो।';}catch(err){if(st)st.textContent='ब्राउजरमा सुरक्षित भयो; Server save भएन। CEO-authenticated backend endpoint आवश्यक छ।';}}catch(_){if(st)st.textContent='सेभ असफल भयो। ब्राउजर storage उपलब्ध छ कि जाँच्नुहोस्।';}};
       window.resetNsewaAISettings=function(){if(!confirm('AI Settings default मा फर्काउने? पहिले Backup लिनुहोस्।'))return;localStorage.removeItem(KEY);audit('RESET_SETTINGS','Defaults restored');load();const st=$('nsewa-ai-settings-status');if(st)st.textContent='Default सेटिङ ब्राउजरमा लागू भयो। Server reset गर्न छुट्टै CEO endpoint चाहिन्छ।';};
       function showNsewaAINextReview(){const e=$('nsewa-ai-next-review');if(e){const d=new Date();d.setMonth(d.getMonth()+3);e.textContent='अर्को त्रैमासिक समीक्षा लक्ष्य: '+d.toLocaleDateString('ne-NP')+' (स्मरण मात्र; स्वचालित deployment होइन)।';}}
       window.exportNsewaAISettings=function(){const payload={product:'Nepali Sewa AI',exportedAt:new Date().toISOString(),settings:read(),audit:safeParse(localStorage.getItem(AUDIT),'[]')};const a=document.createElement('a'),u=URL.createObjectURL(new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}));a.href=u;a.download='nepali-sewa-ai-backup.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1500);};
       window.importNsewaAISettings=function(ev){const f=ev.target.files?.[0];if(!f)return;if(f.size>1048576){alert('Backup 1 MB भन्दा सानो हुनुपर्छ।');ev.target.value='';return;}const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result),src=d.settings&&typeof d.settings==='object'?d.settings:d;if(!src||typeof src!=='object'||Array.isArray(src))throw new Error('Invalid backup');const o={...defaults,schemaVersion:4,savedAt:new Date().toISOString()};fieldIds.forEach(k=>{if(Object.prototype.hasOwnProperty.call(src,k)){if(boolIds.has(k))o[k]=src[k]===true;else if(['daily-limit','image-limit'].includes(k)){const n=Number(src[k]);if(Number.isFinite(n)&&n>=0&&n<=100000)o[k]=String(n);}else o[k]=String(src[k]).slice(0,2000);}});localStorage.setItem(KEY,JSON.stringify(o));audit('IMPORT_BACKUP','Settings restored');load();alert('Backup restore भयो। Server मा लागू गर्न Save गर्नुहोस्।');}catch(_){alert('Backup फाइल मान्य छैन।');}finally{ev.target.value='';}};r.readAsText(f);};
-      document.addEventListener('DOMContentLoaded',()=>{load();});document.addEventListener('keydown',e=>{if(e.key==='Escape')window.closeNsewaAI();});
+      document.addEventListener('DOMContentLoaded',()=>{load();});
+      document.addEventListener('input',e=>{if(e.target&&e.target.id&&e.target.id.startsWith('nsewa-ai-')&&e.target.closest('#nsewa-ai-settings-view'))sync();});
+      document.addEventListener('change',e=>{if(e.target&&e.target.id&&e.target.id.startsWith('nsewa-ai-')&&e.target.closest('#nsewa-ai-settings-view'))sync();});
+      window.addEventListener('storage',e=>{if(e.key===KEY){sync();}});
+      window.addEventListener('nsewa-ai-settings-updated',()=>sync());
+      document.addEventListener('keydown',e=>{if(e.key==='Escape')window.closeNsewaAI();});
     })();
     </script>
 
@@ -3765,65 +3557,6 @@ button[aria-label="बन्द"]:hover,button[aria-label="बन्द गर�
   }
 })();
 </script>
-// Dynamic Registration Submission Hub for Supabase
-async function handleRegistrationForm() {
-    console.log("Supabase Form submission module active...");
-    
-    // Website ko HTML text fields components haru match garchha
-    const nameInput = document.querySelector('input[type="text"][placeholder*="नाम"]') || document.getElementById('fullName');
-    const fatherInput = document.querySelector('input[type="text"][placeholder*="बुवा"]');
-    const mobileInput = document.querySelector('input[type="text"][placeholder*="मोबाइल"]') || document.querySelector('input[type="tel"]');
-    const districtInput = document.querySelector('select[placeholder*="जिल्ला"]') || document.querySelector('select');
-    const submitBtn = document.querySelector('button[type="submit"]') || document.querySelector('.submit-btn') || document.querySelector('button');
-
-    if (submitBtn) {
-        // Purano demo action text click bypass garera naya functional click set garchha
-        submitBtn.onclick = async function(event) {
-            event.preventDefault(); // Browser auto-reload load stop garchha
-            
-            const fullName = nameInput ? nameInput.value : '';
-            const fatherName = fatherInput ? fatherInput.value : '';
-            const mobile = mobileInput ? mobileInput.value : '';
-            const district = districtInput ? districtInput.value : 'Kathmandu';
-            
-            if (!fullName || !mobile) {
-                alert("कृपया पूरा नाम र मोबाइल नम्बर अनिवार्य रूपमा भर्नुहोस्!");
-                return;
-            }
-
-            // Supabase API layer call setup
-            try {
-                const { data, error } = await supabase
-                    .from('profiles')
-                    .insert([
-                        { 
-                            full_name: fullName, 
-                            father_name: fatherName, 
-                            mobile: mobile, 
-                            district: district, 
-                            role: 'Worker' 
-                        }
-                    ]);
-
-                if (error) {
-                    alert("Error logic: " + error.message);
-                } else {
-                    alert("बधाई छ! प्राविधिक (Worker) को विवरण Supabase Server मा दर्ता भयो।");
-                    if(typeof loadWorkersFromSupabase === 'function') {
-                        loadWorkersFromSupabase(); // Render updates to client grid
-                    }
-                }
-            } catch (err) {
-                console.error("Critical submission break:", err);
-            }
-        };
-    }
-}
-
-// Auto triggers check context hook
-document.addEventListener("DOMContentLoaded", () => {
-    setTimeout(handleRegistrationForm, 1000); // 1 sec delay to map dynamic front controls
-});
 
 </body>
 </html>

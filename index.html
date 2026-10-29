@@ -31,7 +31,80 @@
         }
     </script>
     <style>
-        body {
+        body {<!-- १. Supabase JS Library (Yo script halna compulsory xa, natra client initialize hudaina) -->
+<script src="https://jsdelivr.net"></script>
+
+<!-- २. Tapaiko website connect garne core setup code -->
+<script>
+    // URL ma maile tapaiko real project URL ready banai dieko xu
+    const SUPABASE_URL = "https://nucejkobfimkfuexpcku.supabase.co";
+    
+    // Yahan chai tapaile Supabase Dashboard -> Project Settings -> API bata liyeko 'anon' public key paste garnuhos
+    const SUPABASE_ANON_KEY = "YAHAN_TAPAIKO_SUPABASE_ANON_KEY_PASTE_GARNUHOS";
+
+    // Supabase Engine Initialize vayo
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // ३. Website khulda real time data backend server bata load garne connection
+    async function loadProductsFromSupabase() {
+        const { data: products, error } = await supabase
+            .from('products')
+            .select('*');
+
+        if (error) {
+            console.error("Saman load garna milena:", error.message);
+            return;
+        }
+
+        console.log("Database bata aayeko saman:", products);
+        
+        // Dynamic Frontend Connection Bridge
+        const storeGrid = document.querySelector('.products-grid') || document.getElementById('products-container');
+        if (storeGrid && products) {
+            storeGrid.innerHTML = ''; // Old browser local storage data grid clear garchha
+            products.forEach(item => {
+                // Tapaiko website ko UI layout card code automatically insert hunchha
+                storeGrid.innerHTML += `
+                    <div class="product-card">
+                        <img src="${item.image_url || 'placeholder.jpg'}" alt="${item.title}">
+                        <h3>${item.title}</h3>
+                        <p>${item.description}</p>
+                        <span class="price">रू. ${item.price}</span>
+                        <span class="category">${item.category}</span>
+                    </div>
+                `;
+            });
+        }
+    }
+
+    // ४. Website bata naya original saman post गर्दा use hune operational handler
+    async function addProductToSupabase(title, desc, price, imgUrl, cat) {
+        const { data, error } = await supabase
+            .from('products')
+            .insert([
+                { 
+                    title: title, 
+                    description: desc, 
+                    price: parseFloat(price), 
+                    image_url: imgUrl, 
+                    category: cat 
+                }
+            ]);
+
+        if (error) {
+            alert("Saman post garna sakiena: " + error.message);
+        } else {
+            alert("Saman Supabase Database ma safe vayo!");
+            loadProductsFromSupabase(); // Post hune bitikai refresh garxa
+        }
+    }
+
+    // Auto-run when the screen fully loads
+    document.addEventListener("DOMContentLoaded", () => {
+        loadProductsFromSupabase();
+    });
+</script>
+
             font-family: 'Mukta', sans-serif;
             background-color: #FDFBF7;
             background-image: radial-gradient(#DC143C 0.5px, transparent 0.5px), radial-gradient(#003893 0.5px, #FDFBF7 0.5px);

@@ -13,7 +13,67 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <!-- Google Fonts for Nepali Text (Mukta) -->
     
-    <script>
+    <script>// १. नयाँ प्राविधिक (Worker) दर्ता गर्दा डाटाबेसमा सुरक्षित गर्ने (Register Worker)
+async function registerWorkerToSupabase(fullName, fatherName, mobile, district, role = 'Worker') {
+    const { data, error } = await supabase
+        .from('profiles')
+        .insert([
+            { 
+                full_name: fullName, 
+                father_name: fatherName, 
+                mobile: mobile, 
+                district: district, 
+                role: role 
+            }
+        ]);
+
+    if (error) {
+        alert("प्राविधिक दर्ता गर्न सकिएन: " + error.message);
+    } else {
+        alert("बधाई छ! प्राविधिक सफलतापूर्वक दर्ता भयो।");
+        loadWorkersFromSupabase(); // लिस्ट रिफ्रेस गर्न
+    }
+}
+
+// २. डाटाबेसबाट स्वीकृत प्राविधिकहरूको सूची लोड गरेर वेबसाइटमा देखाउने (Fetch Workers)
+async function loadWorkersFromSupabase() {
+    const { data: workers, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('role', 'Worker'); // साधारण ग्राहक बाहेक प्राविधिकहरू मात्र तान्ने
+
+    if (error) {
+        console.error("प्राविधिकहरूको सूची लोड हुन सकेन:", error.message);
+        return;
+    }
+
+    console.log("Database bata aayeko workers:", workers);
+    
+    // वेबसाइटमा वर्करहरू देखिने ठाउँको क्लास वा ID (जस्तai: .workers-grid) छान्ने
+    const workersContainer = document.querySelector('.workers-grid') || document.getElementById('workers-container');
+    if (workersContainer && workers) {
+        workersContainer.innerHTML = ''; // पुरानो डेमो डाटा खाली गर्ने
+        
+        workers.forEach(worker => {
+            workersContainer.innerHTML += `
+                <div class="worker-card">
+                    <h3>${worker.full_name}</h3>
+                    <p><b>जिल्ला:</b> ${worker.district}</p>
+                    <p><b>सम्पर्क:</b> ${worker.mobile || 'उपलब्ध छैन'}</p>
+                    <span class="status-badge">प्रमाणित प्राविधिक</span>
+                    <br>
+                    <a href="https://wa.me{worker.mobile}" target="_blank" class="whatsapp-btn">WhatsApp मा कुरा गर्नुहोस्</a>
+                </div>
+            `;
+        });
+    }
+}
+
+// अघिको DOMContentLoaded भित्र यो लाइन पनि थपिदिनुहोस् ता कि साइट खुल्ने बित्तिकै वर्करहरू लोड हुन्
+document.addEventListener("DOMContentLoaded", () => {
+    loadWorkersFromSupabase();
+});
+
         tailwind.config = {
             theme: {
                 extend: {

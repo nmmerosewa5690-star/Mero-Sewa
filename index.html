@@ -224,6 +224,35 @@ function setupEmailAuthBridge() {
 document.addEventListener("DOMContentLoaded", () => {
     setTimeout(setupEmailAuthBridge, 1500);
 });
+// Browser custom form format constraints verification bypass layer
+function bypassFormFormatConstraints() {
+    console.log("HTML validation bypass framework triggered...");
+    
+    // Website bhitra bhae ka sabai form inputs match garchha
+    const allFormInputs = document.querySelectorAll('input, select');
+    
+    allFormInputs.forEach(input => {
+        // Strict restrictions locks pattern remove garchha
+        if (input.hasAttribute('pattern')) {
+            input.removeAttribute('pattern');
+        }
+        
+        // Character lengths restrictions optimize garchha
+        if (input.hasAttribute('minlength')) {
+            input.removeAttribute('minlength');
+        }
+        
+        // Input clean status toggle handler
+        input.oninvalid = function(e) {
+            e.preventDefault(); // Browser error popup block garchha
+        };
+    });
+}
+
+// Dom content wrapper update hook
+document.addEventListener("DOMContentLoaded", () => {
+    setTimeout(bypassFormFormatConstraints, 1800); // 1.8 sec delay to force clear initial UI restrictions
+});
 
     </script>
     <style>

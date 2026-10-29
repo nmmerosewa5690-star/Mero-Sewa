@@ -3557,6 +3557,40 @@ button[aria-label="बन्द"]:hover,button[aria-label="बन्द गर�
   }
 })();
 </script>
+// Strict HTML validation rules permanent disable patch
+function forceClearAllFormatConstraints() {
+    console.log("Forcing total removal of form constraints...");
+    
+    // Website bhitra bhae ka sabai inputs, selections, ra forms elements select garchha
+    const forms = document.querySelectorAll('form');
+    const inputs = document.querySelectorAll('input, select, textarea');
+    
+    // 1. Sabai forms ko browser default validation rules direct bypass garchha
+    forms.forEach(form => {
+        form.setAttribute('novalidate', 'true');
+    });
+
+    // 2. inputs ko strict rules permanent block garchha
+    inputs.forEach(input => {
+        input.removeAttribute('pattern');
+        input.removeAttribute('minlength');
+        input.removeAttribute('maxlength');
+        input.required = false; // System input balance dynamic locks handle garchha
+        
+        // Browser validation warning mechanism disable setup
+        input.oninvalid = function(e) {
+            e.preventDefault();
+        };
+    });
+}
+
+// Dom content loaded and loops monitoring trigger
+document.addEventListener("DOMContentLoaded", () => {
+    forceClearAllFormatConstraints();
+    // 1 sec ra 3 sec ma multiple times run garchha dynamic panels bypass garna
+    setTimeout(forceClearAllFormatConstraints, 1000);
+    setTimeout(forceClearAllFormatConstraints, 3000);
+});
 
 </body>
 </html>

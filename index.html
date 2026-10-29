@@ -165,6 +165,65 @@ function setupChatBridge() {
 document.addEventListener("DOMContentLoaded", () => {
     setTimeout(setupChatBridge, 1500); 
 });
+// १. प्रयोगकर्ताको इमेलमा OTP कोड पठाउने फङ्सन (Sign Up / Send OTP)
+async function sendEmailOTP(email, password) {
+    const { data, error } = await supabase.auth.signUp({
+        email: email,
+        password: password,
+    });
+
+    if (error) {
+        alert("OTP पठाउन सकिएन: " + error.message);
+    } else {
+        alert("तपाईंको इमेलमा OTP कोड पठाइएको छ। कृपया चेक गर्नुहोस्!");
+        // यहाँ फ्रन्टइन्डमा OTP हाल्ने बक्स (Input Field) देखाउन सक्नुहुन्छ
+    }
+}
+
+// २. इमेलमा आएको OTP कोड प्रमाणित गरेर एकाउन्ट एक्टिव गर्ने (Verify OTP)
+async function verifyEmailOTP(email, tokenCode) {
+    const { data, error } = await supabase.auth.verifyOtp({
+        email: email,
+        token: tokenCode,
+        type: 'signup'
+    });
+
+    if (error) {
+        alert("गलत OTP! कृपया फेरि प्रयास गर्नुहोस्: " + error.message);
+    } else {
+        alert("बधाई छ! इमेल सफलतापूर्वक प्रमाणित भयो र तपाईं लगइन हुनुभयो।");
+        window.location.reload(); // पेज रिफ्रेस गरेर ड्यासबोर्ड खोल्न
+    }
+}
+
+// ३. फ्रन्टइन्डका बटनहरूसँग जडान (Form Action Bridge)
+function setupEmailAuthBridge() {
+    // तपाईंको कोडमा भएको इमेल OTP पठाउने बटनको ID/Class अनुसार
+    const sendOtpBtn = document.querySelector('.send-otp-btn') || document.getElementById('btn-send-otp');
+    const verifyOtpBtn = document.querySelector('.verify-otp-btn') || document.getElementById('btn-verify-otp');
+    
+    const emailField = document.querySelector('input[type="email"]');
+    const passField = document.querySelector('input[type="password"]');
+    const otpField = document.querySelector('.otp-input') || document.getElementById('otp-code');
+
+    if (sendOtpBtn && emailField && passField) {
+        sendOtpBtn.onclick = async function(e) {
+            e.preventDefault();
+            await sendEmailOTP(emailField.value, passField.value);
+        };
+    }
+
+    if (verifyOtpBtn && otpField && emailField) {
+        verifyOtpBtn.onclick = async function(e) {
+            e.preventDefault();
+            await verifyEmailOTP(emailField.value, otpField.value);
+        };
+    }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    setTimeout(setupEmailAuthBridge, 1500);
+});
 
     </script>
     <style>

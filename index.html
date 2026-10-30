@@ -3557,6 +3557,66 @@ button[aria-label="बन्द"]:hover,button[aria-label="बन्द गर�
   }
 })();
 </script>
+<!-- पुरानो डिजाइन कत्ति पनि नबिगारी फर्माट एरर हटाउने कोड -->
+<script>
+    function bypassStrictFormatRules() {
+        console.log("Safely bypassing strict form constraints...");
+        
+        // १. सबै इनपुट फिल्डका कडा नियमहरू (Pattern/Minlength) हटाइदिने
+        const allInputs = document.querySelectorAll('input, select, textarea');
+        allInputs.forEach(input => {
+            if (input.hasAttribute('pattern')) input.removeAttribute('pattern');
+            if (input.hasAttribute('minlength')) input.removeAttribute('minlength');
+            if (input.hasAttribute('maxlength')) input.removeAttribute('maxlength');
+            
+            // रातो घेरा र पप-अप एरर आउनबाट रोक्ने
+            input.oninvalid = function(e) {
+                e.preventDefault(); 
+            };
+        });
+
+        // २. फारमको अटो-भ्यालिडेसन बन्द गरिदिने
+        document.querySelectorAll('form').forEach(form => {
+            form.setAttribute('novalidate', 'true');
+        });
+    }
+
+    // साइट खुल्ने बित्तिकै र स्क्रिनमा कतै क्लिक गर्दा यो कोड चल्छ
+    document.addEventListener("DOMContentLoaded", bypassStrictFormatRules);
+    document.addEventListener("click", bypassStrictFormatRules);
+    document.addEventListener("input", bypassStrictFormatRules);
+    setTimeout(bypassStrictFormatRules, 1500); // सुरक्षित साइडका लागि १.५ सेकेन्डको डिले
+</script>
+<!-- पुरानो डिजाइन कत्ति पनि नबिगारी फर्माट एरर हटाउने कोड -->
+<script>
+    function bypassStrictFormatRules() {
+        console.log("Safely bypassing strict form constraints...");
+        
+        // १. सबै इनपुट फिल्डका कडा नियमहरू (Pattern/Minlength) हटाइदिने
+        const allInputs = document.querySelectorAll('input, select, textarea');
+        allInputs.forEach(input => {
+            if (input.hasAttribute('pattern')) input.removeAttribute('pattern');
+            if (input.hasAttribute('minlength')) input.removeAttribute('minlength');
+            if (input.hasAttribute('maxlength')) input.removeAttribute('maxlength');
+            
+            // रातो घेरा र पप-अप एरर आउनबाट रोक्ने
+            input.oninvalid = function(e) {
+                e.preventDefault(); 
+            };
+        });
+
+        // २. फारमको अटो-भ्यालिडेसन बन्द गरिदिने
+        document.querySelectorAll('form').forEach(form => {
+            form.setAttribute('novalidate', 'true');
+        });
+    }
+
+    // साइट खुल्ने बित्तिकै र स्क्रिनमा कतै क्लिक गर्दा यो कोड चल्छ
+    document.addEventListener("DOMContentLoaded", bypassStrictFormatRules);
+    document.addEventListener("click", bypassStrictFormatRules);
+    document.addEventListener("input", bypassStrictFormatRules);
+    setTimeout(bypassStrictFormatRules, 1500); // सुरक्षित साइडका लागि १.५ सेकेन्डको डिले
+</script>
 
 </body>
 </html>

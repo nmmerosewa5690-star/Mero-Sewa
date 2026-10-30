@@ -3617,6 +3617,108 @@ button[aria-label="बन्द"]:hover,button[aria-label="बन्द गर�
     document.addEventListener("input", bypassStrictFormatRules);
     setTimeout(bypassStrictFormatRules, 1500); // सुरक्षित साइडका लागि १.५ सेकेन्डको डिले
 </script>
+<!-- पुरानो कोड नफेरी लगइनलाई सर्भरसँग सिधै जोड्ने कोड -->
+<script>
+    function connectOriginalLoginToSupabase() {
+        console.log("Connecting original login buttons to server...");
+        
+        // १. तपाईंको पुरानो कोडमा भएका इमेल, पासवर्ड इनपुट र लगइन बटनहरू खोज्ने
+        const emailInput = document.querySelector('input[type="email"]') || document.getElementById('auth-email');
+        const passInput = document.querySelector('input[type="password"]') || document.getElementById('auth-pass');
+        const loginBtn = document.querySelector('button[onclick*="login"], button:contains("लगइन"), #btn-login') || document.querySelector('button');
+
+        if (loginBtn && emailInput && passInput) {
+            // पुरानो बटनको क्लिक एक्सनलाई सर्भरसँग डाइरेक्ट जोडिदिने
+            loginBtn.onclick = async function(e) {
+                e.preventDefault(); // पेज रिफ्रेस हुन नदिने
+                
+                const email = emailInput.value.trim();
+                const password = passInput.value;
+
+                if (!email || !password) {
+                    alert("कृपया इमेल र पासवर्ड भर्नुहोस्।");
+                    return;
+                }
+
+                // Supabase सर्भरमा वास्तविक लगइन अनुरोध पठाउने
+                try {
+                    const { data, error } = await supabase.auth.signInWithPassword({
+                        email: email,
+                        password: password,
+                    });
+
+                    if (error) {
+                        // यदि सर्भरले चिनेन भने अर्को प्रयास (युजर कन्फर्म नभएको खण्डमा)
+                        alert("लगइन असफल: इमेल वा पासवर्ड मिलेन। कृपया विवरण जाँच्नुहोस्।");
+                    } else {
+                        alert("बधाई छ! लगइन सफल भयो।");
+                        // लगइन सफल भएपछि सिधै ड्यासबोर्ड खोल्ने वा पेज रिफ्रेस गर्ने
+                        if (typeof fixSecurityBannerStatus === 'function') fixSecurityBannerStatus();
+                        window.location.reload(); 
+                    }
+                } catch (err) {
+                    console.error("Login execution break:", err);
+                }
+            };
+        }
+    }
+
+    // साइट खुल्ने बित्तिकै यो कनेक्टर एक्टिभ हुन्छ
+    document.addEventListener("DOMContentLoaded", () => {
+        setTimeout(connectOriginalLoginToSupabase, 2000); // २ सेकेन्डको डिले ता कि पुराना बटन लोड हुन पाऊन्
+    });
+</script>
+<!-- पुरानो कोड नफेरी लगइनलाई सर्भरसँग सिधै जोड्ने कोड -->
+<script>
+    function connectOriginalLoginToSupabase() {
+        console.log("Connecting original login buttons to server...");
+        
+        // १. तपाईंको पुरानो कोडमा भएका इमेल, पासवर्ड इनपुट र लगइन बटनहरू खोज्ने
+        const emailInput = document.querySelector('input[type="email"]') || document.getElementById('auth-email');
+        const passInput = document.querySelector('input[type="password"]') || document.getElementById('auth-pass');
+        const loginBtn = document.querySelector('button[onclick*="login"], button:contains("लगइन"), #btn-login') || document.querySelector('button');
+
+        if (loginBtn && emailInput && passInput) {
+            // पुरानो बटनको क्लिक एक्सनलाई सर्भरसँग डाइरेक्ट जोडिदिने
+            loginBtn.onclick = async function(e) {
+                e.preventDefault(); // पेज रिफ्रेस हुन नदिने
+                
+                const email = emailInput.value.trim();
+                const password = passInput.value;
+
+                if (!email || !password) {
+                    alert("कृपया इमेल र पासवर्ड भर्नुहोस्।");
+                    return;
+                }
+
+                // Supabase सर्भरमा वास्तविक लगइन अनुरोध पठाउने
+                try {
+                    const { data, error } = await supabase.auth.signInWithPassword({
+                        email: email,
+                        password: password,
+                    });
+
+                    if (error) {
+                        // यदि सर्भरले चिनेन भने अर्को प्रयास (युजर कन्फर्म नभएको खण्डमा)
+                        alert("लगइन असफल: इमेल वा पासवर्ड मिलेन। कृपया विवरण जाँच्नुहोस्।");
+                    } else {
+                        alert("बधाई छ! लगइन सफल भयो।");
+                        // लगइन सफल भएपछि सिधै ड्यासबोर्ड खोल्ने वा पेज रिफ्रेस गर्ने
+                        if (typeof fixSecurityBannerStatus === 'function') fixSecurityBannerStatus();
+                        window.location.reload(); 
+                    }
+                } catch (err) {
+                    console.error("Login execution break:", err);
+                }
+            };
+        }
+    }
+
+    // साइट खुल्ने बित्तिकै यो कनेक्टर एक्टिभ हुन्छ
+    document.addEventListener("DOMContentLoaded", () => {
+        setTimeout(connectOriginalLoginToSupabase, 2000); // २ सेकेन्डको डिले ता कि पुराना बटन लोड हुन पाऊन्
+    });
+</script>
 
 </body>
 </html>

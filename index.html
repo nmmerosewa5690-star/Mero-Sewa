@@ -126,16 +126,27 @@
 <script>
 (async function nsewaBackendStatus(){
   const el=document.getElementById('nsewa-system-status'); if(!el)return;
+  const paint=(message,ok)=>{
+    el.textContent=message;
+    el.style.background=ok?'#ecfdf5':'#fff7ed';
+    el.style.color=ok?'#065f46':'#9a3412';
+    el.style.borderColor=ok?'#a7f3d0':'#fed7aa';
+  };
   try {
-    const r=await fetch('/api/health',{headers:{'Accept':'application/json'},cache:'no-store'});
-    const d=await r.json();
-    if(r.ok && d && d.status==='ok' && d.database==='ok'){
-      el.textContent='सर्भर जडान भएको छ। भुक्तानी/अर्डर सुविधा उपलब्धता सम्बन्धित API ले पुष्टि गरेपछि मात्र मान्य हुनेछ।';
-      el.style.background='#ecfdf5';el.style.color='#065f46';el.style.borderColor='#a7f3d0';
-    } else throw new Error('backend not ready');
-  } catch (_) {
-    el.textContent='सर्भर जडान पुष्टि हुन सकेन। लगइन, अर्डर, भुक्तानी र निजी डाटा प्रयोग गर्नु अघि सेवा उपलब्धता जाँच्नुहोस्।';
-    el.style.background='#fff7ed';el.style.color='#9a3412';el.style.borderColor='#fed7aa';
+    // Supabase bootstrap is loaded near the end of this HTML. Wait for its event.
+    if(!window.nsewaSupabaseReady){
+      await Promise.race([
+        new Promise(resolve=>window.addEventListener('nsewa:supabase-ready',resolve,{once:true})),
+        new Promise((_,reject)=>setTimeout(()=>reject(new Error('Supabase SDK timeout')),10000))
+      ]);
+    }
+    if(!window.nsewaSupabaseReady || !window.nsewaSupabase) throw new Error('Supabase client unavailable');
+    const {error}=await window.nsewaSupabase.from('profiles').select('id').limit(1);
+    if(error) throw error;
+    paint('Supabase जडान र profiles तालिकामा पहुँच सफल भयो। अन्य सुविधा (च्याट, अर्डर, भुक्तानी, निजी फाइल र CEO अधिकार) छुट्टै जडान तथा परीक्षणपछि मात्र सक्रिय मानिनेछन्।',true);
+  } catch (error) {
+    console.warn('Mero-Sewa backend check:',error);
+    paint('Supabase को profiles तालिकामा पहुँच पुष्टि भएन। SQL migration, RLS नीति, Project URL/Publishable key र नेटवर्क जाँच्नुहोस्।',false);
   }
 })();
 </script>
@@ -1057,7 +1068,7 @@
               <div id="ceo-broadcast-access" class="space-y-3"><label for="ceo-broadcast-text" class="block text-sm font-bold">सूचनाको सन्देश</label><textarea id="ceo-broadcast-text" maxlength="3000" rows="5" class="w-full rounded-xl border p-3 text-sm focus:border-red-400 focus:outline-none" placeholder="सबै प्रयोगकर्ताका लागि सूचना लेख्नुहोस्…"></textarea><button onclick="createCeoBroadcast()" class="rounded-xl bg-nepalRed px-5 py-3 text-sm font-bold text-white"><i class="fa-solid fa-bullhorn mr-2"></i>सूचना तयार गर्नुहोस्</button><div id="ceo-broadcast-result" class="text-sm"></div></div>
               <div class="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900">कम्पनी सूचना अहिले स्थानीय मस्यौदा मात्र हो—वास्तविक रूपमा सबैलाई पुग्न server-side CEO अनुमति, user database र push/in-app notification आवश्यक छ। HTML मा देखिने CEO role मात्र वास्तविक सुरक्षा होइन।</div>
             </section>
-            <div id="nsewa-live-chat" class="mx-3 my-3 rounded-xl border border-blue-200 bg-blue-50 p-4"><h3 class="font-bold text-blue-950">सर्भरमा आधारित Live Chat</h3><p id="nsewa-live-chat-status" class="my-1 text-xs text-blue-800">लगइन गरेपछि प्रयोगकर्ता ID र सन्देश पठाउन सक्नुहुन्छ।</p><div class="grid grid-cols-1 gap-2 sm:grid-cols-[130px_1fr_auto]"><input id="nsewa-live-chat-to" type="number" min="1" class="rounded-lg border px-3 py-2 text-sm" placeholder="प्राप्तकर्ता ID"><input id="nsewa-live-chat-body" maxlength="4000" class="rounded-lg border px-3 py-2 text-sm" placeholder="सन्देश लेख्नुहोस्…"><button id="nsewa-live-chat-send" type="button" class="rounded-lg bg-blue-800 px-4 py-2 text-sm font-bold text-white">पठाउनुहोस्</button></div><div id="nsewa-live-chat-log" class="mt-3 max-h-48 space-y-2 overflow-y-auto text-sm"></div></div>
+            <div id="nsewa-live-chat" class="mx-3 my-3 rounded-xl border border-blue-200 bg-blue-50 p-4"><h3 class="font-bold text-blue-950">सर्भरमा आधारित Live Chat</h3><p id="nsewa-live-chat-status" class="my-1 text-xs text-blue-800">लगइन गरेपछि प्रयोगकर्ता ID र सन्देश पठाउन सक्नुहुन्छ।</p><div class="grid grid-cols-1 gap-2 sm:grid-cols-[130px_1fr_auto]"><input id="nsewa-live-chat-to" type="text" class="rounded-lg border px-3 py-2 text-sm" placeholder="प्राप्तकर्ताको Supabase User UUID"><input id="nsewa-live-chat-body" maxlength="4000" class="rounded-lg border px-3 py-2 text-sm" placeholder="सन्देश लेख्नुहोस्…"><button id="nsewa-live-chat-send" type="button" class="rounded-lg bg-blue-800 px-4 py-2 text-sm font-bold text-white">पठाउनुहोस्</button></div><div id="nsewa-live-chat-log" class="mt-3 max-h-48 space-y-2 overflow-y-auto text-sm"></div></div>
 <section id="comm-panel-calls" class="comm-panel hidden space-y-4">
               <div><h3 class="text-lg font-extrabold">Voice/Video Call र OTP</h3><p class="text-sm text-slate-500">एकै ठाउँबाट सम्पर्क गर्ने व्यवस्था</p></div>
               <div class="grid gap-3 sm:grid-cols-2"><article class="rounded-xl border p-4"><div class="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-green-100 text-green-700"><i class="fa-solid fa-phone text-xl"></i></div><h4 class="font-bold">Voice call</h4><p class="my-2 text-sm text-slate-500">सामान्य फोन वा in-app call</p><button onclick="startCommCall('voice')" class="rounded-lg bg-green-700 px-4 py-2 text-sm font-bold text-white">Voice call सुरु</button></article><article class="rounded-xl border p-4"><div class="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-blue-100 text-blue-700"><i class="fa-solid fa-video text-xl"></i></div><h4 class="font-bold">Video call</h4><p class="my-2 text-sm text-slate-500">In-app video call</p><button onclick="startCommCall('video')" class="rounded-lg bg-nepalBlue px-4 py-2 text-sm font-bold text-white">Video call सुरु</button></article><article class="rounded-xl border p-4 sm:col-span-2"><h4 class="font-bold">मोबाइल SMS OTP</h4><p class="my-2 text-sm text-slate-500">मोबाइल नम्बरमा वास्तविक OTP पठाउने प्रयास गर्नुहोस् (backend र SMS provider सेटअप भएको हुनुपर्छ)।</p><div class="flex flex-wrap gap-2"><input id="comm-otp-phone" class="min-w-0 flex-1 rounded-lg border px-3 py-2 text-sm" inputmode="tel" placeholder="+977 98XXXXXXXX"><button onclick="requestRealOtpInfo()" class="rounded-lg border border-nepalRed px-4 py-2 text-sm font-bold text-nepalRed">SMS OTP पठाउनुहोस्</button></div></article></div>
@@ -3507,7 +3518,6 @@ button[aria-label="बन्द"]:hover,button[aria-label="बन्द गर�
     })();
     </script>
 
-<script src="/integration.js" defer></script>
 
 <!-- Nsewa Supabase connection setup -->
 <div id="nsewa-supabase-status" role="status" aria-live="polite" style="position:relative;z-index:9999;margin:10px auto;padding:10px 14px;max-width:1100px;border:1px solid #fed7aa;border-radius:10px;background:#fff7ed;color:#9a3412;font:14px/1.5 system-ui,sans-serif;">
@@ -3718,6 +3728,235 @@ button[aria-label="बन्द"]:hover,button[aria-label="बन्द गर�
     document.addEventListener("DOMContentLoaded", () => {
         setTimeout(connectOriginalLoginToSupabase, 2000); // २ सेकेन्डको डिले ता कि पुराना बटन लोड हुन पाऊन्
     });
+</script>
+
+
+<!-- Mero-Sewa Supabase integration adapter (preserves the original public UI) -->
+<script id="nsewa-full-backend-adapter">
+(function () {
+  'use strict';
+  const BUCKET = 'nsewa-private-documents';
+  const statusEl = () => document.getElementById('nsewa-system-status');
+  const sb = () => window.nsewaSupabaseReady && window.nsewaSupabase ? window.nsewaSupabase : null;
+  const say = (message, good) => {
+    const el = statusEl(); if (!el) return;
+    el.textContent = message;
+    el.style.background = good ? '#ecfdf5' : '#fff7ed';
+    el.style.color = good ? '#065f46' : '#9a3412';
+  };
+  const currentUser = async () => {
+    const client = sb(); if (!client) throw new Error('Supabase जडान उपलब्ध छैन।');
+    const { data, error } = await client.auth.getUser();
+    if (error) throw error;
+    if (!data.user) throw new Error('पहिले लगइन गर्नुहोस्।');
+    return data.user;
+  };
+  const escapeText = v => String(v == null ? '' : v);
+  const safeFileName = name => escapeText(name).normalize('NFKD').replace(/[^a-zA-Z0-9._-]/g, '_').slice(-90) || 'document';
+  const fileAllowed = f => f && f.size <= 5 * 1024 * 1024 &&
+    ['image/jpeg','image/png','image/webp','application/pdf'].includes(f.type);
+
+  async function uploadRegistrationDocuments(user, pending, files) {
+    const client = sb();
+    const docs = [
+      ['profile_photo', files.photo],
+      ['citizenship', files.citizenship],
+      ['professional_or_business_proof', files.proof]
+    ].filter(x => x[1]);
+    for (const [kind, file] of docs) {
+      if (!fileAllowed(file)) throw new Error('कागजात JPG/PNG/WebP/PDF र ५ MB भित्र हुनुपर्छ: ' + file.name);
+      const path = `${user.id}/${kind}/${Date.now()}-${safeFileName(file.name)}`;
+      const { error: upErr } = await client.storage.from(BUCKET).upload(path, file, {
+        contentType: file.type, upsert: false
+      });
+      if (upErr) throw upErr;
+      const { error: rowErr } = await client.from('user_documents').insert({
+        user_id: user.id, document_type: kind, storage_path: path,
+        original_name: file.name.slice(0,180), mime_type: file.type, size_bytes: file.size,
+        review_status: 'PENDING'
+      });
+      if (rowErr) throw rowErr;
+    }
+    if (pending.role === 'Worker') {
+      const { error } = await client.from('worker_profiles').upsert({
+        user_id: user.id, district: pending.district || null, skills: [], experience_years: null
+      }, { onConflict: 'user_id' });
+      if (error) throw error;
+    } else if (pending.role === 'Seller') {
+      const { error } = await client.from('seller_profiles').upsert({
+        user_id: user.id, district: pending.district || null, business_name: pending.name || null
+      }, { onConflict: 'user_id' });
+      if (error) throw error;
+    }
+  }
+
+  async function loadPublicData() {
+    const client = sb(); if (!client) return;
+    try {
+      const { data: p, error } = await client.from('products')
+        .select('id,title,price,district,image_url,seller_name,status')
+        .eq('status','APPROVED').order('created_at',{ascending:false}).limit(100);
+      if (error) throw error;
+      window.__nsewaApiProducts = (p || []).map(x => ({
+        id:x.id, title:x.title, price:Number(x.price), district:x.district || '',
+        img:x.image_url || 'https://placehold.co/300x200/dc143c/white?text=Electrical+Item',
+        seller:x.seller_name || 'नेपाली सेवा विक्रेता', mobile:''
+      }));
+      window.__nsewaApiSearchActive = false;
+      if (typeof window.renderProducts === 'function') window.renderProducts();
+    } catch (e) { console.warn('Products load:', e.message); }
+    try {
+      const { data: w, error } = await client.from('worker_profiles')
+        .select('user_id,district,skills,experience_years,profiles!inner(full_name,phone,status)')
+        .eq('profiles.status','APPROVED').limit(100);
+      if (error) throw error;
+      if (typeof workers !== 'undefined' && Array.isArray(workers)) {
+        const remote = (w || []).map((x,i)=>({
+          id:'db-'+x.user_id, personalId:'WRK-'+String(i+1).padStart(4,'0'),
+          name:x.profiles?.full_name || 'प्रमाणित प्राविधिक',
+          mobile:x.profiles?.phone || '', district:x.district || '',
+          spec:Array.isArray(x.skills)?x.skills.join(', '):'', exp:x.experience_years ? x.experience_years+' वर्ष':'',
+          status:'APPROVED'
+        }));
+        workers = workers.filter(x => !String(x.id).startsWith('db-')).concat(remote);
+        if (typeof window.renderWorkers === 'function') window.renderWorkers();
+      }
+    } catch (e) { console.warn('Workers load:', e.message); }
+  }
+
+  async function loadNotices() {
+    const client=sb(); if(!client) return;
+    try {
+      const user=await currentUser();
+      const {data,error}=await client.from('notifications')
+        .select('id,title,body,created_at,read_at').eq('user_id',user.id)
+        .order('created_at',{ascending:false}).limit(50);
+      if(error) throw error;
+      const items=(data||[]).map(n=>({id:n.id,title:n.title,body:n.body,at:n.created_at,read:!!n.read_at}));
+      localStorage.setItem('nsewa-notification-items-v1',JSON.stringify(items));
+      if(typeof window.renderNsewaNotifications==='function') window.renderNsewaNotifications();
+    } catch(e) { console.warn('Notifications load:',e.message); }
+  }
+
+  async function initRealtime() {
+    const client=sb(); if(!client) return;
+    let user; try { user=await currentUser(); } catch(_) { return; }
+    try {
+      const channel=client.channel('nsewa-user-'+user.id)
+        .on('postgres_changes',{event:'*',schema:'public',table:'notifications',filter:'user_id=eq.'+user.id},()=>loadNotices())
+        .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:'recipient_id=eq.'+user.id},payload=>{
+          const box=document.getElementById('nsewa-live-chat-log');
+          if(box){const row=document.createElement('div');row.className='rounded-lg bg-blue-50 p-2';row.textContent='नयाँ सन्देश: '+payload.new.body;box.appendChild(row);}
+        }).subscribe();
+      window.__nsewaRealtimeChannel=channel;
+    } catch(e) { console.warn('Realtime:',e.message); }
+  }
+
+  async function sendLiveMessage() {
+    const client=sb(), to=document.getElementById('nsewa-live-chat-to'), body=document.getElementById('nsewa-live-chat-body');
+    const log=document.getElementById('nsewa-live-chat-log');
+    try {
+      const user=await currentUser(), recipient=(to?.value||'').trim(), message=(body?.value||'').trim();
+      if(!recipient || !/^[0-9a-f-]{36}$/i.test(recipient)) throw new Error('प्राप्तकर्ताको Supabase User UUID राख्नुहोस्।');
+      if(!message || message.length>4000) throw new Error('सन्देश १–४००० अक्षरको हुनुपर्छ।');
+      const {error}=await client.from('messages').insert({sender_id:user.id,recipient_id:recipient,body:message});
+      if(error) throw error;
+      const row=document.createElement('div'); row.className='rounded-lg bg-red-50 p-2 text-right'; row.textContent=message;
+      if(log) log.appendChild(row); if(body) body.value='';
+    } catch(e) { alert('Live Chat: '+e.message); }
+  }
+
+  async function createSecureOrder(gateway) {
+    const client=sb(); if(!client) throw new Error('Supabase जडान छैन।');
+    const title=String(currentPayDetails?.title || '');
+    const product=(window.__nsewaApiProducts||[]).find(x=>String(x.title)===title) ||
+      (typeof products!=='undefined' && products.find(x=>String(x.title)===title));
+    if(!product || !product.id || String(product.id).startsWith('db-')===false && !/^[0-9a-f-]{36}$/i.test(String(product.id))) {
+      throw new Error('यो सामानको server database ID भेटिएन। Database मा स्वीकृत सामान छान्नुहोस्।');
+    }
+    const {data:order,error:orderError}=await client.functions.invoke('create-order',{
+      body:{product_id:product.id,quantity:1}
+    });
+    if(orderError) throw orderError;
+    if(!order?.order_id) throw new Error('सर्भरबाट अर्डर ID प्राप्त भएन।');
+    const {data:checkout,error:payError}=await client.functions.invoke('payment-checkout',{
+      body:{order_id:order.order_id,gateway}
+    });
+    if(payError) throw payError;
+    if(!checkout?.checkout_url || !/^https:\/\//i.test(checkout.checkout_url)) throw new Error('भुक्तानी प्रदायकको सुरक्षित Checkout URL तयार छैन। रकम नपठाउनुहोस्।');
+    window.location.assign(checkout.checkout_url);
+  }
+
+  function install() {
+    const client=sb(); if(!client) return;
+    // Replace browser-only product creation with authenticated, pending database listing.
+    window.handleAddProduct=async function(e){
+      e.preventDefault();
+      try{
+        const user=await currentUser();
+        const title=document.getElementById('prod-title').value.trim();
+        const price=Number(document.getElementById('prod-price').value);
+        const district=document.getElementById('prod-district').value;
+        const image_url=document.getElementById('prod-img').value.trim() || null;
+        if(!title || !Number.isFinite(price) || price<=0) throw new Error('सामानको नाम र सही मूल्य राख्नुहोस्।');
+        const {error}=await client.from('products').insert({
+          owner_id:user.id,title,price,district,image_url,seller_name:user.user_metadata?.full_name||'विक्रेता',status:'PENDING'
+        });
+        if(error) throw error;
+        alert('सामान CEO स्वीकृतिका लागि Database मा पठाइयो। स्वीकृति नहुँदासम्म सार्वजनिक बजारमा देखिँदैन।');
+        e.target.reset(); if(typeof closeModal==='function') closeModal('add-product-modal');
+      }catch(err){alert('सामान सुरक्षित भएन: '+err.message);}
+    };
+
+    // Real payment is deliberately fail-closed until gateway credentials and provider verification are installed.
+    window.processPayment=async function(gateway){
+      try{await createSecureOrder(gateway);}
+      catch(err){alert('भुक्तानी सुरु भएन: '+err.message+'\nGateway Merchant credentials र payment-checkout Edge Function configure नभएसम्म रकम नपठाउनुहोस्।');}
+    };
+
+    const send=document.getElementById('nsewa-live-chat-send');
+    if(send && !send.dataset.backendBound){send.dataset.backendBound='1';send.addEventListener('click',sendLiveMessage);}
+    const to=document.getElementById('nsewa-live-chat-to');
+    if(to){to.type='text';to.removeAttribute('min');to.placeholder='प्राप्तकर्ताको Supabase User UUID';}
+    loadPublicData(); loadNotices(); initRealtime();
+  }
+
+  // Wrap the existing OTP verification so Worker/Seller documents go to private Storage after OTP success.
+  function wrapOtp() {
+    if(typeof window.verifyRegistrationEmailOtp!=='function' || window.verifyRegistrationEmailOtp.__nsewaWrapped) return false;
+    const original=window.verifyRegistrationEmailOtp;
+    const wrapped=async function(){
+      const pending=(()=>{try{return JSON.parse(localStorage.getItem('nsewa-pending-email-signup')||'null');}catch(_){return null;}})();
+      const files={
+        photo:document.getElementById('reg-photo')?.files?.[0],
+        citizenship:document.getElementById('reg-citizenship')?.files?.[0],
+        proof:document.getElementById('reg-cv')?.files?.[0]
+      };
+      await original.apply(this,arguments);
+      if(!pending || !sb()) return;
+      try{
+        const user=await currentUser();
+        await uploadRegistrationDocuments(user,pending,files);
+        say('OTP प्रमाणित भयो; Worker/Seller विवरण र छानिएका कागजात निजी Supabase Storage मा सुरक्षित भए। CEO समीक्षा बाँकी छ।',true);
+      }catch(e){
+        console.error('Private document upload failed:',e);
+        say('OTP सफल भयो तर कागजात/भूमिका विवरण पूर्ण सुरक्षित भएन: '+e.message,false);
+        alert('खाता OTP बाट प्रमाणित भयो, तर कागजात अपलोड वा Worker/Seller विवरण सुरक्षित गर्न समस्या आयो। पुनः लगइन गरेर सहायता लिनुहोस्।');
+      }
+    };
+    wrapped.__nsewaWrapped=true; window.verifyRegistrationEmailOtp=wrapped; return true;
+  }
+
+  const start=()=>{
+    if(!sb()) return;
+    install(); wrapOtp();
+    window.nsewaSupabase.auth.onAuthStateChange(()=>{setTimeout(()=>{install();loadPublicData();loadNotices();initRealtime();},300);});
+  };
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>setTimeout(start,0));
+  else setTimeout(start,0);
+  // Function declarations from the original inline script may be initialized just after this adapter.
+  let tries=0; const retry=setInterval(()=>{tries++;if(wrapOtp()||tries>20)clearInterval(retry);},250);
+})();
 </script>
 
 </body>

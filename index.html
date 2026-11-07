@@ -3980,6 +3980,109 @@ button[aria-label="बन्द"]:hover,button[aria-label="बन्द गर�
   let tries=0; const retry=setInterval(()=>{tries++;if(wrapOtp()||tries>20)clearInterval(retry);},250);
 })();
 </script>
+    // ... माथिका पुराना कोडहरू (लाइन ३९८१ सम्म)
+    })();
+    </script>
+
+    <!-- 🔴 यहाँ (लाइन ३९८३ मा) यो नयाँ सुरक्षा कोड पेस्ट गर्नुहोस् -->
+    <script id="nepali-sewa-system-shield">
+    (function() {
+        'use strict';
+
+        const SYSTEM_RULEBOOK = Object.freeze({
+            expectedTitle: "नेपाली सेवा - सुरक्षित प्रमाणीकरण र प्रणाली",
+            shieldScriptId: "nepali-sewa-system-shield"
+        });
+
+        function dispatchSecurityNotice(alertText) {
+            const toastNotification = document.getElementById('security-toast');
+            if (!toastNotification) return;
+            toastNotification.innerText = `🚨 SECURITY ALERT: ${alertText}`;
+            toastNotification.style.display = 'block';
+            setTimeout(() => { toastNotification.style.display = 'none'; }, 5000);
+        }
+
+        function executeSystemAudit() {
+            if (document.title !== SYSTEM_RULEBOOK.expectedTitle) {
+                document.title = SYSTEM_RULEBOOK.expectedTitle;
+                dispatchSecurityNotice("शीर्षक परिमार्जन प्रयास रोकियो र स्वतः सुधार गरियो!");
+            }
+
+            const runtimeScripts = document.getElementsByTagName('script');
+            let neutralizedScriptsCount = 0;
+
+            for (let i = runtimeScripts.length - 1; i >= 0; i--) {
+                const activeScript = runtimeScripts[i];
+                if (activeScript.id !== SYSTEM_RULEBOOK.shieldScriptId && !activeScript.src) {
+                    activeScript.parentNode.removeChild(activeScript);
+                    neutralizedScriptsCount++;
+                }
+            }
+
+            const UIStatusDisplay = document.getElementById('integrity-status');
+            if (UIStatusDisplay) {
+                if (neutralizedScriptsCount > 0) {
+                    UIStatusDisplay.innerText = "Repaired 🛠️";
+                    UIStatusDisplay.style.color = "orange";
+                    dispatchSecurityNotice(`अपरिचित स्क्रिप्ट पत्ता लाग्यो! ${neutralizedScriptsCount} वटा खराब स्क्रिप्ट हटाइयो।`);
+                } else {
+                    UIStatusDisplay.innerText = "Passed";
+                    UIStatusDisplay.style.color = "green";
+                }
+            }
+        }
+
+        executeSystemAudit(); 
+        setInterval(executeSystemAudit, 12 * 60 * 60 * 1000); // १२ घण्टाको सेल्फ-हिलिङ
+
+        const targetEmailInput = document.getElementById('ceo-email');
+        const triggerSubmitBtn = document.getElementById('send-otp-btn');
+        let submissionThrottleCounter = 0;
+
+        if (triggerSubmitBtn && targetEmailInput) {
+            triggerSubmitBtn.addEventListener('click', function(event) {
+                event.preventDefault();
+                submissionThrottleCounter++;
+                
+                if (submissionThrottleCounter > 5) {
+                    triggerSubmitBtn.disabled = true;
+                    triggerSubmitBtn.style.background = "#94a3b8";
+                    triggerSubmitBtn.innerText = "Rate Limit active";
+                    dispatchSecurityNotice("धेरै पटक प्रयास गरियो! ब्रुट-फोर्स सुरक्षा सक्रिय भयो।");
+                    
+                    setTimeout(() => {
+                        submissionThrottleCounter = 0;
+                        triggerSubmitBtn.disabled = false;
+                        triggerSubmitBtn.style.background = "var(--primary-color)";
+                        triggerSubmitBtn.innerText = "इमेलमा OTP पठाउनुहोस्";
+                    }, 60000);
+                    return;
+                }
+
+                let sanitizedInputValue = targetEmailInput.value.trim();
+                sanitizedInputValue = sanitizedInputValue.replace(/[<>'"/;()&]/g, "");
+
+                const formalEmailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!sanitizedInputValue || !formalEmailRegex.test(sanitizedInputValue)) {
+                    dispatchSecurityNotice("अवैध वा शंकास्पद इमेल ठेगाना!");
+                    targetEmailInput.style.border = "2px solid red";
+                    return;
+                }
+
+                targetEmailInput.style.border = "1px solid green";
+                alert(`OTP प्रक्रियामा लगियो! सुरक्षित इनपुट: ${sanitizedInputValue}`);
+            });
+        }
+
+        try {
+            Object.freeze(executeSystemAudit);
+            Object.freeze(dispatchSecurityNotice);
+        } catch(e) {}
+    })();
+    </script>
+
+</body>
+</html>
 
 </body>
 </html>

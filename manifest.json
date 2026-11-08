@@ -1,0 +1,23 @@
+{
+  "short_name": "MeroSewa",
+  "name": "Mero-Sewa | Smart Marketplace",
+  "icons": [
+    {
+      "src": "logo.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/Mero-Sewa/",
+  "background_color": "#da251d",
+  "theme_color": "#da251d",
+  "display": "standalone",
+  "orientation": "portrait"
+}

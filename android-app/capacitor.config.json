@@ -1,0 +1,8 @@
+{
+  "appId": "com.merosewa.app",
+  "appName": "MeroSewa",
+  "webDir": "www",
+  "server": {
+    "url": "https://nmmerosewa5690-star.github.io/Mero-Sewa/"
+  }
+}

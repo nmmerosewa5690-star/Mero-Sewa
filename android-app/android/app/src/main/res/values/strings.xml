@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">MeroSewa</string>
+    <string name="title_activity_main">MeroSewa</string>
+    <string name="package_name">com.merosewa.app</string>
+    <string name="custom_url_scheme">com.merosewa.app</string>
+</resources>

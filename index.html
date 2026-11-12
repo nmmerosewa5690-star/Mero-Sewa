@@ -1,15 +1,13 @@
 <!DOCTYPE html>
 <html lang="ne">
 <head>
-    <meta name="google-site-verification" content="cMj8Y9j1BKi7GkrElpZGXhc0MZ6EQpO7XNjGKigKBbU" />
+    <meta name="nsewa-build" content="Mero-Sewa hardened frontend candidate 2026-11-12">
     <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <meta charset="UTF-8">
     <meta name="color-scheme" content="light">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mero-Sewa</title>
-<meta name="description" content="Mero-Sewa - नेपालमा सेवा तथा उत्पादनसम्बन्धी जानकारी र सेवा प्रदायक तथा प्रयोगकर्तालाई जोड्ने डिजिटल प्लेटफर्म।">
-<link rel="canonical" href="https://nmmerosewa5690-star.github.io/Mero-Sewa/">
+    <title>Mero-Sewa | नेपाली सेवा — Smart Marketplace</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -1646,7 +1644,7 @@
                             </div>
                         </div>
                         <p class="text-xs text-gray-600 mb-2"><b>विशेषज्ञता:</b> ${window.nsewaEscapeHtml(w.spec)}</p>
-                        <p class="text-xs text-gray-500"><b>अनुभव:</b> ${w.exp} | <b>रेटिङ:</b> ⭐ ${w.rating}</p>
+                        <p class="text-xs text-gray-500"><b>अनुभव:</b> ${window.nsewaEscapeHtml(w.exp)} | <b>रेटिङ:</b> ⭐ ${window.nsewaEscapeHtml(w.rating)}</p>
                     </div>
 
                     <div class="bg-gray-50 p-3 border-t border-gray-100 flex flex-wrap gap-2">
@@ -1689,12 +1687,12 @@
                     <div>
                         <div class="h-40 bg-gray-100 overflow-hidden relative">
                             <img src="${window.nsewaSafeImageUrl(p.img)}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/300x200/dc143c/white?text=Electrical+Item'">
-                            <span class="absolute top-2 right-2 bg-nepalGold text-nepalBlue font-black text-xs px-2 py-1 rounded-full">रू. ${p.price}</span>
+                            <span class="absolute top-2 right-2 bg-nepalGold text-nepalBlue font-black text-xs px-2 py-1 rounded-full">रू. ${window.nsewaEscapeHtml(Number(p.price) || 0)}</span>
                         </div>
                         <div class="p-3">
                             <h4 class="font-bold text-sm text-gray-800 line-clamp-1">${window.nsewaEscapeHtml(p.title)}</h4>
                             <p class="text-xs text-gray-500 mt-1"><i class="fa-solid fa-store mr-1 text-nepalRed"></i>${window.nsewaEscapeHtml(p.seller)} ${(() => { const sp = sellers.find(x => x.name === p.seller); return sp && sp.status === 'APPROVED' ? '<span class="text-green-700 font-bold">स्वीकृत</span>' : '<span class="text-red-600 font-bold">जाँच बाँकी</span>'; })()}</p>
-                            <p class="text-xs text-gray-500"><i class="fa-solid fa-location-dot mr-1 text-nepalBlue"></i>${p.district}</p>
+                            <p class="text-xs text-gray-500"><i class="fa-solid fa-location-dot mr-1 text-nepalBlue"></i>${window.nsewaEscapeHtml(p.district)}</p>
                         </div>
                     </div>
                     <div class="p-3 border-t border-gray-100 bg-gray-50 space-y-1.5">
@@ -2051,19 +2049,18 @@
                     // Never accept role or district from client-editable user metadata.
                     const { error: createProfileError } = await window.nsewaSupabase.from('profiles').upsert({
                         id: user.id,
+                        email: user.email || (method === 'email' ? identifier : null),
                         phone: user.phone || (method === 'mobile' ? phone : null),
                         full_name: name,
-                        role: 'Client',
                         district: null,
-                        status: 'PENDING',
                         updated_at: new Date().toISOString()
                     }, { onConflict: 'id' });
                     if (createProfileError) throw createProfileError;
                 }
                 // Normal user login must never grant CEO/Admin privileges. CEO access is a separate
                 // server-verified OTP flow; the database RLS/API must independently enforce this.
-                const dbRole = String(profile?.role || 'Client');
-                const role = ['Client','Worker','Seller'].includes(dbRole) ? dbRole : 'Client';
+                const dbRole = String(profile?.role || 'Client').toLowerCase();
+                const role = ({client:'Client',worker:'Worker',seller:'Seller'})[dbRole] || 'Client';
                 const account = { id: user.id, phone: user.phone || (method === 'mobile' ? phone : ''), email: user.email || (method === 'email' ? identifier : ''), role, name };
                 localStorage.setItem('nsewa-auth-session', JSON.stringify(account));
                 currentUserRole = role; currentPersonalId = user.id;
@@ -2078,46 +2075,128 @@
                 showAuthMessage(err.message || 'लगिन हुन सकेन। मोबाइल नम्बर, पासवर्ड र Supabase Auth सेटअप जाँच्नुहोस्।');
             }
         }
+        // Restore the Supabase session once at a time. Do not treat the
+        // legacy localStorage account record as proof of authentication.
+        let nsewaAuthRestorePromise = null;
         async function restoreAuthSession() {
-            try {
-                if (!window.nsewaSupabaseReady || !window.nsewaSupabase) return;
-                const { data: sessionData, error: sessionError } = await window.nsewaSupabase.auth.getSession();
-                if (sessionError || !sessionData?.session?.user) return;
-                const user = sessionData.session.user;
-                // CEO authority comes only from Supabase server-managed app_metadata, never user_metadata.
-                // Preserve the verified CEO role when the Auth state listener restores the session after OTP.
+            if (!window.nsewaSupabaseReady || !window.nsewaSupabase) return false;
+            if (nsewaAuthRestorePromise) return nsewaAuthRestorePromise;
+
+            nsewaAuthRestorePromise = (async () => {
+                const { data: sessionData, error: sessionError } =
+                    await window.nsewaSupabase.auth.getSession();
+                if (sessionError) throw sessionError;
+
+                const user = sessionData?.session?.user;
+                if (!user) {
+                    localStorage.removeItem('nsewa-auth-session');
+                    currentPersonalId = null;
+                    currentUserRole = 'Client';
+                    ceoLayoutSessionExpiresAt = 0;
+                    window.nsewaCeoLayoutSessionToken = null;
+                    const gate = document.getElementById('entry-gate');
+                    if (gate) gate.classList.remove('hidden');
+                    return false;
+                }
+
+                // CEO privilege is accepted only from server-managed app_metadata.
                 if (String(user.app_metadata?.role || '').toLowerCase() === 'ceo') {
                     const verifiedSession = sessionData.session;
-                    ceoLayoutSessionExpiresAt = (Number(verifiedSession.expires_at) || Math.floor(Date.now()/1000) + 600) * 1000;
+                    ceoLayoutSessionExpiresAt =
+                        (Number(verifiedSession.expires_at) || Math.floor(Date.now() / 1000) + 600) * 1000;
                     window.nsewaCeoLayoutSessionToken = verifiedSession.access_token;
                     currentUserRole = 'CEO';
                     currentPersonalId = user.id;
-                    const account = { id:user.id, phone:user.phone||'', email:user.email||'', role:'CEO', name:user.user_metadata?.full_name||'CEO' };
+                    const account = {
+                        id: user.id,
+                        phone: user.phone || '',
+                        email: user.email || '',
+                        role: 'CEO',
+                        name: user.user_metadata?.full_name || 'CEO'
+                    };
                     localStorage.setItem('nsewa-auth-session', JSON.stringify(account));
-                    const n=document.getElementById('current-user-name'); if(n)n.textContent=account.name;
-                    const r=document.getElementById('current-user-role'); if(r)r.textContent='CEO / Admin';
-                    const i=document.getElementById('current-user-id'); if(i)i.textContent='My ID: '+user.id;
-                    const rs=document.getElementById('role-selector'); if(rs)rs.value='CEO';
+                    const nameEl = document.getElementById('current-user-name');
+                    if (nameEl) nameEl.textContent = account.name;
+                    const roleEl = document.getElementById('current-user-role');
+                    if (roleEl) roleEl.textContent = 'CEO / Admin';
+                    const idEl = document.getElementById('current-user-id');
+                    if (idEl) idEl.textContent = 'My ID: ' + user.id;
+                    const roleSelect = document.getElementById('role-selector');
+                    if (roleSelect) roleSelect.value = 'CEO';
                     window.syncNsewaRoleVisibility?.();
-                    return;
+                    const gate = document.getElementById('entry-gate');
+                    if (gate) gate.classList.add('hidden');
+                    return true;
                 }
-                const { data: profile, error } = await window.nsewaSupabase.from('profiles')
-                    .select('id,phone,full_name,role,district,status').eq('id', user.id).maybeSingle();
-                if (error) { console.warn('Could not restore Supabase profile:', error.message); return; }
-                // Security: never grant a role from editable user metadata. The database profile
-                // is the source of truth; missing/unknown roles fall back to least privilege.
+
                 const allowedRoles = new Set(['Client', 'Worker', 'Seller']);
-                const role = profile && allowedRoles.has(profile.role) ? profile.role : 'Client';
-                const name = profile?.full_name || 'प्रयोगकर्ता';
-                const account = { id: user.id, phone: user.phone || profile?.phone || '', email: user.email || '', role, name };
+                let profile = null;
+                const { data, error: profileError } = await window.nsewaSupabase
+                    .from('profiles')
+                    .select('id,phone,full_name,role,district,status')
+                    .eq('id', user.id)
+                    .maybeSingle();
+
+                if (profileError) {
+                    // A temporary profile/network failure must not erase a valid
+                    // Supabase session or falsely force the user to log in again.
+                    console.warn('Could not restore Supabase profile; using least privilege:', profileError.message);
+                    let cached = null;
+                    try { cached = JSON.parse(localStorage.getItem('nsewa-auth-session') || 'null'); }
+                    catch (_) {}
+                    if (cached?.id === user.id) {
+                        profile = {
+                            phone: cached.phone || '',
+                            full_name: cached.name || '',
+                            role: 'Client'
+                        };
+                    } else {
+                        profile = { phone: user.phone || '', full_name: '', role: 'Client' };
+                    }
+                } else {
+                    profile = data;
+                }
+
+                const rawRole = String(profile?.role || 'Client').toLowerCase();
+                const role = ({client:'Client',worker:'Worker',seller:'Seller'})[rawRole] || 'Client';
+                const name = profile?.full_name || user.user_metadata?.full_name || 'प्रयोगकर्ता';
+                const account = {
+                    id: user.id,
+                    phone: user.phone || profile?.phone || '',
+                    email: user.email || '',
+                    role,
+                    name
+                };
                 localStorage.setItem('nsewa-auth-session', JSON.stringify(account));
-                currentUserRole = role; currentPersonalId = user.id;
-                const n=document.getElementById('current-user-name'); if(n)n.textContent=name;
-                const r=document.getElementById('current-user-role'); if(r)r.textContent=role;
-                const i=document.getElementById('current-user-id'); if(i)i.textContent='My ID: '+user.id;
-                const rs=document.getElementById('role-selector'); if(rs)rs.value=role;
-            } catch (err) { console.warn('Supabase session restore failed:', err); }
+                currentUserRole = role;
+                currentPersonalId = user.id;
+
+                const nameEl = document.getElementById('current-user-name');
+                if (nameEl) nameEl.textContent = name;
+                const roleEl = document.getElementById('current-user-role');
+                if (roleEl) roleEl.textContent = role;
+                const idEl = document.getElementById('current-user-id');
+                if (idEl) idEl.textContent = 'My ID: ' + user.id;
+                const roleSelect = document.getElementById('role-selector');
+                if (roleSelect) roleSelect.value = role;
+                const gate = document.getElementById('entry-gate');
+                if (gate) gate.classList.add('hidden');
+                return true;
+            })();
+
+            try {
+                return await nsewaAuthRestorePromise;
+            } catch (err) {
+                console.warn('Supabase session restore failed:', err);
+                // Do not delete the persisted Supabase session on a temporary error.
+                const gate = document.getElementById('entry-gate');
+                if (gate) gate.classList.remove('hidden');
+                return false;
+            } finally {
+                nsewaAuthRestorePromise = null;
+            }
         }
+        window.restoreAuthSession = restoreAuthSession;
 
         function toggleWorkerSellerFields(role) {
             const section = document.getElementById('extra-docs-section');
@@ -2261,24 +2340,47 @@
                 alert('पहिले विवरण भरेर “इमेल OTP पठाउनुहोस्” थिच्नुहोस्।'); return;
             }
             if (!/^\d{6,8}$/.test(token)) { alert('इमेलमा आएको ६–८ अङ्कको OTP लेख्नुहोस्।'); return; }
+            // The browser cannot restore file-input contents after refresh. Do not consume
+            // the one-time OTP until required Worker/Seller documents are selected again.
+            if (['Worker','Seller'].includes(pendingSignup.role)) {
+                const requiredFiles = [
+                    document.getElementById('reg-photo')?.files?.[0],
+                    document.getElementById('reg-citizenship')?.files?.[0],
+                    document.getElementById('reg-cv')?.files?.[0]
+                ];
+                if (requiredFiles.some(file => !file)) {
+                    alert('Worker/Seller दर्ताका लागि फोटो, नागरिकता र सीप/व्यवसाय प्रमाण फेरि छान्नुहोस्। पेज Refresh भएपछि फाइलहरू पुनः छान्नुपर्छ।');
+                    return;
+                }
+                const allowedTypes = ['image/jpeg','image/png','image/webp','application/pdf'];
+                if (requiredFiles.some(file => !allowedTypes.includes(file.type) || file.size > 5 * 1024 * 1024)) {
+                    alert('कागजात JPG/PNG/WebP/PDF हुनुपर्छ र प्रत्येक फाइल ५ MB भित्र हुनुपर्छ।');
+                    return;
+                }
+            }
+            window.__nsewaSignupOtpVerifiedUserId = null;
             try {
                 if (status) status.textContent = 'OTP प्रमाणित हुँदैछ…';
-                const { data, error } = await window.nsewaSupabase.auth.verifyOtp({ email, token, type: 'signup' });
+                const { data, error } = await window.nsewaSupabase.auth.verifyOtp({ email, token, type: 'email' });
                 if (error) throw error;
-                if (!data?.user) throw new Error('प्रमाणित प्रयोगकर्ता भेटिएन।');
+                if (!data?.user || !data?.session) throw new Error('OTP प्रमाणित भए पनि Supabase Login Session प्राप्त भएन। पुनः लगइन गरेर प्रयास गर्नुहोस्।');
                 const pending = pendingSignup;
                 const user = data.user;
-                const safeSignupRole = ['Worker','Seller','Client'].includes(pending?.role) ? pending.role : 'Client';
+                if (String(user.email || '').toLowerCase() !== String(pending.email || '').toLowerCase()) {
+                    await window.nsewaSupabase.auth.signOut();
+                    throw new Error('OTP प्रमाणित भएको इमेल र दर्ता गरिएको इमेल मिलेन।');
+                }
+                // nsewa_handle_new_auth_user() creates the profile using database defaults.
+                // Do not let browser code set role/status: the profile guard and CEO workflow own them.
+                // date_of_birth is kept in Auth user_metadata; it is not a column in the confirmed profiles schema.
                 const profilePayload = {
                     id: user.id,
+                    email: pending.email,
                     phone: pending.phone,
                     full_name: pending.name,
                     father_name: pending.father || null,
                     address: pending.address,
-                    date_of_birth: pending.dateOfBirth,
-                    role: safeSignupRole,
                     district: pending.district,
-                    status: safeSignupRole === 'Client' ? 'APPROVED' : 'PENDING',
                     updated_at: new Date().toISOString()
                 };
                 const { error: profileSaveError } = await window.nsewaSupabase
@@ -2290,16 +2392,17 @@
                     alert('इमेल प्रमाणित भयो तर प्रोफाइल database मा सुरक्षित भएन। Supabase SQL/RLS जाँच्नुहोस्।\n' + profileSaveError.message);
                     return;
                 }
-                const account = { id: user.id, phone: pending.phone, email: pending.email, role: safeSignupRole, name: pending.name };
+                window.__nsewaSignupOtpVerifiedUserId = user.id;
+                const account = { id: user.id, phone: pending.phone, email: pending.email, role: 'Client', name: pending.name };
                 localStorage.setItem('nsewa-auth-session', JSON.stringify(account));
-                currentUserRole = safeSignupRole; currentPersonalId = user.id;
+                currentUserRole = 'Client'; currentPersonalId = user.id;
                 const n = document.getElementById('current-user-name'); if (n) n.textContent = pending.name;
-                const r = document.getElementById('current-user-role'); if (r) r.textContent = safeSignupRole;
+                const r = document.getElementById('current-user-role'); if (r) r.textContent = 'Client';
                 const i = document.getElementById('current-user-id'); if (i) i.textContent = 'My ID: ' + user.id;
-                const rs = document.getElementById('role-selector'); if (rs) rs.value = safeSignupRole;
+                const rs = document.getElementById('role-selector'); if (rs) rs.value = 'Client';
                 nsewaClearPendingEmailSignup();
                 if (status) status.textContent = 'इमेल OTP प्रमाणित भयो। दर्ता सफल भयो।';
-                alert(`इमेल प्रमाणित भयो र दर्ता सफल भयो, ${pending.name}! मोबाइल नम्बर ${pending.phone} तपाईंको खातासँग राखिएको छ।`);
+                alert(`इमेल प्रमाणित भयो र दर्ता विवरण सुरक्षित भयो, ${pending.name}! मोबाइल नम्बर ${pending.phone} खातासँग राखिएको छ। Worker/Seller अधिकार CEO को server-side स्वीकृतिपछि मात्र सक्रिय हुन्छ।`);
                 closeModal('auth-modal'); if (window.finishEntryAuth) window.finishEntryAuth();
             } catch (err) {
                 console.error('Email OTP verification failed:', err);
@@ -2430,7 +2533,7 @@
         function renderProfileGallery(){
             const gallery=document.getElementById('profile-photo-gallery'), preview=document.getElementById('profile-posts-preview');if(!gallery||!preview)return;
             const photos=(posts||[]).filter(p=>p.image).map(p=>({image:p.image,caption:p.caption||'पोस्ट फोटो',time:p.time||''}));
-            const tile=x=>`<div class="relative"><img src="${window.nsewaEscapeHtml(x.image)}" alt="${escapeProfileText(x.caption)}" loading="lazy" class="w-full aspect-square object-cover rounded-lg border" onerror="this.parentElement.style.display='none'"><span class="block text-[10px] truncate mt-1">${escapeProfileText(x.caption)}</span></div>`;
+            const tile=x=>`<div class="relative"><img src="${window.nsewaSafeImageUrl(x.image)}" alt="${escapeProfileText(x.caption)}" loading="lazy" class="w-full aspect-square object-cover rounded-lg border" onerror="this.parentElement.style.display='none'"><span class="block text-[10px] truncate mt-1">${escapeProfileText(x.caption)}</span></div>`;
             gallery.innerHTML=photos.length?photos.map(tile).join(''):'<p class="col-span-3 text-sm text-gray-500">अहिलेसम्म फोटो छैन। फोटोसहित पोस्ट गर्दा यहाँ स्वतः देखिन्छ।</p>';
             preview.innerHTML=(posts||[]).slice(0,6).map(p=>p.image?tile({image:p.image,caption:p.caption||'पोस्ट'}):`<div class="aspect-square rounded-lg bg-gray-50 border p-2 text-xs overflow-hidden">${escapeProfileText(p.caption||'पोस्ट')}</div>`).join('')||'<p class="col-span-3 text-sm text-gray-500">पोस्ट छैन।</p>';
         }
@@ -2470,14 +2573,25 @@
         function toggleDarkMode() { document.body.classList.toggle('dark-mode'); localStorage.setItem('nsewa-dark-mode', document.body.classList.contains('dark-mode') ? 'on' : 'off'); }
         function showOrdersPayments() { toggleUserMenu(false); const m=document.getElementById('orders-payments-modal'); if(m){m.classList.remove('hidden'); if(window.nsewaLoadMyOrders)window.nsewaLoadMyOrders();} }
         function addAccount() { toggleUserMenu(false); openModal('auth-modal'); }
-        function logoutUser() {
+        async function logoutUser() {
             if (typeof toggleUserMenu === 'function') toggleUserMenu(false);
-            localStorage.removeItem('nsewa-auth-session');
-            const gate = document.getElementById('entry-gate');
-            if (gate) gate.classList.remove('hidden');
-            const modal = document.getElementById('auth-modal');
-            if (modal) modal.classList.add('hidden');
-            alert('लगआउट भयो। फेरि वेबसाइट प्रयोग गर्न लगिन गर्नुहोस्।');
+            try {
+                if (window.nsewaSupabase?.auth) {
+                    const { error } = await window.nsewaSupabase.auth.signOut();
+                    if (error) throw error;
+                }
+                localStorage.removeItem('nsewa-auth-session');
+                currentPersonalId = null;
+                currentUserRole = 'Client';
+                const gate = document.getElementById('entry-gate');
+                if (gate) gate.classList.remove('hidden');
+                const modal = document.getElementById('auth-modal');
+                if (modal) modal.classList.add('hidden');
+                alert('लगआउट भयो। फेरि वेबसाइट प्रयोग गर्न लगिन गर्नुहोस्।');
+            } catch (error) {
+                console.error('Supabase logout failed:', error);
+                alert('लगआउट पूरा भएन। इन्टरनेट जडान जाँचेर फेरि प्रयास गर्नुहोस्।');
+            }
         }
         function showSecurityInfo() { alert('व्यक्तिगत सुरक्षा: बलियो पासवर्ड प्रयोग गर्नुहोस् र OTP कसैलाई नदिनुहोस्। खाता सुरक्षा server-side authentication र authorization मा निर्भर हुन्छ।'); }
         function showServerInfo() { alert('डाटा सर्भर: जडित backend र database को अवस्था API जाँचबाट मात्र पुष्टि हुन्छ। वास्तविक प्रयोगका लागि सुरक्षित server-side authentication, database access policies र monitoring आवश्यक छन्।'); }
@@ -2822,7 +2936,6 @@
             const savedName = localStorage.getItem('nsewa-profile-name');
             if (savedName) document.getElementById('current-user-name').textContent = savedName;
             const savedLang = localStorage.getItem('nsewa-language');
-            restoreAuthSession();
             if (savedLang) document.getElementById('language-choice').value = savedLang;
         });
 
@@ -2907,7 +3020,7 @@
 
 
 <!-- Entry gate: sign-in or registration required before using protected features -->
-<div id="entry-gate" class="fixed inset-0 z-[45] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="entry-gate-title">
+<div id="entry-gate" class="hidden fixed inset-0 z-[45] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="entry-gate-title">
   <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl border-t-4 border-nepalRed">
     <div class="text-center">
       <div class="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-nepalRed text-white text-2xl"><i class="fa-solid fa-shield-halved"></i></div>
@@ -3042,16 +3155,6 @@
     const a = document.createElement('a'); a.href = url; a.download = 'nepali-sewa-reports.json';
     document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
   };
-  window.addEventListener('DOMContentLoaded', function() {
-    let valid = false;
-    try {
-      const session = JSON.parse(localStorage.getItem('nsewa-auth-session') || 'null');
-      const accounts = JSON.parse(localStorage.getItem('nsewa-auth-accounts') || '[]');
-      valid = !!(session && Array.isArray(accounts) && accounts.some(a => a.id === session.id && a.phone === session.phone));
-    } catch (_) {}
-    const gate = document.getElementById('entry-gate');
-    if (gate) gate.classList.toggle('hidden', valid);
-  });
   document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
       const modal = document.getElementById('help-report-modal');
@@ -3303,7 +3406,7 @@ button[aria-label="बन्द"]:hover,button[aria-label="बन्द गर�
 (function(){
   document.querySelectorAll('[onclick*="closeModal("]').forEach(function(b){if(!b.getAttribute('aria-label'))b.setAttribute('aria-label','बन्द गर्नुहोस्');});
   document.addEventListener('keydown',function(e){if(e.key!=='Escape')return;document.querySelectorAll('[id$="-modal"]').forEach(function(m){if(!m.classList.contains('hidden')&&m.id!=='auth-modal'){m.classList.add('hidden');m.classList.remove('flex');}});});
-  document.addEventListener('DOMContentLoaded',function(){try{if(localStorage.getItem('nsewa-auth-session')){const g=document.getElementById('entry-gate');if(g)g.classList.add('hidden');}}catch(e){}const b=document.getElementById('profile-follow-button');if(b&&localStorage.getItem('nsewa-profile-following')==='yes'){b.textContent='✓ Following';b.classList.remove('bg-nepalRed');b.classList.add('bg-nepalBlue');}});
+  document.addEventListener('DOMContentLoaded',function(){try{const b=document.getElementById('profile-follow-button');if(b&&localStorage.getItem('nsewa-profile-following')==='yes'){b.textContent='✓ Following';b.classList.remove('bg-nepalRed');b.classList.add('bg-nepalBlue');}}catch(e){}});
 })();
 </script>
 
@@ -3556,20 +3659,8 @@ document.addEventListener('DOMContentLoaded',()=>{const e=$('nsewa-analytics-sql
       return `<article class="rounded-xl border border-white/10 bg-slate-800 p-4"><div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div class="min-w-0"><div class="flex flex-wrap items-center gap-2"><h4 class="font-extrabold text-white">${esc(r.name)}</h4><span class="rounded-full border px-2 py-1 text-xs ${color}">${esc(label)}</span></div><p class="mt-1 text-xs text-slate-300">${esc(r.type==='Worker'?'प्राविधिक':'विक्रेता')} · ${esc(r.id)} · ${esc(r.district||'जिल्ला उल्लेख छैन')}</p><p class="mt-1 text-sm text-slate-200">मोबाइल: ${esc(r.phone||'उपलब्ध छैन')}</p><p class="mt-2 text-xs text-slate-400">${esc(r.proof||'कागजात विवरण छैन')}</p></div><div class="flex flex-wrap gap-2 sm:max-w-[330px] sm:justify-end">${r.status!=='APPROVED'?`<button onclick="nsewaReviewAction('${esc(r.key)}','APPROVED')" class="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-extrabold text-white">Approve</button>`:''}${r.status!=='REJECTED'?`<button onclick="nsewaReviewAction('${esc(r.key)}','REJECTED')" class="rounded-lg bg-rose-700 px-3 py-2 text-xs font-extrabold text-white">Reject</button>`:''}${r.status!=='SUSPENDED'&&r.status!=='BANNED'?`<button onclick="nsewaReviewAction('${esc(r.key)}','SUSPENDED')" class="rounded-lg bg-orange-600 px-3 py-2 text-xs font-extrabold text-white">Suspend</button>`:''}${r.status!=='BANNED'?`<button onclick="nsewaReviewAction('${esc(r.key)}','BANNED')" class="rounded-lg border border-red-400 px-3 py-2 text-xs font-extrabold text-red-200">Ban</button>`:''}${['SUSPENDED','BANNED','REJECTED'].includes(r.status)?`<button onclick="nsewaReviewAction('${esc(r.key)}','PENDING')" class="rounded-lg border border-white/20 px-3 py-2 text-xs font-bold text-white">पुनः जाँच</button>`:''}</div></div></article>`;
     }).join('');
   };
-  window.nsewaReviewAction=function(key,status){
-    if(!allowed()){alert('यो कामका लागि CEO सुरक्षित सत्रमा प्रवेश गर्नुहोस्।');return;}
-    const valid=['APPROVED','REJECTED','SUSPENDED','BANNED','PENDING'];if(!valid.includes(status))return;
-    const all=records(), r=all.find(x=>x.key===key);if(!r)return;
-    let reason='';
-    if(['REJECTED','SUSPENDED','BANNED'].includes(status)){reason=prompt('निर्णयको कारण लेख्नुहोस् (रेकर्डका लागि):','');if(reason===null)return;if(!reason.trim()){alert('कृपया निर्णयको कारण लेख्नुहोस्।');return;}}
-    const label={APPROVED:'स्वीकृत',REJECTED:'अस्वीकृत',SUSPENDED:'अस्थायी रोक',BANNED:'स्थायी प्रतिबन्ध',PENDING:'पुनः जाँचका लागि खुला'}[status];
-    if(status==='BANNED'&&!confirm(`${r.name} लाई स्थायी प्रतिबन्ध लगाउने? यो परिवर्तन यस ब्राउजरको सूचीमा मात्र लागू हुन्छ।`))return;
-    r.status=status;r.reviewReason=reason;r.reviewedAt=new Date().toISOString();persist(all);logAction(r,label,reason);
-    if(r.key.startsWith('worker:')&&Array.isArray(window.workers)){const x=workers.find(v=>'worker:'+v.id===key);if(x)x.status=status;}
-    if(r.key.startsWith('seller:')&&Array.isArray(window.sellers)){const x=sellers.find(v=>'seller:'+v.id===key);if(x)x.status=status;}
-    if(r.key.startsWith('account:')){try{let ac=JSON.parse(localStorage.getItem('nsewa-auth-accounts')||'[]');ac=ac.map(a=>'account:'+a.id===key?{...a,status}:a);localStorage.setItem('nsewa-auth-accounts',JSON.stringify(ac));}catch(e){}}
-    try{if(typeof renderWorkers==='function')renderWorkers();if(typeof renderProducts==='function')renderProducts();if(typeof updateMapMarkers==='function')updateMapMarkers();}catch(e){}
-    window.nsewaRenderApprovalCenter();alert(`${r.name}: ${label}। स्थानीय ब्राउजरमा सुरक्षित गरियो।`);
+  window.nsewaReviewAction=function(){
+    alert('सुरक्षा सूचना: यो Approval Center को पुरानो भागले localStorage मा मात्र परिवर्तन गर्थ्यो। यसले Supabase Database मा स्वीकृति/अस्वीकृति गर्दैन। त्यसैले गलत स्वीकृति देखिन नदिन यो कार्य रोकिएको छ। वास्तविक CEO approval का लागि Supabase को nsewa_ceo_review_profile RPC को प्रमाणित parameter/body अनुसार server-connected UI आवश्यक छ।');
   };
   window.nsewaClearApprovalSearch=function(){const a=document.getElementById('nsewa-approval-search'),b=document.getElementById('nsewa-approval-filter');if(a)a.value='';if(b)b.value='ALL';window.nsewaRenderApprovalCenter();};
   window.nsewaExportApprovalLog=function(){if(!allowed()){alert('CEO सुरक्षित सत्र आवश्यक छ।');return;}let data=[];try{data=JSON.parse(localStorage.getItem(LOG)||'[]')}catch(e){}const blob=new Blob([JSON.stringify({exportedAt:new Date().toISOString(),note:'Local browser audit log only; not a server audit trail.',records:data},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='nepali-sewa-ceo-review-log.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);};
@@ -3619,7 +3710,7 @@ document.addEventListener('DOMContentLoaded',()=>{const e=$('nsewa-analytics-sql
 })();
 </script>
 
-<script src="/socket.io/socket.io.js" defer></script>
+<!-- Removed unused Socket.IO client: no Socket.IO calls exist in this page. -->
 
 
 <script>
@@ -3697,7 +3788,7 @@ document.addEventListener('DOMContentLoaded',()=>{const e=$('nsewa-analytics-sql
             <textarea id="nsewa-ai-image-prompt" rows="4" class="w-full rounded-xl border p-3" placeholder="जस्तै: नेपाली प्राविधिक सेवाको आधुनिक विज्ञापन, सफा डिजाइन, निलो र रातो रङ"></textarea>
             <button onclick="prepareNsewaAIImagePrompt()" class="rounded-xl bg-indigo-700 px-5 py-3 font-bold text-white">तस्बिरको Prompt तयार गर्नुहोस्</button>
             <textarea id="nsewa-ai-image-output" rows="4" class="w-full rounded-xl border bg-slate-50 p-3" readonly placeholder="तयार prompt यहाँ आउँछ"></textarea>
-            <div class="mt-3 flex flex-wrap gap-2"><button type="button" onclick="generateNsewaAIImage()" class="rounded-xl bg-violet-700 px-4 py-2 font-bold text-white">वास्तविक AI तस्बिर बनाउनुहोस्</button><span id="nsewa-ai-image-status" class="self-center text-sm" aria-live="polite"></span></div>
+            <div class="mt-3 flex flex-wrap gap-2"><button type="button" onclick="prepareNsewaAIImagePrompt(); const status=document.getElementById('nsewa-ai-image-status'); if(status) status.textContent='वास्तविक तस्बिर बनाउन सुरक्षित Image API/backend जडान बाँकी छ। तयार भएको Prompt Copy गर्न सक्नुहुन्छ।';" class="rounded-xl bg-violet-700 px-4 py-2 font-bold text-white">AI तस्बिर सेवा जाँच्नुहोस्</button><span id="nsewa-ai-image-status" class="self-center text-sm" aria-live="polite"></span></div>
             <button onclick="copyNsewaAIImagePrompt()" class="rounded-xl border px-4 py-2 font-semibold">Prompt Copy</button>
           </section>
           <section id="nsewa-ai-settings-view" class="hidden space-y-4">
@@ -3879,9 +3970,16 @@ document.addEventListener('DOMContentLoaded',()=>{const e=$('nsewa-analytics-sql
     window.nsewaSupabaseReady = true;
     show('Supabase client सुरु भयो। यसले SMTP वा database/RLS सफल भएको प्रमाणित गर्दैन; OTP, profiles र RLS छुट्टै परीक्षण गर्नुपर्छ। HTML मा public publishable key मात्र छ।', true);
     window.dispatchEvent(new CustomEvent('nsewa:supabase-ready'));
-    if (typeof window.restoreAuthSession === 'function') window.restoreAuthSession();
-    window.nsewaSupabase.auth.onAuthStateChange(function (_event, session) {
-      if (session && typeof window.restoreAuthSession === 'function') window.restoreAuthSession();
+    window.nsewaSupabase.auth.onAuthStateChange(function (event, session) {
+      // Supabase warns against awaiting/calling other Supabase methods inside this
+      // callback. Defer restoration until the auth callback has returned.
+      window.setTimeout(function () {
+        if (typeof window.restoreAuthSession === 'function') {
+          // This also handles SIGNED_OUT by checking getSession() and clearing
+          // the legacy UI cache only after Supabase confirms there is no session.
+          window.restoreAuthSession();
+        }
+      }, 0);
     });
   } catch (error) {
     console.error('Supabase initialization failed:', error);
@@ -3889,170 +3987,6 @@ document.addEventListener('DOMContentLoaded',()=>{const e=$('nsewa-analytics-sql
   }
 })();
 </script>
-<!-- पुरानो डिजाइन कत्ति पनि नबिगारी फर्माट एरर हटाउने कोड -->
-<script>
-    function bypassStrictFormatRules() {
-        console.log("Safely bypassing strict form constraints...");
-        
-        // १. सबै इनपुट फिल्डका कडा नियमहरू (Pattern/Minlength) हटाइदिने
-        const allInputs = document.querySelectorAll('input, select, textarea');
-        allInputs.forEach(input => {
-            if (input.hasAttribute('pattern')) input.removeAttribute('pattern');
-            if (input.hasAttribute('minlength')) input.removeAttribute('minlength');
-            if (input.hasAttribute('maxlength')) input.removeAttribute('maxlength');
-            
-            // रातो घेरा र पप-अप एरर आउनबाट रोक्ने
-            input.oninvalid = function(e) {
-                e.preventDefault(); 
-            };
-        });
-
-        // २. फारमको अटो-भ्यालिडेसन बन्द गरिदिने
-        document.querySelectorAll('form').forEach(form => {
-            form.setAttribute('novalidate', 'true');
-        });
-    }
-
-    // साइट खुल्ने बित्तिकै र स्क्रिनमा कतै क्लिक गर्दा यो कोड चल्छ
-    document.addEventListener("DOMContentLoaded", bypassStrictFormatRules);
-    document.addEventListener("click", bypassStrictFormatRules);
-    document.addEventListener("input", bypassStrictFormatRules);
-    setTimeout(bypassStrictFormatRules, 1500); // सुरक्षित साइडका लागि १.५ सेकेन्डको डिले
-</script>
-<!-- पुरानो डिजाइन कत्ति पनि नबिगारी फर्माट एरर हटाउने कोड -->
-<script>
-    function bypassStrictFormatRules() {
-        console.log("Safely bypassing strict form constraints...");
-        
-        // १. सबै इनपुट फिल्डका कडा नियमहरू (Pattern/Minlength) हटाइदिने
-        const allInputs = document.querySelectorAll('input, select, textarea');
-        allInputs.forEach(input => {
-            if (input.hasAttribute('pattern')) input.removeAttribute('pattern');
-            if (input.hasAttribute('minlength')) input.removeAttribute('minlength');
-            if (input.hasAttribute('maxlength')) input.removeAttribute('maxlength');
-            
-            // रातो घेरा र पप-अप एरर आउनबाट रोक्ने
-            input.oninvalid = function(e) {
-                e.preventDefault(); 
-            };
-        });
-
-        // २. फारमको अटो-भ्यालिडेसन बन्द गरिदिने
-        document.querySelectorAll('form').forEach(form => {
-            form.setAttribute('novalidate', 'true');
-        });
-    }
-
-    // साइट खुल्ने बित्तिकै र स्क्रिनमा कतै क्लिक गर्दा यो कोड चल्छ
-    document.addEventListener("DOMContentLoaded", bypassStrictFormatRules);
-    document.addEventListener("click", bypassStrictFormatRules);
-    document.addEventListener("input", bypassStrictFormatRules);
-    setTimeout(bypassStrictFormatRules, 1500); // सुरक्षित साइडका लागि १.५ सेकेन्डको डिले
-</script>
-<!-- पुरानो कोड नफेरी लगइनलाई सर्भरसँग सिधै जोड्ने कोड -->
-<script>
-    function connectOriginalLoginToSupabase() {
-        console.log("Connecting original login buttons to server...");
-        
-        // १. तपाईंको पुरानो कोडमा भएका इमेल, पासवर्ड इनपुट र लगइन बटनहरू खोज्ने
-        const emailInput = document.querySelector('input[type="email"]') || document.getElementById('auth-email');
-        const passInput = document.querySelector('input[type="password"]') || document.getElementById('auth-pass');
-        const loginBtn = document.querySelector('button[onclick*="login"], button:contains("लगइन"), #btn-login') || document.querySelector('button');
-
-        if (loginBtn && emailInput && passInput) {
-            // पुरानो बटनको क्लिक एक्सनलाई सर्भरसँग डाइरेक्ट जोडिदिने
-            loginBtn.onclick = async function(e) {
-                e.preventDefault(); // पेज रिफ्रेस हुन नदिने
-                
-                const email = emailInput.value.trim();
-                const password = passInput.value;
-
-                if (!email || !password) {
-                    alert("कृपया इमेल र पासवर्ड भर्नुहोस्।");
-                    return;
-                }
-
-                // Supabase सर्भरमा वास्तविक लगइन अनुरोध पठाउने
-                try {
-                    const { data, error } = await supabase.auth.signInWithPassword({
-                        email: email,
-                        password: password,
-                    });
-
-                    if (error) {
-                        // यदि सर्भरले चिनेन भने अर्को प्रयास (युजर कन्फर्म नभएको खण्डमा)
-                        alert("लगइन असफल: इमेल वा पासवर्ड मिलेन। कृपया विवरण जाँच्नुहोस्।");
-                    } else {
-                        alert("बधाई छ! लगइन सफल भयो।");
-                        // लगइन सफल भएपछि सिधै ड्यासबोर्ड खोल्ने वा पेज रिफ्रेस गर्ने
-                        if (typeof fixSecurityBannerStatus === 'function') fixSecurityBannerStatus();
-                        window.location.reload(); 
-                    }
-                } catch (err) {
-                    console.error("Login execution break:", err);
-                }
-            };
-        }
-    }
-
-    // साइट खुल्ने बित्तिकै यो कनेक्टर एक्टिभ हुन्छ
-    document.addEventListener("DOMContentLoaded", () => {
-        setTimeout(connectOriginalLoginToSupabase, 2000); // २ सेकेन्डको डिले ता कि पुराना बटन लोड हुन पाऊन्
-    });
-</script>
-<!-- पुरानो कोड नफेरी लगइनलाई सर्भरसँग सिधै जोड्ने कोड -->
-<script>
-    function connectOriginalLoginToSupabase() {
-        console.log("Connecting original login buttons to server...");
-        
-        // १. तपाईंको पुरानो कोडमा भएका इमेल, पासवर्ड इनपुट र लगइन बटनहरू खोज्ने
-        const emailInput = document.querySelector('input[type="email"]') || document.getElementById('auth-email');
-        const passInput = document.querySelector('input[type="password"]') || document.getElementById('auth-pass');
-        const loginBtn = document.querySelector('button[onclick*="login"], button:contains("लगइन"), #btn-login') || document.querySelector('button');
-
-        if (loginBtn && emailInput && passInput) {
-            // पुरानो बटनको क्लिक एक्सनलाई सर्भरसँग डाइरेक्ट जोडिदिने
-            loginBtn.onclick = async function(e) {
-                e.preventDefault(); // पेज रिफ्रेस हुन नदिने
-                
-                const email = emailInput.value.trim();
-                const password = passInput.value;
-
-                if (!email || !password) {
-                    alert("कृपया इमेल र पासवर्ड भर्नुहोस्।");
-                    return;
-                }
-
-                // Supabase सर्भरमा वास्तविक लगइन अनुरोध पठाउने
-                try {
-                    const { data, error } = await supabase.auth.signInWithPassword({
-                        email: email,
-                        password: password,
-                    });
-
-                    if (error) {
-                        // यदि सर्भरले चिनेन भने अर्को प्रयास (युजर कन्फर्म नभएको खण्डमा)
-                        alert("लगइन असफल: इमेल वा पासवर्ड मिलेन। कृपया विवरण जाँच्नुहोस्।");
-                    } else {
-                        alert("बधाई छ! लगइन सफल भयो।");
-                        // लगइन सफल भएपछि सिधै ड्यासबोर्ड खोल्ने वा पेज रिफ्रेस गर्ने
-                        if (typeof fixSecurityBannerStatus === 'function') fixSecurityBannerStatus();
-                        window.location.reload(); 
-                    }
-                } catch (err) {
-                    console.error("Login execution break:", err);
-                }
-            };
-        }
-    }
-
-    // साइट खुल्ने बित्तिकै यो कनेक्टर एक्टिभ हुन्छ
-    document.addEventListener("DOMContentLoaded", () => {
-        setTimeout(connectOriginalLoginToSupabase, 2000); // २ सेकेन्डको डिले ता कि पुराना बटन लोड हुन पाऊन्
-    });
-</script>
-
-
 <!-- Mero-Sewa Supabase integration adapter (preserves the original public UI) -->
 <script id="nsewa-full-backend-adapter">
 (function () {
@@ -4085,19 +4019,38 @@ document.addEventListener('DOMContentLoaded',()=>{const e=$('nsewa-analytics-sql
       ['citizenship', files.citizenship],
       ['professional_or_business_proof', files.proof]
     ].filter(x => x[1]);
-    for (const [kind, file] of docs) {
-      if (!fileAllowed(file)) throw new Error('कागजात JPG/PNG/WebP/PDF र ५ MB भित्र हुनुपर्छ: ' + file.name);
-      const path = `${user.id}/${kind}/${Date.now()}-${safeFileName(file.name)}`;
-      const { error: upErr } = await client.storage.from(BUCKET).upload(path, file, {
-        contentType: file.type, upsert: false
-      });
-      if (upErr) throw upErr;
-      const { error: rowErr } = await client.from('user_documents').insert({
-        user_id: user.id, document_type: kind, storage_path: path,
-        original_name: file.name.slice(0,180), mime_type: file.type, size_bytes: file.size,
-        review_status: 'PENDING'
-      });
-      if (rowErr) throw rowErr;
+    if (['Worker','Seller'].includes(pending.role) && docs.length !== 3) {
+      throw new Error('Worker/Seller दर्ताका लागि तीनैवटा कागजात आवश्यक छन्।');
+    }
+    const uploadedPaths = [];
+    try {
+      for (const [kind, file] of docs) {
+        if (!fileAllowed(file)) throw new Error('कागजात JPG/PNG/WebP/PDF र ५ MB भित्र हुनुपर्छ: ' + file.name);
+        const path = `${user.id}/${kind}/${Date.now()}-${safeFileName(file.name)}`;
+        const { error: upErr } = await client.storage.from(BUCKET).upload(path, file, {
+          contentType: file.type, upsert: false
+        });
+        if (upErr) throw upErr;
+        uploadedPaths.push(path);
+        const { error: rowErr } = await client.from('user_documents').insert({
+          user_id: user.id, document_type: kind, storage_path: path,
+          original_name: file.name.slice(0,180), mime_type: file.type, size_bytes: file.size
+        });
+        if (rowErr) throw rowErr;
+      }
+    } catch (error) {
+      if (uploadedPaths.length) {
+        try {
+          const { error: rowCleanupError } = await client.from('user_documents')
+            .delete().eq('user_id', user.id).in('storage_path', uploadedPaths);
+          if (rowCleanupError) console.warn('Document-row rollback needs review:', rowCleanupError.message);
+        } catch (cleanupError) {
+          console.warn('Document-row rollback failed:', cleanupError?.message || cleanupError);
+        }
+        const { error: cleanupError } = await client.storage.from(BUCKET).remove(uploadedPaths);
+        if (cleanupError) console.warn('Private document rollback needs review:', cleanupError.message);
+      }
+      throw error;
     }
     if (pending.role === 'Worker') {
       const { error } = await client.from('worker_profiles').upsert({
@@ -4164,6 +4117,10 @@ document.addEventListener('DOMContentLoaded',()=>{const e=$('nsewa-analytics-sql
     const client=sb(); if(!client) return;
     let user; try { user=await currentUser(); } catch(_) { return; }
     try {
+      if (window.__nsewaRealtimeChannel) {
+        try { await client.removeChannel(window.__nsewaRealtimeChannel); } catch (_) {}
+        window.__nsewaRealtimeChannel = null;
+      }
       const channel=client.channel('nsewa-user-'+user.id)
         .on('postgres_changes',{event:'*',schema:'public',table:'notifications',filter:'user_id=eq.'+user.id},()=>loadNotices())
         .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:'recipient_id=eq.'+user.id},payload=>{
@@ -4193,7 +4150,7 @@ document.addEventListener('DOMContentLoaded',()=>{const e=$('nsewa-analytics-sql
     const title=String(currentPayDetails?.title || '');
     const product=(window.__nsewaApiProducts||[]).find(x=>String(x.title)===title) ||
       (typeof products!=='undefined' && products.find(x=>String(x.title)===title));
-    if(!product || !product.id || String(product.id).startsWith('db-')===false && !/^[0-9a-f-]{36}$/i.test(String(product.id))) {
+    if(!product || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(product.id||''))) {
       throw new Error('यो सामानको server database ID भेटिएन। Database मा स्वीकृत सामान छान्नुहोस्।');
     }
     const {data:order,error:orderError}=await client.functions.invoke('create-order',{
@@ -4218,7 +4175,7 @@ document.addEventListener('DOMContentLoaded',()=>{const e=$('nsewa-analytics-sql
         const user=await currentUser();
         const {data:roleProfile,error:roleError}=await client.from('profiles').select('role,status').eq('id',user.id).single();
         if(roleError) throw roleError;
-        if(roleProfile?.role!=='Seller' || roleProfile?.status!=='APPROVED') throw new Error('सामान बिक्रीमा राख्न CEO बाट स्वीकृत Seller ID आवश्यक छ। Public र Worker ले सामान बेच्न पाउँदैनन्।');
+        if(String(roleProfile?.role||'').toLowerCase()!=='seller' || roleProfile?.status!=='APPROVED') throw new Error('सामान बिक्रीमा राख्न CEO बाट स्वीकृत Seller ID आवश्यक छ। Public र Worker ले सामान बेच्न पाउँदैनन्।');
         const title=document.getElementById('prod-title').value.trim();
         const price=Number(document.getElementById('prod-price').value);
         const district=document.getElementById('prod-district').value;
@@ -4257,14 +4214,20 @@ document.addEventListener('DOMContentLoaded',()=>{const e=$('nsewa-analytics-sql
         citizenship:document.getElementById('reg-citizenship')?.files?.[0],
         proof:document.getElementById('reg-cv')?.files?.[0]
       };
+      window.__nsewaSignupOtpVerifiedUserId=null;
       await original.apply(this,arguments);
-      if(!pending || !sb()) return;
+      if(!pending || !sb() || !window.__nsewaSignupOtpVerifiedUserId) return;
       try{
         const user=await currentUser();
+        if(user.id!==window.__nsewaSignupOtpVerifiedUserId ||
+           String(user.email||'').toLowerCase()!==String(pending.email||'').toLowerCase()) {
+          throw new Error('प्रमाणित Supabase खाता र दर्ता इमेल मेल खाएनन्।');
+        }
         await uploadRegistrationDocuments(user,pending,files);
-        say('OTP प्रमाणित भयो; Worker/Seller विवरण र छानिएका कागजात निजी Supabase Storage मा सुरक्षित भए। CEO समीक्षा बाँकी छ।',true);
+        say(pending.role==='Client' ? 'OTP र प्रोफाइल विवरण प्रमाणित/सुरक्षित भए।' : 'OTP प्रमाणित भयो; Worker/Seller विवरण र कागजात निजी Supabase Storage मा सुरक्षित भए। CEO समीक्षा बाँकी छ।',true);
       }catch(e){
         console.error('Private document upload failed:',e);
+        if (typeof nsewaSavePendingEmailSignup==='function') nsewaSavePendingEmailSignup(pending);
         say('OTP सफल भयो तर कागजात/भूमिका विवरण पूर्ण सुरक्षित भएन: '+e.message,false);
         alert('खाता OTP बाट प्रमाणित भयो, तर कागजात अपलोड वा Worker/Seller विवरण सुरक्षित गर्न समस्या आयो। पुनः लगइन गरेर सहायता लिनुहोस्।');
       }
@@ -4284,7 +4247,6 @@ document.addEventListener('DOMContentLoaded',()=>{const e=$('nsewa-analytics-sql
 })();
     </script>
     
-    <!-- 🔴 यहाँ (लाइन ३९८३ मा) यो नयाँ सुरक्षा कोड पेस्ट गर्नुहोस् -->
 <script id="nsewa-connect-enhancements">
 (function(){
   'use strict';
@@ -4345,14 +4307,15 @@ document.addEventListener('DOMContentLoaded',()=>{const e=$('nsewa-analytics-sql
     try{
       const {profile}=await currentProfile();
       window.nsewaUserRoleApproved=profile.status==='APPROVED';
-      window.nsewaServerRole=profile.role;
+      const normalizedRole=String(profile.role||'Client').toLowerCase();
+      window.nsewaServerRole=({client:'Client',worker:'Worker',seller:'Seller'})[normalizedRole]||'Client';
       // Do not let a UI selector elevate a database role.
-      if(typeof currentUserRole!=='undefined' && ['Client','Worker','Seller'].includes(profile.role)) currentUserRole=profile.role;
+      if(typeof currentUserRole!=='undefined') currentUserRole=window.nsewaServerRole;
       const add=$('add-product-modal');
       const productOpen=document.querySelector('[onclick*="add-product-modal"]');
-      if(productOpen) productOpen.classList.toggle('hidden',profile.role!=='Seller'||profile.status!=='APPROVED');
+      if(productOpen) productOpen.classList.toggle('hidden',window.nsewaServerRole!=='Seller'||profile.status!=='APPROVED');
       const workerPost=$('post-caption')?.closest('.bg-white');
-      if(workerPost) workerPost.classList.toggle('hidden',profile.role!=='Worker'||profile.status!=='APPROVED');
+      if(workerPost) workerPost.classList.toggle('hidden',window.nsewaServerRole!=='Worker'||profile.status!=='APPROVED');
     }catch(_){
       window.nsewaUserRoleApproved=false;
     }
@@ -4363,19 +4326,19 @@ document.addEventListener('DOMContentLoaded',()=>{const e=$('nsewa-analytics-sql
     if(box)box.replaceChildren();
     try{
       const {user}=await currentProfile(), sb=client();
-      const {data,error}=await sb.from('orders').select('id,created_at,status,total_amount,currency,payment_status,delivery_address').eq('buyer_id',user.id).order('created_at',{ascending:false}).limit(50);
+      const {data,error}=await sb.from('orders').select('id,created_at,status,total_amount').eq('buyer_id',user.id).order('created_at',{ascending:false}).limit(50);
       if(error)throw error;
       const rows=data||[];
       $('my-order-count').textContent=String(rows.length);
-      $('my-payment-pending').textContent=String(rows.filter(x=>!['PAID','REFUNDED'].includes(String(x.payment_status).toUpperCase())).length);
-      $('my-payment-paid').textContent=String(rows.filter(x=>String(x.payment_status).toUpperCase()==='PAID').length);
+      $('my-payment-pending').textContent=String(rows.filter(x=>['PENDING_PAYMENT','AWAITING_PAYMENT'].includes(String(x.status).toUpperCase())).length);
+      $('my-payment-paid').textContent=String(rows.filter(x=>String(x.status).toUpperCase()==='PAID').length);
       if(status)status.textContent=rows.length?'तपाईंका अर्डरहरू तल छन्।':'अहिलेसम्म कुनै अर्डर भेटिएन।';
       if(!box)return;
       rows.forEach(order=>{
         const card=document.createElement('article');card.className='rounded-xl border border-slate-200 p-3';
         const date=new Date(order.created_at).toLocaleString('ne-NP');
-        card.innerHTML=`<div class="flex flex-wrap items-start justify-between gap-2"><div><b class="text-sm text-slate-900">अर्डर #${safeText(String(order.id).slice(0,8))}</b><p class="text-xs text-slate-500">${safeText(date)}</p></div><span class="rounded-full bg-slate-100 px-2 py-1 text-xs font-bold">${safeText(order.status||'PENDING')}</span></div><div class="mt-2 flex items-center justify-between"><span class="text-sm">कुल रकम</span><b>${safeText(order.currency||'NPR')} ${Number(order.total_amount||0).toLocaleString('en-IN')}</b></div><div class="mt-1 text-xs text-slate-500">भुक्तानी: ${safeText(order.payment_status||'PENDING')}</div>`;
-        if(String(order.payment_status).toUpperCase()!=='PAID' && ['PENDING','AWAITING_PAYMENT'].includes(String(order.status).toUpperCase())){
+        card.innerHTML=`<div class="flex flex-wrap items-start justify-between gap-2"><div><b class="text-sm text-slate-900">अर्डर #${safeText(String(order.id).slice(0,8))}</b><p class="text-xs text-slate-500">${safeText(date)}</p></div><span class="rounded-full bg-slate-100 px-2 py-1 text-xs font-bold">${safeText(order.status||'PENDING_PAYMENT')}</span></div><div class="mt-2 flex items-center justify-between"><span class="text-sm">कुल रकम</span><b>NPR ${Number(order.total_amount||0).toLocaleString('en-IN')}</b></div>`;
+        if(['PENDING_PAYMENT','PENDING','AWAITING_PAYMENT'].includes(String(order.status).toUpperCase())){
           const payWrap=document.createElement('div');payWrap.className='mt-3 flex flex-wrap gap-2';
           ['Khalti','eSewa','Fonepay'].forEach(gateway=>{const pay=document.createElement('button');pay.type='button';pay.className='rounded-lg bg-nepalBlue px-3 py-2 text-xs font-bold text-white';pay.textContent=gateway+' भुक्तानी';pay.addEventListener('click',()=>window.nsewaStartOrderPayment(order.id,gateway));payWrap.appendChild(pay);});
           card.appendChild(payWrap);
@@ -4398,7 +4361,11 @@ document.addEventListener('DOMContentLoaded',()=>{const e=$('nsewa-analytics-sql
     try{
       const sb=client();if(!sb)throw new Error('Supabase जडान छैन।');
       const {user,profile}=await currentProfile();
-      if(!['Client','Worker','Seller'].includes(profile.role)||profile.status!=='APPROVED')throw new Error('स्वीकृत खाता आवश्यक छ।');
+      const dbRole=String(profile.role||'Client').toLowerCase();
+      const profileStatus=String(profile.status||'PENDING').toUpperCase();
+      const canOrder=(dbRole==='client' && ['PENDING','ACTIVE','APPROVED'].includes(profileStatus)) ||
+        (['worker','seller'].includes(dbRole) && profileStatus==='APPROVED');
+      if(!canOrder)throw new Error('यो खाताको अवस्था अनुसार अर्डर गर्न अनुमति छैन। Worker/Seller का लागि CEO स्वीकृति आवश्यक छ।');
       const items=Object.entries(window.__nsewaCart||{}); // compatibility only; current cart may be closure-scoped
       const cartItems=(typeof cart!=='undefined'?Object.entries(cart):items).map(([id,quantity])=>({product_id:String(id),quantity:Number(quantity)})).filter(x=>/^[0-9a-f-]{36}$/i.test(x.product_id)&&Number.isInteger(x.quantity)&&x.quantity>0);
       if(!cartItems.length)throw new Error('Cart मा Supabase बाट स्वीकृत सामान राख्नुहोस्।');
@@ -4425,9 +4392,6 @@ document.addEventListener('DOMContentLoaded',()=>{const e=$('nsewa-analytics-sql
   const dob=$('reg-dob');if(dob)dob.max=new Date().toISOString().slice(0,10);
 })();
 </script>
-
-</body>
-</html>
 
 </body>
 </html>

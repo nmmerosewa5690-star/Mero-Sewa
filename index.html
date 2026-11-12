@@ -2016,7 +2016,14 @@
             input.dataset.method = email ? 'email' : 'mobile';
             input.type = email ? 'email' : 'tel';
             input.inputMode = email ? 'email' : 'numeric';
-            input.pattern = email ? '' : '[0-9०-९+\\s-]{10,16}';
+            // Email mode must have NO pattern attribute. An empty pattern=""
+            // causes every non-empty email value to fail browser validation.
+            if (email) {
+                input.removeAttribute('pattern');
+            } else {
+                input.setAttribute('pattern', '[0-9०-९+\\s-]{10,16}');
+            }
+            input.setCustomValidity('');
             input.placeholder = email ? 'example@gmail.com' : '९८XXXXXXXX';
             label.textContent = email ? 'इमेल ठेगाना' : 'मोबाइल नम्बर';
             icon.className = 'fa-solid ' + (email ? 'fa-at' : 'fa-phone') + ' pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400';

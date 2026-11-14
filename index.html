@@ -452,19 +452,8 @@
     <div id="personal-accounts-folder-modal" class="fixed inset-0 bg-black/70 hidden z-[115] flex items-center justify-center p-3 overflow-y-auto">
       <div class="bg-white rounded-2xl p-5 w-full max-w-2xl max-h-[94vh] overflow-y-auto shadow-2xl border-2 border-nepalGold">
         <div class="flex items-center justify-between gap-3 mb-4"><div class="flex items-center gap-3"><i class="fa-solid fa-folder-open text-3xl text-nepalBlue"></i><div><p class="text-xs text-gray-500">Setting & Privacy / Folder ५</p><h3 class="text-xl font-extrabold text-nepalRed">Personal Accounts</h3></div></div><button onclick="closeCeoAccountsFolder()" class="text-2xl" aria-label="बन्द गर्नुहोस्">&times;</button></div>
-        <div class="rounded-xl border border-amber-300 bg-amber-50 p-3 mb-4 text-sm text-amber-950"><b>महत्त्वपूर्ण:</b> यो फाइलको account manager ले यो ब्राउजरमा मात्र डेटा राख्छ। पासपोर्टजस्ता संवेदनशील विवरण सार्वजनिक/live प्रणालीमा राख्नुअघि server-side authorization, encrypted database, audit log र backup आवश्यक छन्।</div>
-        <form id="ceo-account-form" onsubmit="saveCeoManagedAccount(event)" class="rounded-xl border p-4 space-y-3">
-          <input type="hidden" id="ceo-account-edit-id">
-          <input type="hidden" id="ceo-account-image-data">
-          <h4 id="ceo-account-form-title" class="font-extrabold text-nepalBlue">नयाँ खाता दर्ता / Personal Account</h4>
-          <div class="flex items-center gap-3"><img id="ceo-account-image-preview" alt="खाताको प्रोफाइल तस्वीर" class="h-20 w-20 rounded-full object-cover border bg-gray-100" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Crect width='100%25' height='100%25' fill='%23e5e7eb'/%3E%3Ctext x='50%25' y='55%25' text-anchor='middle' font-size='28' fill='%236b7280'%3E%3F%3C/text%3E%3C/svg%3E"><label class="block text-sm font-semibold flex-1">प्रोफाइल इमेज राख्ने / परिवर्तन गर्ने<input id="ceo-account-image-file" type="file" accept="image/png,image/jpeg,image/webp" class="mt-1 block w-full text-sm" onchange="loadCeoAccountImage(event)"><span class="text-xs text-gray-500">PNG/JPG/WebP, अधिकतम 1 MB</span></label></div>
-          <label class="block text-sm font-semibold">पूरा नाम<input id="ceo-account-name" required maxlength="100" class="mt-1 w-full rounded-lg border p-2" placeholder="खातावालाको नाम"></label>
-          <label class="block text-sm font-semibold">मोबाइल नम्बर<input id="ceo-account-phone" required inputmode="tel" maxlength="20" class="mt-1 w-full rounded-lg border p-2" placeholder="98XXXXXXXX"></label>
-          <p class="rounded-lg border border-amber-200 bg-amber-50 p-2 text-xs text-amber-900">पासपोर्ट वा अन्य संवेदनशील परिचयपत्र विवरण यो browser-only सूचीमा नराख्नुहोस्। सुरक्षित private database/storage जडान भएपछि मात्र सङ्कलन गर्नुहोस्।</p>
-          <label class="block text-sm font-semibold">खाताको भूमिका<select id="ceo-account-role" class="mt-1 w-full rounded-lg border p-2"><option value="Client">ग्राहक</option><option value="Worker">प्राविधिक</option><option value="Seller">बिक्रेता</option></select></label>
-          <div class="flex flex-wrap gap-2"><button class="rounded-lg bg-nepalBlue px-4 py-2 font-bold text-white" type="submit">खाता सुरक्षित गर्नुहोस्</button><button type="button" onclick="resetCeoManagedAccountForm()" class="rounded-lg border px-4 py-2">नयाँ फारम</button></div><p id="ceo-account-status" role="status" class="text-sm"></p>
-        </form>
-        <div class="mt-4"><h4 class="font-extrabold mb-2">यस ब्राउजरमा सुरक्षित खाताहरू</h4><div class="flex flex-col sm:flex-row gap-2 mb-3"><input id="ceo-account-search" oninput="renderCeoManagedAccounts()" class="min-w-0 flex-1 rounded-lg border p-2" placeholder="नाम / नम्बर / पासपोर्टबाट खोज्नुहोस्"><button type="button" onclick="exportCeoManagedAccounts()" class="rounded-lg border px-3 py-2 text-sm font-bold">Backup Export</button><button type="button" onclick="document.getElementById('ceo-account-import-file').click()" class="rounded-lg border px-3 py-2 text-sm font-bold">Backup Restore</button><input id="ceo-account-import-file" type="file" accept="application/json,.json" class="hidden" onchange="importCeoManagedAccounts(event)"></div><p id="ceo-account-audit-summary" class="mb-3 text-xs text-gray-500"></p><div id="ceo-account-list" class="space-y-2"><p class="text-sm text-gray-500">खाताहरू लोड हुँदैछन्…</p></div></div>
+        <div class="rounded-xl border border-emerald-300 bg-emerald-50 p-3 mb-4 text-sm text-emerald-950"><b>सुरक्षित Database Directory:</b> यहाँ Supabase Auth मा दर्ता भएका वास्तविक profiles मात्र देखिन्छन्। Browser बाट नक्कली खाता सिर्जना/मेटाउने सुविधा हटाइएको छ। नयाँ Auth user सिर्जना वा हटाउन सुरक्षित server-side Edge Function आवश्यक हुन्छ।</div>
+        <div class="mt-2"><h4 class="font-extrabold mb-2">Supabase प्रयोगकर्ता सूची</h4><div class="flex flex-col sm:flex-row gap-2 mb-3"><input id="ceo-account-search" oninput="renderCeoManagedAccounts()" class="min-w-0 flex-1 rounded-lg border p-2" placeholder="नाम / मोबाइल / भूमिका खोज्नुहोस्"><button type="button" onclick="renderCeoManagedAccounts(true)" class="rounded-lg border px-3 py-2 text-sm font-bold">Server बाट Refresh</button></div><p id="ceo-account-audit-summary" class="mb-3 text-xs text-gray-500"></p><p id="ceo-account-status" role="status" class="mb-2 text-sm" aria-live="polite"></p><div id="ceo-account-list" class="space-y-2"><p class="text-sm text-gray-500">Supabase profiles लोड हुँदैछन्…</p></div></div>
         <div class="flex justify-end mt-4"><button onclick="closeCeoAccountsFolder()" class="bg-nepalBlue text-white rounded-lg px-4 py-2 font-bold">बन्द गर्नुहोस्</button></div>
       </div>
     </div>
@@ -504,13 +493,14 @@
           <div class="rounded-xl border p-3 bg-slate-50"><div class="text-xs text-gray-600">Checklist पूरा</div><div id="security-completion" class="text-2xl font-extrabold text-nepalRed">0%</div></div>
           <div class="rounded-xl border p-3 bg-slate-50"><div class="text-xs text-gray-600">टिक लगाइएका</div><div id="security-checked-count" class="text-2xl font-extrabold">0/30</div></div>
           <div class="rounded-xl border p-3 bg-slate-50"><div class="text-xs text-gray-600">अन्तिम समीक्षा</div><div id="security-last-review" class="text-sm font-bold">अहिलेसम्म छैन</div></div>
-          <div class="rounded-xl border p-3 bg-slate-50"><div class="text-xs text-gray-600">सुरक्षा स्थिति</div><div class="text-sm font-extrabold text-amber-700">समीक्षा आवश्यक</div></div>
+          <div class="rounded-xl border p-3 bg-slate-50"><div class="text-xs text-gray-600">सुरक्षा परीक्षण</div><div class="text-sm font-extrabold text-amber-700">स्वतन्त्र पुष्टि बाँकी</div></div>
         </div>
-        <section class="mb-4 rounded-xl border-2 border-amber-300 bg-amber-50 p-4" aria-labelledby="ceo-system-notices-title">
-          <div class="flex flex-wrap items-center justify-between gap-2"><div><h4 id="ceo-system-notices-title" class="font-extrabold text-amber-950"><i class="fa-solid fa-bell mr-2"></i>CEO निजी System Notifications</h4><p class="mt-1 text-xs text-amber-900">वेबसाइट जडान, database, OTP र सुरक्षा सम्बन्धी सूचना यहीँ मात्र देखिन्छन्। सार्वजनिक प्रयोगकर्तालाई देखाइँदैन।</p></div><div class="flex gap-2"><button type="button" onclick="markNsewaNotificationsRead()" class="rounded-lg border border-amber-400 bg-white px-3 py-2 text-xs font-bold">सबै पढियो</button><button type="button" onclick="clearNsewaNotifications()" class="rounded-lg border border-amber-400 bg-white px-3 py-2 text-xs font-bold">खाली गर्नुहोस्</button></div></div>
-          <div id="ceo-system-notification-list" class="mt-3 space-y-2"><p class="rounded-lg bg-white p-3 text-sm text-slate-500">सूचना लोड हुँदैछ…</p></div>
+        <section class="mb-4 rounded-xl border border-cyan-200 bg-cyan-50 p-3" aria-label="Unified CEO notifications">
+          <p class="text-sm font-bold text-cyan-950">सबै CEO System Notification अब एउटै CEO Notification Center मा</p>
+          <p class="mt-1 text-xs text-cyan-900">Security, OTP, Supabase, Database, API र Browser घटनाहरू एउटै सूचीमा हेर्नुहोस्।</p>
+          <button type="button" onclick="document.getElementById('ceo-layout-hub')?.classList.remove('hidden');document.getElementById('nsewa-ceo-notification-center')?.scrollIntoView({behavior:'smooth',block:'start'});nsewaCeoRefreshEvents?.()" class="mt-2 rounded-lg bg-cyan-800 px-3 py-2 text-xs font-bold text-white">CEO Notification Center खोल्नुहोस्</button>
         </section>
-        <div class="border rounded-xl p-4 mb-4"><h4 class="font-extrabold text-lg mb-1"><i class="fa-solid fa-list-check mr-2 text-nepalRed"></i>३०-बुँदे सुरक्षा अडिट Checklist</h4><p class="text-xs text-gray-600 mb-3">वास्तवमा परीक्षण/कार्यान्वयन गरेपछि मात्र टिक लगाउनुहोस्। अवस्था यही ब्राउजरमा सुरक्षित हुन्छ, server मा होइन।</p><div id="security-checklist" class="space-y-4"></div>
+        <div class="border rounded-xl p-4 mb-4"><h4 class="font-extrabold text-lg mb-1"><i class="fa-solid fa-list-check mr-2 text-nepalRed"></i>३०-बुँदे सुरक्षा समीक्षा Checklist</h4><p class="text-xs text-gray-600 mb-3">यो केवल स्थानीय समीक्षा प्रगति हो—स्वचालित security scan वा प्रमाणित सुरक्षा score होइन। Supabase RLS, Auth, Storage, API र hosting configuration छुट्टै जाँच्नुपर्छ। अवस्था यही ब्राउजरमा सुरक्षित हुन्छ।</p><div id="security-checklist" class="space-y-4"></div>
           <div class="flex flex-wrap gap-2 mt-4"><button onclick="saveSecurityReview()" class="bg-nepalRed text-white rounded-lg px-4 py-2 font-bold"><i class="fa-solid fa-floppy-disk mr-1"></i> समीक्षा मिति सुरक्षित</button><button onclick="exportSecurityReport()" class="bg-nepalBlue text-white rounded-lg px-4 py-2 font-bold"><i class="fa-solid fa-file-arrow-down mr-1"></i> रिपोर्ट डाउनलोड</button><button onclick="resetSecurityChecklist()" class="border border-red-300 text-red-700 rounded-lg px-4 py-2 font-bold">टिक हटाउनुहोस्</button></div>
         </div>
         <div class="grid md:grid-cols-2 gap-4">
@@ -1876,7 +1866,7 @@
             currentPayDetails = { type, amount, title };
             
             let commissionRate = type === 'PRODUCT' ? 0.05 : 0.10; // local display setting only
-            if(type === 'PRODUCT'){try{const cfg=JSON.parse(localStorage.getItem('nsewa-market-admin-v1')||'{}');const product=(typeof products!=='undefined'&&Array.isArray(products)?products:[]).find(p=>String(p.title)===String(title));const rule=product&&(cfg.sellerRules||{})[product.seller||''];commissionRate=(Number(rule&&rule.commission!=null?rule.commission:cfg.commission??5))/100;}catch(e){}}
+            if(type === 'PRODUCT'){try{const cfg=window.nsewaMarketplaceConfig||{};const product=(typeof products!=='undefined'&&Array.isArray(products)?products:[]).find(p=>String(p.title)===String(title));const rule=product&&(cfg.sellerRules||{})[product.seller||''];commissionRate=(Number(rule&&rule.commission!=null?rule.commission:cfg.commission??5))/100;}catch(e){}}
             let commissionAmt = amount * commissionRate;
             let grandTotal = amount;
 
@@ -2714,8 +2704,8 @@
         function exportSecurityReport(){const all=JSON.parse(localStorage.getItem('nsewa-security-checklist')||'{}');let lines=['नेपाली सेवा — सुरक्षा तयारी रिपोर्ट','नोट: यो स्थानीय self-assessment हो, वास्तविक security certification होइन।','समीक्षा मिति: '+(localStorage.getItem('nsewa-security-review-date')||'दर्ता छैन'),''];NSEWA_SECURITY_GROUPS.forEach((g,gi)=>{lines.push(g.title);g.items.forEach((item,ii)=>lines.push(`${all[`sec-${gi}-${ii}`]?'[x]':'[ ]'} ${item}`));lines.push('');});const blob=new Blob([lines.join('\n')],{type:'text/plain;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='nepali-sewa-security-review.txt';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
         function generateSecurityPassword(){const len=Number(document.getElementById('security-password-length')?.value||24);const chars='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^&*()-_=+[]{}';const out=document.getElementById('security-generated-password');if(!out)return;let result='';if(window.crypto&&crypto.getRandomValues){const bytes=new Uint32Array(len);crypto.getRandomValues(bytes);for(let i=0;i<len;i++)result+=chars[bytes[i]%chars.length];}else{alert('यो browser मा सुरक्षित random generator उपलब्ध छैन। Browser update गर्नुहोस्।');return;}out.value=result;document.getElementById('security-password-message').textContent='पासवर्ड बन्यो। Password manager मा सुरक्षित गर्नुहोस्; यस HTML मा save गरिएको छैन।';}
         async function copySecurityPassword(){const el=document.getElementById('security-generated-password');if(!el||!el.value){alert('पहिला पासवर्ड बनाउनुहोस्।');return;}try{await navigator.clipboard.writeText(el.value);document.getElementById('security-password-message').textContent='Clipboard मा copy भयो; साझा कम्प्युटरमा clipboard खाली गर्नुहोस्।';}catch(e){el.select();document.execCommand('copy');document.getElementById('security-password-message').textContent='पासवर्ड select/copy गर्न तयार छ।';}}
-        function openSecurityStudio() {
-            if (currentUserRole !== 'CEO' || !window.hasVerifiedCeoLayoutSession?.()) { alert('अनुमति छैन। यो सुरक्षा सेटिङ CEO ले मात्र खोल्न पाउँछन्।'); return; }
+        async function openSecurityStudio() {
+            if (!(await window.nsewaEnsureCeoFolderSession?.())) { alert('CEO login सत्र प्रमाणित हुन सकेन। कृपया CEO Email OTP बाट पुनः login गर्नुहोस्।'); return; }
             closeModal('ceo-settings-modal');
             renderSecurityChecklist();
             window.renderNsewaNotifications?.();
@@ -2723,15 +2713,15 @@
             // Refresh after the modal is opened so the CEO-only notices panel is always current.
             window.requestAnimationFrame?.(()=>window.renderNsewaNotifications?.());
         }
-        function openPersonalAccountsFolder() {
-            if (currentUserRole !== 'CEO' || !window.hasVerifiedCeoLayoutSession?.()) { alert('अनुमति छैन। यो फोल्डर CEO ले मात्र खोल्न पाउँछन्।'); return; }
+        async function openPersonalAccountsFolder() {
+            if (!(await window.nsewaEnsureCeoFolderSession?.())) { alert('CEO login सत्र प्रमाणित हुन सकेन। कृपया CEO Email OTP बाट पुनः login गर्नुहोस्।'); return; }
             closeModal('ceo-settings-modal');
             openModal('personal-accounts-folder-modal');
         }
 
-        function openCeoSettings() {
+        async function openCeoSettings() {
             toggleUserMenu(false);
-            if (currentUserRole !== 'CEO' || !window.hasVerifiedCeoLayoutSession?.()) { alert('यो सेटिङ CEO ले मात्र खोल्न पाउँछन्।'); return; }
+            if (!(await window.nsewaEnsureCeoFolderSession?.())) { alert('CEO login सत्र प्रमाणित हुन सकेन। कृपया CEO Email OTP बाट पुनः login गर्नुहोस्।'); return; }
             openModal('ceo-settings-modal');
         }
 
@@ -2742,10 +2732,11 @@
           try { const saved = JSON.parse(localStorage.getItem('nsewa-layout') || '{}'); return {font:Number(saved.font)||100,radius:Number(saved.radius)||16,gap:Number(saved.gap)||16,width:Number(saved.width)||1280,preset:['compact','balanced','spacious','marketplace','premium','minimal','editorial','tech','service','dashboard','artisan','split'].includes(saved.preset)?saved.preset:'balanced',header:saved.header||'classic',hero:saved.hero||'standard',card:saved.card||'soft',grid:saved.grid||'responsive',button:saved.button||'rounded',flow:saved.flow||'standard'}; }
           catch(e) { return {...NSEWA_LAYOUT_DEFAULTS}; }
         }
-        function openLayoutStudio(mode="quick") {
-          if (currentUserRole !== 'CEO' || !window.hasVerifiedCeoLayoutSession?.()) { alert('अनुमति छैन। यो सुविधा CEO ले मात्र प्रयोग गर्न पाउँछन्।'); return; }
+        async function openLayoutStudio(mode="quick") {
+          if (!(await window.nsewaEnsureCeoFolderSession?.())) { alert('CEO login सत्र प्रमाणित हुन सकेन। कृपया CEO Email OTP बाट पुनः login गर्नुहोस्।'); return; }
           closeModal('ceo-settings-modal');
-          const v=getNsewaLayout();
+          let v=getNsewaLayout();
+          try{const serverLayout=await window.nsewaCeoBackend.getState('layout_preferences');if(serverLayout&&typeof serverLayout==='object'&&Object.keys(serverLayout).length)v={...v,...serverLayout};}catch(e){console.warn('CEO layout settings are not loaded from database:',e.message);}
           const adv=document.getElementById('advanced-layout-controls'); if(adv) adv.classList.toggle('hidden',mode!=='advanced');
           ['header','hero','card','grid','button','flow'].forEach(k=>{const el=document.getElementById('layout-'+k+'-style');if(el)el.value=v[k]||({header:'classic',hero:'standard',card:'soft',grid:'responsive',button:'rounded',flow:'standard'}[k]);});
           nsewaPendingLayoutPreset=v.preset||'balanced';
@@ -2786,10 +2777,12 @@
           nsewaPendingLayoutPreset=preset;
           document.getElementById('layout-font-scale').value=v.font;document.getElementById('layout-card-radius').value=v.radius;document.getElementById('layout-gap').value=v.gap;document.getElementById('layout-width').value=v.width; ['header','hero','card','grid','button','flow'].forEach(k=>{const el=document.getElementById('layout-'+k+'-style');if(el)el.value=v[k]||'standard';});previewNsewaLayout();
         }
-        function saveNsewaLayout() { if(currentUserRole!=='CEO'||!window.hasVerifiedCeoLayoutSession?.()){alert('अनुमति छैन।');return;} applyNsewaLayout(readLayoutControls(),true); alert('वेबसाइट लेआउट सुरक्षित भयो। पाँचै नेपाली थिममा यही लेआउट कायम रहनेछ।'); }
-        function resetNsewaLayout() {
+        async function saveNsewaLayout() { if(currentUserRole!=='CEO'||!window.hasVerifiedCeoLayoutSession?.()){alert('अनुमति छैन।');return;} const value=readLayoutControls();try{await window.nsewaCeoBackend.saveState('layout_preferences',value,'CEO layout preference update');await window.nsewaCeoBackend.audit('LAYOUT_PREFERENCES_UPDATED','layout','global',value);applyNsewaLayout(value,true);alert('वेबसाइट लेआउट Supabase Database मा सुरक्षित भयो। यो live deployment होइन।');}catch(e){alert('Layout server मा सुरक्षित भएन: '+e.message);} }
+        async function resetNsewaLayout() {
           if(currentUserRole!=='CEO'||!window.hasVerifiedCeoLayoutSession?.()){alert('अनुमति छैन।');return;}
-          const v={...NSEWA_LAYOUT_DEFAULTS,preset:'balanced'};nsewaPendingLayoutPreset='balanced';document.getElementById('layout-font-scale').value=v.font;document.getElementById('layout-card-radius').value=v.radius;document.getElementById('layout-gap').value=v.gap;document.getElementById('layout-width').value=v.width; ['header','hero','card','grid','button','flow'].forEach(k=>{const el=document.getElementById('layout-'+k+'-style');if(el)el.value=v[k]||({header:'classic',hero:'standard',card:'soft',grid:'responsive',button:'rounded',flow:'standard'}[k]);});applyNsewaLayout(v,true);alert('मूल सन्तुलित लेआउट पुनः लागू भयो।');
+          const v={...NSEWA_LAYOUT_DEFAULTS,preset:'balanced'};
+          try{await window.nsewaCeoBackend.saveState('layout_preferences',v,'CEO reset layout preferences');await window.nsewaCeoBackend.audit('LAYOUT_PREFERENCES_RESET','layout','global',{});}catch(e){alert('Default layout Database मा सुरक्षित भएन: '+e.message);return;}
+          nsewaPendingLayoutPreset='balanced';document.getElementById('layout-font-scale').value=v.font;document.getElementById('layout-card-radius').value=v.radius;document.getElementById('layout-gap').value=v.gap;document.getElementById('layout-width').value=v.width; ['header','hero','card','grid','button','flow'].forEach(k=>{const el=document.getElementById('layout-'+k+'-style');if(el)el.value=v[k]||({header:'classic',hero:'standard',card:'soft',grid:'responsive',button:'rounded',flow:'standard'}[k]);});applyNsewaLayout(v,true);alert('मूल सन्तुलित लेआउट Supabase मा सुरक्षित गरी लागू भयो।');
         }
 
         const NSEWA_THEMES = {
@@ -2800,10 +2793,10 @@
           'himalayan-sky': {name:'हिमालयन आकाश', primary:'#075985', secondary:'#0f766e', accent:'#bae6fd', background:'#e0f2fe'}
         };
         let nsewaPendingTheme = localStorage.getItem('nsewa-theme') || 'dhaka';
-        function openThemeStudio() {
-          if (currentUserRole !== 'CEO' || !window.hasVerifiedCeoLayoutSession?.()) { alert('अनुमति छैन। यो सुविधा CEO ले मात्र प्रयोग गर्न पाउँछन्।'); return; }
+        async function openThemeStudio() {
+          if (!(await window.nsewaEnsureCeoFolderSession?.())) { alert('CEO login सत्र प्रमाणित हुन सकेन। कृपया CEO Email OTP बाट पुनः login गर्नुहोस्।'); return; }
           closeModal('ceo-settings-modal');
-          nsewaPendingTheme = localStorage.getItem('nsewa-theme') || 'dhaka';
+          try{const saved=await window.nsewaCeoBackend.getState('theme_preferences');nsewaPendingTheme=NSEWA_THEMES[saved?.theme]?saved.theme:(localStorage.getItem('nsewa-theme')||'dhaka');}catch(e){nsewaPendingTheme=localStorage.getItem('nsewa-theme')||'dhaka';const st=document.getElementById('theme-status');if(st)st.textContent='Database theme load भएन: '+e.message;}
           updateThemeStudioPreview(nsewaPendingTheme);
           openModal('ceo-theme-studio');
         }
@@ -2821,30 +2814,27 @@
           banner.style.borderBottom = `5px solid ${t.accent}`;
           document.getElementById('theme-status').textContent = `छानिएको थिम: ${t.name} — “यो थिम लागू गर्नुहोस्” थिचेपछि लागू हुन्छ।`;
         }
-        function applyNsewaTheme() {
+        async function applyNsewaTheme() {
           if (currentUserRole !== 'CEO' || !window.hasVerifiedCeoLayoutSession?.()) { alert('अनुमति छैन।'); return; }
           if (!NSEWA_THEMES[nsewaPendingTheme]) return;
+          try{await window.nsewaCeoBackend.saveState('theme_preferences',{theme:nsewaPendingTheme},'CEO theme preference update');await window.nsewaCeoBackend.audit('THEME_PREFERENCE_UPDATED','theme','global',{theme:nsewaPendingTheme});}catch(e){alert('थिम Database मा सुरक्षित भएन: '+e.message);return;}
           document.body.dataset.nsewaTheme = nsewaPendingTheme;
-          try { localStorage.setItem('nsewa-theme', nsewaPendingTheme); }
-          catch (e) { alert('थिम ब्राउजरमा सुरक्षित भएन। यो सत्रमा भने लागू गरिएको छ।'); }
+          try { localStorage.setItem('nsewa-theme', nsewaPendingTheme); } catch (e) {}
           closeModal('ceo-theme-studio');
-          alert(`${NSEWA_THEMES[nsewaPendingTheme].name} थिम लागू भयो। यो ब्राउजरमा सुरक्षित गरिएको छ।`);
+          alert(`${NSEWA_THEMES[nsewaPendingTheme].name} थिम Supabase मा सुरक्षित भयो। Live site publish भएको होइन।`);
         }
-        function resetNsewaTheme() {
+        async function resetNsewaTheme() {
           if (currentUserRole !== 'CEO' || !window.hasVerifiedCeoLayoutSession?.()) { alert('अनुमति छैन।'); return; }
-          nsewaPendingTheme = 'dhaka';
-          document.body.dataset.nsewaTheme = 'dhaka';
-          localStorage.setItem('nsewa-theme', 'dhaka');
-          updateThemeStudioPreview('dhaka');
-          alert('मूल नेपाली ढाका शैलीको थिम पुनः लागू भयो।');
+          try{await window.nsewaCeoBackend.saveState('theme_preferences',{theme:'dhaka'},'CEO reset theme preference');await window.nsewaCeoBackend.audit('THEME_PREFERENCE_RESET','theme','global',{});}catch(e){alert('Default theme Database मा सुरक्षित भएन: '+e.message);return;}
+          nsewaPendingTheme = 'dhaka';document.body.dataset.nsewaTheme = 'dhaka';localStorage.setItem('nsewa-theme', 'dhaka');updateThemeStudioPreview('dhaka');alert('मूल नेपाली ढाका शैली Supabase मा सुरक्षित भयो।');
         }
 
         function ceoAction(action) {
             if (currentUserRole !== 'CEO' || !window.hasVerifiedCeoLayoutSession?.()) { alert('अनुमति छैन।'); return; }
             alert(action + ': यो कामका लागि सुरक्षित backend/admin authentication र deployment workflow आवश्यक छ।');
         }
-        function openCodeEditor() {
-            if (currentUserRole !== 'CEO' || !window.hasVerifiedCeoLayoutSession?.()) { alert('अनुमति छैन। CEO ले मात्र वेबसाइट कोड खोल्न पाउँछन्।'); return; }
+        async function openCodeEditor() {
+            if (!(await window.nsewaEnsureCeoFolderSession?.())) { alert('CEO login सत्र प्रमाणित हुन सकेन। कृपया CEO Email OTP बाट पुनः login गर्नुहोस्।'); return; }
             closeModal('ceo-settings-modal');
             openModal('ceo-code-editor-modal');
             const draft = localStorage.getItem('nsewa-ceo-code-draft');
@@ -3016,7 +3006,7 @@
     <div class="grid grid-cols-2 gap-2 mt-auto pt-4"><button type="button" class="ns-action-btn ns-action-primary" onclick="nsBuyNow('${id}')" ${p.stock===0?'disabled':''}><i class="fa-solid fa-bolt mr-1"></i>अहिले किन्नुहोस्</button><button type="button" class="ns-action-btn" onclick="nsAddToCart('${id}')" ${p.stock===0?'disabled':''}><i class="fa-solid fa-basket-shopping mr-1"></i>झोलामा राख्नुहोस्</button><button type="button" class="ns-action-btn" onclick="nsViewProduct('${id}')"><i class="fa-regular fa-eye mr-1"></i>विवरण</button><button type="button" class="ns-action-btn" onclick="nsAskSeller('${id}')"><i class="fa-regular fa-comments mr-1"></i>बिक्रेतालाई सोध्नुहोस्</button><button type="button" class="ns-action-btn ${inCompare?'bg-purple-50 text-purple-800 border-purple-300':''} col-span-2" onclick="nsToggleCompare('${id}')"><i class="fa-solid fa-scale-balanced mr-1"></i>${inCompare?'तुलनाबाट हटाउनुहोस्':'तुलनामा थप्नुहोस्'}</button></div></div></article>`}).join('');renderCart();renderCompare();updateCartCount();}
  function renderCart(){const box=$('ns-cart-items');if(!box)return;const all=allProducts();const items=Object.entries(cart).map(([id,qty])=>({p:all.find(p=>String(p.id)===String(id)),qty:Number(qty)})).filter(x=>x.p&&x.qty>0);if(!items.length){box.innerHTML='<div class="rounded-xl bg-gray-50 p-5 text-sm text-gray-500 text-center">तपाईंको झोला खाली छ। मन परेको सामानमा “झोलामा राख्नुहोस्” थिच्नुहोस्।</div>'}else{box.innerHTML=items.map(({p,qty})=>`<div class="flex items-center gap-3 border rounded-xl p-3"><img src="${escapeHTML(p.img||'')}" alt="" loading="lazy" decoding="async" class="w-16 h-16 rounded-lg object-cover bg-gray-100" onerror="this.style.display='none'"><div class="flex-1 min-w-0"><b class="text-sm">${escapeHTML(p.title)}</b><div class="text-sm text-nepalBlue font-bold">${money(p.price)}</div><div class="flex items-center gap-2 mt-2"><button onclick="nsChangeQty('${escapeHTML(p.id)}',-1)" class="border rounded px-2" aria-label="मात्रा घटाउनुहोस्">−</button><span class="text-sm">${qty}</span><button onclick="nsChangeQty('${escapeHTML(p.id)}',1)" class="border rounded px-2" aria-label="मात्रा बढाउनुहोस्">+</button><button onclick="nsRemoveCartItem('${escapeHTML(p.id)}')" class="text-red-600 text-xs ml-2">हटाउनुहोस्</button></div></div><b class="text-sm">${money(Number(p.price)*qty)}</b></div>`).join('')};const subtotal=items.reduce((sum,x)=>sum+Number(x.p.price)*x.qty,0);if($('ns-cart-subtotal'))$('ns-cart-subtotal').textContent=money(subtotal);}
  function renderCompare(){const panel=$('ns-compare-panel'),box=$('ns-compare-items');if(!panel||!box)return;const list=compareIds.map(id=>allProducts().find(p=>String(p.id)===id)).filter(Boolean);panel.classList.toggle('hidden',!list.length);box.innerHTML=list.map(p=>`<div class="border border-purple-100 rounded-xl p-3"><b>${escapeHTML(p.title)}</b><p class="text-lg font-black text-purple-900 mt-1">${money(p.price)}</p><p class="text-xs text-gray-500">${escapeHTML(p.district||'स्थान उपलब्ध छैन')}</p><button onclick="nsAddToCart('${escapeHTML(p.id)}')" class="mt-2 text-xs font-bold text-blue-700 underline">झोलामा राख्नुहोस्</button></div>`).join('')}
- window.nsPlaceOrderRequest=function(){const items=Object.entries(cart).map(([id,qty])=>({productId:id,quantity:Number(qty),product:allProducts().find(p=>String(p.id)===String(id))})).filter(x=>x.product);if(!items.length){toast('पहिले झोलामा सामान राख्नुहोस्।');return}const address=$('ns-order-address')?.value.trim()||'',phone=($('ns-order-phone')?.value||'').replace(/\D/g,'');if(address.length<5){toast('कृपया पूरा डेलिभरी ठेगाना लेख्नुहोस्।');$('ns-order-address')?.focus();return}if(!/^9[78]\d{8}$/.test(phone)){toast('१० अङ्कको नेपाली मोबाइल नम्बर लेख्नुहोस्।');$('ns-order-phone')?.focus();return}const order={id:'NS-'+Date.now().toString().slice(-8),createdAt:new Date().toISOString(),items:items.map(x=>({productId:x.productId,title:x.product.title,price:Number(x.product.price),quantity:x.quantity,seller:x.product.seller||'',commissionRatePct:(()=>{try{const cfg=JSON.parse(localStorage.getItem('nsewa-market-admin-v1')||'{}');const rule=(cfg.sellerRules||{})[x.product.seller||''];return rule&&rule.commission!=null?Number(rule.commission):(Number(cfg.commission)||5)}catch(e){return 5}})()})),address,phone,total:items.reduce((n,x)=>n+Number(x.product.price)*x.quantity,0),status:'स्थानीय अर्डर अनुरोध — बिक्रेतासँग पुष्टि बाँकी'};orders.unshift(order);safeWrite(STORE.orders,orders);cart={};persistCart();renderCart();if($('ns-order-status'))$('ns-order-status').textContent='अनुरोध '+order.id+' यस ब्राउजरमा सुरक्षित भयो। यो वास्तविक बिक्रेतालाई पठाइएको छैन।';toast('स्थानीय अर्डर अनुरोध सुरक्षित भयो: '+order.id);};
+ // Order placement is defined below by the Supabase RPC adapter; no browser-only order fallback.
  window.handleAddProduct=function(e){e.preventDefault();const title=$('prod-title')?.value.trim(),price=Number($('prod-price')?.value),district=$('prod-district')?.value||'काठमाडौँ',img=$('prod-img')?.value.trim()||'https://placehold.co/600x400/e2e8f0/334155?text=Nepali+Sewa';if(!title||!Number.isFinite(price)||price<=0){toast('सामानको नाम र सही मूल्य राख्नुहोस्।');return}const product={id:'L'+Date.now(),title,price,seller:(typeof currentUserRole!=='undefined'&&currentUserRole==='Seller')?'हालको बिक्रेता':'नेपाली सेवा प्रयोगकर्ता',mobile:'',district,img,category:categoryOf({title}),stock:1,createdAt:new Date().toISOString()};const listings=safeRead(STORE.listings,[]);listings.unshift(product);if(!safeWrite(STORE.listings,listings)){toast('ब्राउजर स्टोरेज भरिएको हुन सक्छ; सामान सुरक्षित गर्न सकिएन।');return}if(typeof products!=='undefined'&&Array.isArray(products))products.unshift(product);render();if(typeof window.closeModal==='function')window.closeModal('add-product-modal');$('prod-title').value='';$('prod-price').value='';$('prod-img').value='';toast('सामान यस ब्राउजरको स्थानीय बजारमा राखियो। सबै प्रयोगकर्ताले देख्ने गरी प्रकाशित भएको होइन।')};
  function bind(){window.renderProducts=render;window.nsGetAllProducts=allProducts;window.nsGetCart=()=>({...cart});window.nsClearCart=()=>{cart={};persistCart();renderCart()};try{renderProducts=render}catch(_){} const search=$('ns-market-search'),brand=$('ns-market-brand'),cat=$('ns-market-category'),sort=$('ns-market-sort');if(search)search.addEventListener('input',()=>{marketQuery=search.value.trim();render()});if(brand)brand.addEventListener('input',render);if(cat)cat.addEventListener('change',()=>{favoritesOnly=false;render()});if(sort)sort.addEventListener('change',render);updateCartCount();render();}
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind);else bind();
@@ -3204,13 +3194,13 @@
 <div id="ceo-layout-hub" class="fixed inset-0 z-[105] hidden overflow-y-auto bg-slate-950 p-3 sm:p-6" role="dialog" aria-modal="true" aria-labelledby="ceo-layout-hub-title">
   <div class="mx-auto max-w-5xl">
     <header class="mb-5 flex flex-col gap-3 rounded-2xl border border-white/10 bg-slate-900 p-5 text-white sm:flex-row sm:items-center sm:justify-between">
-      <div><p class="text-xs font-bold uppercase tracking-[0.2em] text-emerald-300">CEO ADMIN SESSION</p><h2 id="ceo-layout-hub-title" class="mt-1 text-2xl font-extrabold sm:text-3xl">Nepali Sewa · CEO Dashboard</h2><p class="mt-1 text-sm text-slate-300">CEO नियन्त्रण केन्द्र — स्थानीय ब्राउजर सेटिङ र backup व्यवस्थापन</p></div>
+      <div><p class="text-xs font-bold uppercase tracking-[0.2em] text-emerald-300">CEO ADMIN SESSION</p><h2 id="ceo-layout-hub-title" class="mt-1 text-2xl font-extrabold sm:text-3xl">Nepali Sewa · CEO Dashboard</h2><p class="mt-1 text-sm text-slate-300">CEO नियन्त्रण केन्द्र — एकीकृत सूचना, system review र browser-based management tools</p></div>
     </header>
     <section id="nsewa-ceo-notification-center" class="mb-5 rounded-2xl border border-cyan-400/30 bg-slate-900 p-4 text-white sm:p-5" aria-labelledby="nsewa-ceo-notification-title">
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div><p class="text-xs font-bold uppercase tracking-widest text-cyan-300">SYSTEM MONITORING</p>
-          <h3 id="nsewa-ceo-notification-title" class="mt-1 text-xl font-extrabold">CEO Notification Center</h3>
-          <p class="mt-1 text-sm text-slate-300">Website, Supabase, Database, Authentication, Security र API घटनाहरू</p></div>
+          <h3 id="nsewa-ceo-notification-title" class="mt-1 text-xl font-extrabold">CEO Notification Center <span id="nsewa-ceo-unread-count" class="ml-2 inline-flex rounded-full bg-rose-700 px-2 py-0.5 align-middle text-xs">0 नयाँ</span></h3>
+          <p class="mt-1 text-sm text-slate-300">Website, Supabase, Database, Authentication, Security र API घटनाहरू — एउटै inbox</p></div>
         <div class="flex flex-wrap gap-2">
           <button type="button" onclick="nsewaCeoRefreshEvents()" class="rounded-lg bg-cyan-700 px-3 py-2 text-xs font-bold hover:bg-cyan-600">↻ Refresh</button>
           <button type="button" onclick="nsewaCeoExportEvents()" class="rounded-lg border border-slate-600 px-3 py-2 text-xs font-bold hover:bg-slate-800">Export History</button>
@@ -3233,6 +3223,7 @@
           <option value="all">सबै अवस्था</option><option value="unread">नपढिएको</option><option value="read">पढिएको</option>
         </select>
         <button type="button" onclick="nsewaCeoMarkAllRead()" class="rounded-lg border border-slate-600 px-3 py-2 text-xs font-bold">सबै पढियो</button>
+        <button type="button" onclick="nsewaCeoClearEvents()" class="rounded-lg border border-rose-500/70 px-3 py-2 text-xs font-bold text-rose-200">स्थानीय सूचना हटाउनुहोस्</button>
       </div>
       <p id="nsewa-ceo-event-source" class="mt-3 text-xs text-slate-400">स्थानीय Browser Events लोड हुँदैछन्। साझा Server History का लागि migration र CEO RLS configuration आवश्यक छ।</p>
       <div id="nsewa-ceo-event-list" class="mt-3 max-h-[440px] space-y-2 overflow-y-auto rounded-xl bg-slate-950/50 p-2" aria-live="polite">
@@ -3283,7 +3274,7 @@
     </section>
     <section id="nsewa-market-admin" class="hidden mb-5 rounded-2xl border border-sky-400/30 bg-slate-900 p-4 text-white">
       <div class="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-sky-400/20 bg-sky-950/40 px-3 py-2"><span class="text-xs font-bold uppercase tracking-wider text-sky-200"><i class="fa-solid fa-folder-open mr-2"></i>CEO Dashboard / STORE & MARKETPLACE CONTROLS</span><button type="button" onclick="nsewaCloseCeoFolders()" class="rounded-lg border border-white/20 px-3 py-1.5 text-xs font-bold hover:bg-white/10"><i class="fa-solid fa-folder mr-1"></i>Folder सूचीमा फर्कनुहोस्</button></div>
-      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><p class="text-xs font-bold uppercase tracking-widest text-sky-300">STORE & MARKETPLACE CONTROLS</p><h3 class="mt-1 text-xl font-extrabold">बजार, सामान, कमिसन र डेलिभरी नियन्त्रण</h3><p class="mt-1 text-sm text-slate-300">सामान स्वीकृति, उजुरी, Featured विज्ञापन, मूल्य सीमा, स्टक र अर्डर — यही ब्राउजरमा व्यवस्थापन।</p></div><button type="button" onclick="nsewaMarketAdminRender()" class="rounded-xl border border-white/20 px-4 py-2 font-bold hover:bg-white/10"><i class="fa-solid fa-rotate mr-2"></i>ताजा गर्नुहोस्</button></div>
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><p class="text-xs font-bold uppercase tracking-widest text-sky-300">STORE & MARKETPLACE CONTROLS</p><h3 class="mt-1 text-xl font-extrabold">बजार, सामान, कमिसन र डेलिभरी नियन्त्रण</h3><p class="mt-1 text-sm text-slate-300">सामान स्वीकृति, उजुरी, Featured विज्ञापन, मूल्य सीमा, स्टक र अर्डर — Supabase Database बाट व्यवस्थापन।</p><p id="nma-backend-status" class="mt-2 text-xs text-amber-200" aria-live="polite">SQL migration जडान भएपछि server data लोड हुनेछ।</p></div><button type="button" onclick="nsewaMarketAdminRender(true)" class="rounded-xl border border-white/20 px-4 py-2 font-bold hover:bg-white/10"><i class="fa-solid fa-rotate mr-2"></i>ताजा गर्नुहोस्</button></div>
       <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4"><div class="rounded-xl bg-slate-800 p-3"><p class="text-xs text-slate-300">जाँच बाँकी सामान</p><strong id="nma-pending" class="text-2xl">0</strong></div><div class="rounded-xl bg-slate-800 p-3"><p class="text-xs text-slate-300">उजुरी बाँकी</p><strong id="nma-reports" class="text-2xl">0</strong></div><div class="rounded-xl bg-slate-800 p-3"><p class="text-xs text-slate-300">कम स्टक / सकिएको</p><strong id="nma-stock-alerts" class="text-2xl">0</strong></div><div class="rounded-xl bg-slate-800 p-3"><p class="text-xs text-slate-300">स्थानीय अर्डर</p><strong id="nma-orders" class="text-2xl">0</strong></div></div>
       <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div class="rounded-xl border border-white/10 bg-slate-800 p-4"><h4 class="font-extrabold text-sky-200">१. मूल्य सीमा र बिक्रेता सूची सीमा</h4><div class="mt-3 grid grid-cols-2 gap-2"><label class="text-xs">न्यूनतम मूल्य (रू.)<input id="nma-min-price" type="number" min="0" class="mt-1 w-full rounded-lg border border-slate-600 bg-slate-900 p-2 text-white" placeholder="0"></label><label class="text-xs">अधिकतम मूल्य (रू.)<input id="nma-max-price" type="number" min="0" class="mt-1 w-full rounded-lg border border-slate-600 bg-slate-900 p-2 text-white" placeholder="सीमा छैन"></label><label class="text-xs col-span-2">सामान्य विक्रेताको अधिकतम सूची संख्या<input id="nma-seller-limit" type="number" min="1" max="10000" class="mt-1 w-full rounded-lg border border-slate-600 bg-slate-900 p-2 text-white" value="50"></label></div><button onclick="nsewaMarketSaveSettings()" class="mt-3 rounded-lg bg-sky-700 px-4 py-2 text-sm font-bold">मूल्य/सीमा सुरक्षित</button><p class="mt-2 text-xs text-slate-400">मूल्य सीमा सार्वजनिक सूचीमा फिल्टर हुन्छ; यसले आफैँ बजारको मूल्य निर्धारण वा मिलेमतो रोक्दैन।</p></div>
@@ -3292,8 +3283,8 @@
         <div class="rounded-xl border border-white/10 bg-slate-800 p-4"><h4 class="font-extrabold text-violet-200">४. अर्डर र डेलिभरी स्थिति</h4><p class="mt-1 text-xs text-slate-300">यस ब्राउजरमा देखिएका अर्डरको गणना र स्थिति।</p><div class="mt-3 grid grid-cols-3 gap-2 text-center"><div class="rounded-lg bg-slate-900 p-2"><small class="text-slate-400">डेलिभर</small><div id="nma-delivered" class="text-xl font-black">0</div></div><div class="rounded-lg bg-slate-900 p-2"><small class="text-slate-400">रद्द</small><div id="nma-cancelled" class="text-xl font-black">0</div></div><div class="rounded-lg bg-slate-900 p-2"><small class="text-slate-400">अन्य</small><div id="nma-other-orders" class="text-xl font-black">0</div></div></div><div id="nma-order-list" class="mt-3 space-y-2"></div></div>
       </div>
       <div class="mt-4 rounded-xl border border-white/10 bg-slate-800 p-4"><div class="flex flex-wrap items-center justify-between gap-2"><h4 class="font-extrabold text-white">५. Product Approval, Featured Listing र उजुरी</h4><input id="nma-product-search" oninput="nsewaMarketAdminRender()" class="rounded-lg border border-slate-600 bg-slate-900 px-3 py-2 text-sm text-white" placeholder="सामान/बिक्रेता खोज्नुहोस्"></div><div id="nma-product-list" class="mt-3 grid grid-cols-1 gap-3"></div></div>
-      <div class="mt-4 rounded-xl border border-white/10 bg-slate-800 p-4"><h4 class="font-extrabold text-rose-200">६. Product Report System</h4><p class="mt-1 text-xs text-slate-300">नक्कली सामान वा अत्यधिक मूल्यको उजुरी यहाँ देखिन्छ। उजुरी उत्पादनसँग जोडिएर यही ब्राउजरमा मात्र रहन्छ।</p><div id="nma-report-list" class="mt-3 space-y-2"></div></div>
-      <div class="mt-4 rounded-xl border border-amber-400/30 bg-amber-950/40 p-3 text-xs leading-5 text-amber-100"><b>सीमा स्पष्ट:</b> यो frontend मात्र हो। सबै ग्राहक/बिक्रेताबीच साझा डेटा, वास्तविक विज्ञापन भुक्तानी, server-side CEO permission, courier API, विश्वसनीय commission settlement, र server बाट सामान हटाउन backend/database चाहिन्छ। यो प्यानलले स्थानीय ब्राउजरमा कार्यहरू परीक्षण गर्न दिन्छ, live server मा प्रकाशित गर्दैन।</div>
+      <div class="mt-4 rounded-xl border border-white/10 bg-slate-800 p-4"><h4 class="font-extrabold text-rose-200">६. Product Report System</h4><p class="mt-1 text-xs text-slate-300">नक्कली सामान वा अत्यधिक मूल्यको उजुरी Supabase मा उत्पादन ID सहित सुरक्षित हुन्छ र CEO ले साझा server queue बाट समीक्षा गर्छ।</p><div id="nma-report-list" class="mt-3 space-y-2"></div></div>
+      <div class="mt-4 rounded-xl border border-amber-400/30 bg-amber-950/40 p-3 text-xs leading-5 text-amber-100"><b>Production सीमा:</b> यस प्यानलका settings, product status, reports, order status र audit actions Supabase RPC/table contract अनुसार चल्छन्। सम्बन्धित SQL migration, RLS policies र RPC deploy नभएसम्म यी server actions सफल मानिँदैनन्। Featured शुल्क असुली, payment settlement र courier API यस प्यानलले आफैँ चलाउँदैन।</div>
     </section>
     <div class="rounded-2xl border border-amber-500/30 bg-amber-950/40 p-4 text-sm leading-6 text-amber-100"><b>महत्त्वपूर्ण:</b> हालको HTML संस्करणमा layout/theme सेटिङ यही ब्राउजरमा सुरक्षित हुन्छ। वास्तविक live वेबसाइटमा स्वतः प्रकाशित गर्न, shared database/configuration र server-side deploy API छुट्टै जोड्नुपर्छ। यहाँबाट डाउनलोड गरिएको backup सुरक्षित ठाउँमा राख्नुहोस्।</div>
     <div class="mt-4 flex flex-wrap gap-3"><button onclick="closeCeoLayoutHub()" class="rounded-xl border border-white/20 px-4 py-3 font-bold text-white hover:bg-white/10">ड्यासबोर्ड बन्द गर्नुहोस्</button><button onclick="ceoLayoutLockNow()" class="rounded-xl bg-rose-600 px-5 py-3 font-extrabold text-white shadow-lg hover:bg-rose-500"><i class="fa-solid fa-right-from-bracket mr-2"></i>CEO सुरक्षित Logout</button></div>
@@ -3303,7 +3294,8 @@
 <script>
 (function(){
   // CEO dashboard folder navigation: each control group opens as its own folder.
-  window.nsewaOpenCeoFolder = function(folder){
+  window.nsewaOpenCeoFolder = async function(folder){
+    if(!(await window.nsewaEnsureCeoFolderSession?.())){alert('CEO login सत्र प्रमाणित हुन सकेन। कृपया CEO Email OTP बाट पुनः login गर्नुहोस्।');return;}
     const worker=document.getElementById('ceo-approval-center');
     const market=document.getElementById('nsewa-market-admin');
     if(!worker||!market)return;
@@ -3311,7 +3303,7 @@
     market.classList.toggle('hidden',folder!=='marketplace');
     const target=folder==='worker-seller'?worker:market;
     target.scrollIntoView({behavior:'smooth',block:'start'});
-    if(folder==='worker-seller'&&typeof window.nsewaRenderApprovalCenter==='function')window.nsewaRenderApprovalCenter();
+    if(folder==='worker-seller'&&typeof window.nsewaRenderApprovalCenter==='function')window.nsewaRenderApprovalCenter(true);
     if(folder==='marketplace'&&typeof window.nsewaMarketAdminRender==='function')window.nsewaMarketAdminRender();
   };
   window.nsewaCloseCeoFolders = function(){
@@ -3326,6 +3318,25 @@
   const statusBox = () => document.getElementById('ceo-layout-auth-status');
   function status(message, ok=false) { const el=statusBox(); if(!el)return; el.textContent=message; el.classList.remove('hidden','bg-red-50','text-red-800','bg-emerald-50','text-emerald-800'); el.classList.add(ok?'bg-emerald-50':'bg-red-50',ok?'text-emerald-800':'text-red-800'); }
   window.hasVerifiedCeoLayoutSession = function(){ return Boolean(window.nsewaCeoLayoutSessionToken && Date.now()<ceoLayoutSessionExpiresAt); };
+  // Rehydrate a valid CEO session from Supabase before opening CEO folders.
+  // This fixes stale UI role/token state without bypassing the server-verified CEO role.
+  window.nsewaEnsureCeoFolderSession = async function(){
+    if (typeof currentUserRole!=='undefined' && currentUserRole==='CEO' && window.hasVerifiedCeoLayoutSession()) return true;
+    const client=window.nsewaSupabaseReady && window.nsewaSupabase;
+    if(!client) return false;
+    try{
+      const {data,error}=await client.auth.getSession();
+      if(error || !data?.session?.user) return false;
+      const session=data.session, user=session.user;
+      if(String(user.app_metadata?.role||'').toLowerCase()!=='ceo') return false;
+      const exp=Number(session.expires_at)||Math.floor(Date.now()/1000)+600;
+      ceoLayoutSessionExpiresAt=exp*1000;
+      window.nsewaCeoLayoutSessionToken=session.access_token;
+      currentUserRole='CEO'; currentPersonalId=user.id;
+      window.syncNsewaRoleVisibility?.();
+      return window.hasVerifiedCeoLayoutSession();
+    }catch(e){console.warn('CEO folder session restore failed:',e);return false;}
+  };
   if (typeof window.closeModal === 'function' && !window.closeModal.__ceoHubWrapped) {
     const originalCloseModal = window.closeModal;
     const wrappedCloseModal = function(id){ originalCloseModal(id); if(['ceo-layout-studio','ceo-theme-studio','ceo-code-editor-modal','ceo-security-studio'].includes(id) && window.hasVerifiedCeoLayoutSession()) { document.getElementById('ceo-layout-hub')?.classList.remove('hidden'); } };
@@ -3404,8 +3415,8 @@
     }catch(e){status(e.message||'Email OTP/CEO अनुमति प्रमाणित भएन।');}
     finally{if(btn){btn.disabled=false;btn.innerHTML='<i class="fa-solid fa-shield-check mr-2"></i>Email OTP प्रमाणित गरेर खोल्नुहोस्';}}
   };
-  window.ceoHubOpenTool=function(tool){
-    if(!window.nsewaCeoLayoutSessionToken||Date.now()>ceoLayoutSessionExpiresAt){ceoLayoutLockNow();alert('परीक्षण सत्रको समय सकियो। फेरि पासवर्ड राख्नुहोस्।');return;}
+  window.ceoHubOpenTool=async function(tool){
+    if(!(await window.nsewaEnsureCeoFolderSession?.())){alert('CEO login सत्र प्रमाणित हुन सकेन। कृपया CEO Email OTP बाट पुनः login गर्नुहोस्।');return;}
     document.getElementById('ceo-layout-hub')?.classList.add('hidden');
     const modalId=tool==='theme'?'ceo-theme-studio':tool==='code'?'ceo-code-editor-modal':tool==='security'?'ceo-security-studio':tool==='layout'?'ceo-layout-studio':'';
     if(tool==='layout')openLayoutStudio('advanced');
@@ -3415,8 +3426,8 @@
     const modal=modalId&&document.getElementById(modalId);
     if(modal){modal.classList.remove('hidden');modal.classList.add('flex');modal.style.zIndex='1200';}
   };
-  window.nsewaOpenAnalyticsFolder=function(){
-    if(!window.hasVerifiedCeoLayoutSession?.()){alert('CEO session प्रमाणित छैन।');return;}
+  window.nsewaOpenAnalyticsFolder=async function(){
+    if(!(await window.nsewaEnsureCeoFolderSession?.())){alert('CEO login सत्र प्रमाणित हुन सकेन। कृपया CEO Email OTP बाट पुनः login गर्नुहोस्।');return;}
     ['ceo-approval-center','nsewa-market-admin'].forEach(id=>document.getElementById(id)?.classList.add('hidden'));
     document.getElementById('ceo-analytics-folder')?.classList.remove('hidden');
     document.getElementById('ceo-analytics-folder')?.scrollIntoView({behavior:'smooth',block:'start'});
@@ -3551,8 +3562,17 @@ document.addEventListener('DOMContentLoaded',()=>{const e=$('nsewa-analytics-sql
     const opening=panel.classList.contains('hidden');panel.classList.toggle('hidden',!opening);
     const btn=document.querySelector('[aria-controls="nsewa-notification-panel"]');if(btn)btn.setAttribute('aria-expanded',String(opening));
   };
-  window.markNsewaNotificationsRead=function(){saveCeoSystemNotices(readCeoSystemNotices().map(x=>({...x,read:true})));renderCeoSystemNotices();};
-  window.clearNsewaNotifications=function(){saveCeoSystemNotices([]);renderCeoSystemNotices();};
+  window.markNsewaNotificationsRead=function(){
+    saveNotices(readNotices().map(x=>({...x,read:true})));
+    saveCeoSystemNotices(readCeoSystemNotices().map(x=>({...x,read:true})));
+    window.nsewaCeoMarkAllRead?.();
+    window.renderNsewaNotifications?.();
+  };
+  window.clearNsewaNotifications=function(){
+    saveNotices([]); saveCeoSystemNotices([]);
+    window.nsewaCeoClearEvents?.();
+    window.renderNsewaNotifications?.();
+  };
   window.requestNsewaNotificationPermission=async function(){
     // System diagnostics are deliberately not forwarded to operating-system notifications.
     alert('वेबसाइटका System Notifications CEO Dashboard → Security Checklist भित्र मात्र देखाइन्छन्।');
@@ -3668,142 +3688,239 @@ document.addEventListener('DOMContentLoaded',()=>{const e=$('nsewa-analytics-sql
   });
 })();
 </script>
-<script>
+<script id="nsewa-ceo-approval-backend">
 (function(){
-  'use strict';
-  const STORE='nsewa-ceo-review-records-v1', LOG='nsewa-ceo-review-audit-v1';
-  const esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  function records(){
-    let out=[];
-    try{out=JSON.parse(localStorage.getItem(STORE)||'[]');if(!Array.isArray(out))out=[];}catch(e){out=[];}
-    const map=new Map(out.map(x=>[x.key,x]));
-    (typeof workers!=='undefined' && Array.isArray(workers)?workers:[]).forEach(w=>{const key='worker:'+w.id;if(!map.has(key))map.set(key,{key,type:'Worker',id:w.personalId||('WRK-'+w.id),name:w.name,phone:w.mobile,district:w.district,proof:w.spec||'सीप/प्राविधिक प्रमाण — प्रत्यक्ष फाइल उपलब्ध छैन',status:w.status||'PENDING',source:'sample'});});
-    (typeof sellers!=='undefined' && Array.isArray(sellers)?sellers:[]).forEach(x=>{const key='seller:'+x.id;if(!map.has(key))map.set(key,{key,type:'Seller',id:x.personalId||('SEL-'+x.id),name:x.name,phone:x.mobile,district:x.district,proof:x.proof||'व्यवसाय प्रमाण — प्रत्यक्ष फाइल उपलब्ध छैन',status:x.status||'PENDING',source:'sample'});});
-    try{JSON.parse(localStorage.getItem('nsewa-auth-accounts')||'[]').forEach(a=>{if(['Worker','Seller'].includes(a.role)){const key='account:'+a.id;if(!map.has(key))map.set(key,{key,type:a.role,id:a.id,name:a.name,phone:a.phone,district:a.district,proof:'दर्ता खाताको विवरण; अपलोड कागजात यो HTML ले सुरक्षित गरेको छैन',status:a.status||'PENDING',source:'account'});}});}catch(e){}
-    const result=[...map.values()];
-    result.forEach(r=>{if(r.key.startsWith('worker:')&&typeof workers!=='undefined'){const x=workers.find(v=>'worker:'+v.id===r.key);if(x)x.status=r.status;}if(r.key.startsWith('seller:')&&typeof sellers!=='undefined'){const x=sellers.find(v=>'seller:'+v.id===r.key);if(x)x.status=r.status;}});
-    return result;
-  }
-  function persist(list){localStorage.setItem(STORE,JSON.stringify(list));}
-  function logAction(r,action,reason){let log=[];try{log=JSON.parse(localStorage.getItem(LOG)||'[]')}catch(e){}log.unshift({at:new Date().toISOString(),id:r.id,name:r.name,type:r.type,action,reason:reason||'',by:'CEO (local browser)'});localStorage.setItem(LOG,JSON.stringify(log.slice(0,1000)));}
-  function allowed(){return typeof window.hasVerifiedCeoLayoutSession==='function'&&window.hasVerifiedCeoLayoutSession();}
-  window.nsewaRenderApprovalCenter=function(){
-    const listEl=document.getElementById('nsewa-approval-list');if(!listEl)return;
-    const all=records(), filter=document.getElementById('nsewa-approval-filter')?.value||'ALL', q=(document.getElementById('nsewa-approval-search')?.value||'').trim().toLowerCase();
-    const count=(status)=>all.filter(r=>r.status===status).length;
-    [['pending','PENDING'],['approved','APPROVED'],['suspended','SUSPENDED'],['banned','BANNED']].forEach(([id,st])=>{const e=document.getElementById('nsewa-approval-'+id+'-count');if(e)e.textContent=count(st)});
-    const shown=all.filter(r=>(filter==='ALL'||r.status===filter)&&(!q||[r.name,r.id,r.phone,r.district,r.type].some(v=>String(v||'').toLowerCase().includes(q))));
-    if(!shown.length){listEl.innerHTML='<div class="rounded-xl border border-white/10 bg-slate-800 p-6 text-center text-slate-300">यो छनोटमा कुनै रेकर्ड छैन।</div>';return;}
-    listEl.innerHTML=shown.map(r=>{
-      const color={PENDING:'text-amber-200 bg-amber-950/60 border-amber-400/30',APPROVED:'text-emerald-200 bg-emerald-950/60 border-emerald-400/30',REJECTED:'text-rose-200 bg-rose-950/60 border-rose-400/30',SUSPENDED:'text-orange-200 bg-orange-950/60 border-orange-400/30',BANNED:'text-red-200 bg-red-950/60 border-red-400/30'}[r.status]||'text-slate-200 bg-slate-800';
-      const label={PENDING:'जाँच बाँकी',APPROVED:'स्वीकृत',REJECTED:'अस्वीकृत',SUSPENDED:'अस्थायी रोक',BANNED:'स्थायी प्रतिबन्ध'}[r.status]||r.status;
-      return `<article class="rounded-xl border border-white/10 bg-slate-800 p-4"><div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div class="min-w-0"><div class="flex flex-wrap items-center gap-2"><h4 class="font-extrabold text-white">${esc(r.name)}</h4><span class="rounded-full border px-2 py-1 text-xs ${color}">${esc(label)}</span></div><p class="mt-1 text-xs text-slate-300">${esc(r.type==='Worker'?'प्राविधिक':'विक्रेता')} · ${esc(r.id)} · ${esc(r.district||'जिल्ला उल्लेख छैन')}</p><p class="mt-1 text-sm text-slate-200">मोबाइल: ${esc(r.phone||'उपलब्ध छैन')}</p><p class="mt-2 text-xs text-slate-400">${esc(r.proof||'कागजात विवरण छैन')}</p></div><div class="flex flex-wrap gap-2 sm:max-w-[330px] sm:justify-end">${r.status!=='APPROVED'?`<button onclick="nsewaReviewAction('${esc(r.key)}','APPROVED')" class="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-extrabold text-white">Approve</button>`:''}${r.status!=='REJECTED'?`<button onclick="nsewaReviewAction('${esc(r.key)}','REJECTED')" class="rounded-lg bg-rose-700 px-3 py-2 text-xs font-extrabold text-white">Reject</button>`:''}${r.status!=='SUSPENDED'&&r.status!=='BANNED'?`<button onclick="nsewaReviewAction('${esc(r.key)}','SUSPENDED')" class="rounded-lg bg-orange-600 px-3 py-2 text-xs font-extrabold text-white">Suspend</button>`:''}${r.status!=='BANNED'?`<button onclick="nsewaReviewAction('${esc(r.key)}','BANNED')" class="rounded-lg border border-red-400 px-3 py-2 text-xs font-extrabold text-red-200">Ban</button>`:''}${['SUSPENDED','BANNED','REJECTED'].includes(r.status)?`<button onclick="nsewaReviewAction('${esc(r.key)}','PENDING')" class="rounded-lg border border-white/20 px-3 py-2 text-xs font-bold text-white">पुनः जाँच</button>`:''}</div></div></article>`;
-    }).join('');
-  };
-  window.nsewaReviewAction=function(){
-    alert('सुरक्षा सूचना: यो Approval Center को पुरानो भागले localStorage मा मात्र परिवर्तन गर्थ्यो। यसले Supabase Database मा स्वीकृति/अस्वीकृति गर्दैन। त्यसैले गलत स्वीकृति देखिन नदिन यो कार्य रोकिएको छ। वास्तविक CEO approval का लागि Supabase को nsewa_ceo_review_profile RPC को प्रमाणित parameter/body अनुसार server-connected UI आवश्यक छ।');
-  };
-  window.nsewaClearApprovalSearch=function(){const a=document.getElementById('nsewa-approval-search'),b=document.getElementById('nsewa-approval-filter');if(a)a.value='';if(b)b.value='ALL';window.nsewaRenderApprovalCenter();};
-  window.nsewaExportApprovalLog=function(){if(!allowed()){alert('CEO सुरक्षित सत्र आवश्यक छ।');return;}let data=[];try{data=JSON.parse(localStorage.getItem(LOG)||'[]')}catch(e){}const blob=new Blob([JSON.stringify({exportedAt:new Date().toISOString(),note:'Local browser audit log only; not a server audit trail.',records:data},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='nepali-sewa-ceo-review-log.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);};
-  // Exclude suspended/banned worker profiles from public worker cards.
-  if(typeof window.renderWorkers==='function'&&!window.renderWorkers.__nsewaModerationWrapped){const old=window.renderWorkers;const wrapped=function(){const original=workers;try{workers=original.filter(w=>!['SUSPENDED','BANNED'].includes(w.status));return old.apply(this,arguments);}finally{workers=original;}};wrapped.__nsewaModerationWrapped=true;window.renderWorkers=wrapped;}
-  if(typeof window.renderProducts==='function'&&!window.renderProducts.__nsewaModerationWrapped){const old=window.renderProducts;const wrapped=function(){const original=sellers;try{const banned=new Set(original.filter(x=>['SUSPENDED','BANNED'].includes(x.status)).map(x=>x.name));const originalProducts=products;products=originalProducts.filter(p=>!banned.has(p.seller));try{return old.apply(this,arguments);}finally{products=originalProducts;}}finally{sellers=original;}};wrapped.__nsewaModerationWrapped=true;window.renderProducts=wrapped;}
-  document.addEventListener('DOMContentLoaded',()=>{try{nsewaRenderApprovalCenter();}catch(e){}});
-  setTimeout(()=>{try{nsewaRenderApprovalCenter();}catch(e){}},600);
+ 'use strict';
+ const $=id=>document.getElementById(id), esc=v=>String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ let rows=[],loading=false,loaded=false;
+ const allowed=()=>typeof window.hasVerifiedCeoLayoutSession==='function'&&window.hasVerifiedCeoLayoutSession();
+ async function loadRows(force){
+   if(loading)return rows;
+   if(loaded&&!force)return rows;
+   if(!allowed())throw new Error('CEO प्रमाणित session आवश्यक छ।');
+   const sb=window.nsewaSupabaseReady&&window.nsewaSupabase;if(!sb)throw new Error('Supabase client उपलब्ध छैन।');
+   loading=true;
+   try{
+     const {data:{user},error:authError}=await sb.auth.getUser();
+     if(authError||!user||String(user.app_metadata?.role||'').toLowerCase()!=='ceo')throw new Error('Server-side CEO app_metadata पुष्टि भएन।');
+     const {data,error}=await sb.from('profiles').select('id,role,status,full_name,phone,district,updated_at').in('role',['Worker','Seller']).order('updated_at',{ascending:false}).limit(500);
+     if(error)throw error;
+     const profiles=data||[],ids=profiles.map(r=>r.id),docsByUser=new Map();
+     if(ids.length){
+       try{
+         const {data:docs,error:docsError}=await sb.from('user_documents').select('user_id,document_type,storage_path,original_name,mime_type,size_bytes').in('user_id',ids);
+         if(docsError)throw docsError;
+         await Promise.all((docs||[]).map(async d=>{let url='';try{const signed=await sb.storage.from('nsewa-private-documents').createSignedUrl(d.storage_path,300);if(!signed.error)url=signed.data?.signedUrl||'';}catch(_){}const list=docsByUser.get(d.user_id)||[];list.push({...d,signed_url:url});docsByUser.set(d.user_id,list);}));
+       }catch(docError){console.warn('CEO approval documents unavailable:',docError.message);}
+     }
+     rows=profiles.map(r=>({id:r.id,key:r.id,type:r.role,name:r.full_name,phone:r.phone,district:r.district,status:String(r.status||'PENDING').toUpperCase(),documents:docsByUser.get(r.id)||[],proof:'Supabase profile record'}));
+     loaded=true;return rows;
+   }finally{loading=false;}
+ }
+ window.nsewaRenderApprovalCenter=async function(force=false){
+   const host=$('nsewa-approval-list');if(!host)return;
+   if(!allowed()){host.textContent='CEO login आवश्यक छ।';return;}
+   host.textContent='Supabase बाट approval queue लोड हुँदैछ…';
+   try{
+     const all=await loadRows(force),filter=$('nsewa-approval-filter')?.value||'ALL',q=($('nsewa-approval-search')?.value||'').trim().toLowerCase();
+     const count=st=>all.filter(r=>r.status===st).length;
+     [['pending','PENDING'],['approved','APPROVED'],['suspended','SUSPENDED'],['banned','BANNED']].forEach(([id,st])=>{const e=$('nsewa-approval-'+id+'-count');if(e)e.textContent=count(st)});
+     const shown=all.filter(r=>(filter==='ALL'||r.status===filter)&&(!q||[r.name,r.id,r.phone,r.district,r.type].some(v=>String(v||'').toLowerCase().includes(q))));
+     if(!shown.length){host.innerHTML='<div class="rounded-xl border border-white/10 bg-slate-800 p-6 text-center text-slate-300">यो छनोटमा Supabase profile छैन।</div>';return;}
+     host.innerHTML=shown.map(r=>{
+       const color={PENDING:'text-amber-200 bg-amber-950/60 border-amber-400/30',APPROVED:'text-emerald-200 bg-emerald-950/60 border-emerald-400/30',REJECTED:'text-rose-200 bg-rose-950/60 border-rose-400/30',SUSPENDED:'text-orange-200 bg-orange-950/60 border-orange-400/30',BANNED:'text-red-200 bg-red-950/60 border-red-400/30'}[r.status]||'text-slate-200 bg-slate-800';
+       const label={PENDING:'जाँच बाँकी',APPROVED:'स्वीकृत',REJECTED:'अस्वीकृत',SUSPENDED:'अस्थायी रोक',BANNED:'स्थायी प्रतिबन्ध'}[r.status]||r.status;
+       return `<article class="rounded-xl border border-white/10 bg-slate-800 p-4"><div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div class="min-w-0"><div class="flex flex-wrap items-center gap-2"><h4 class="font-extrabold text-white">${esc(r.name||'नाम उपलब्ध छैन')}</h4><span class="rounded-full border px-2 py-1 text-xs ${color}">${esc(label)}</span></div><p class="mt-1 text-xs text-slate-300">${esc(r.type==='Worker'?'प्राविधिक':'विक्रेता')} · ${esc(r.id)} · ${esc(r.district||'जिल्ला उल्लेख छैन')}</p><p class="mt-1 text-sm text-slate-200">मोबाइल: ${esc(r.phone||'उपलब्ध छैन')}</p><p class="mt-2 text-xs text-slate-300">निजी दर्ता कागजात (५ मिनेटको signed link):</p><div class="mt-1 flex flex-wrap gap-1">${(r.documents||[]).map(d=>`<a class="mr-2 inline-flex rounded bg-slate-700 px-2 py-1 text-[11px] text-cyan-200 underline" href="${esc(d.signed_url||'#')}" target="_blank" rel="noopener noreferrer">${esc(d.document_type)} · ${esc(d.original_name||'कागजात')}</a>`).join('')||'<span class="text-slate-500">कागजात उपलब्ध छैन</span>'}</div></div><div class="flex flex-wrap gap-2 sm:max-w-[330px] sm:justify-end">${r.status!=='APPROVED'?`<button onclick="nsewaReviewAction(${window.nsewaJsArg(r.id)},'APPROVED')" class="rounded-lg bg-emerald-600 px-3 py-2 text-xs font-extrabold text-white">Approve</button>`:''}${r.status!=='REJECTED'?`<button onclick="nsewaReviewAction(${window.nsewaJsArg(r.id)},'REJECTED')" class="rounded-lg bg-rose-700 px-3 py-2 text-xs font-extrabold text-white">Reject</button>`:''}${r.status!=='SUSPENDED'&&r.status!=='BANNED'?`<button onclick="nsewaReviewAction(${window.nsewaJsArg(r.id)},'SUSPENDED')" class="rounded-lg bg-orange-600 px-3 py-2 text-xs font-extrabold text-white">Suspend</button>`:''}${r.status!=='BANNED'?`<button onclick="nsewaReviewAction(${window.nsewaJsArg(r.id)},'BANNED')" class="rounded-lg border border-red-400 px-3 py-2 text-xs font-extrabold text-red-200">Ban</button>`:''}</div></div></article>`;
+     }).join('');
+   }catch(e){host.textContent='Approval queue लोड भएन: '+(e.message||e)+' · आवश्यक SQL migration/RLS जाँच्नुहोस्।';}
+ };
+ window.nsewaReviewAction=async function(id,status){
+   try{
+     if(!allowed())throw new Error('CEO प्रमाणित session आवश्यक छ।');
+     const allowedStatuses=['APPROVED','REJECTED','SUSPENDED','BANNED'];status=String(status||'').toUpperCase();
+     if(!allowedStatuses.includes(status))throw new Error('अमान्य approval status।');
+     const row=(await loadRows(false)).find(x=>String(x.id)===String(id));if(!row)throw new Error('Supabase profile भेटिएन।');
+     let note='';if(['REJECTED','SUSPENDED','BANNED'].includes(status)){note=prompt('कारण / CEO समीक्षा टिप्पणी लेख्नुहोस्:','')??null;if(note===null)return;note=note.trim().slice(0,1000);if(!note)throw new Error('कारण आवश्यक छ।');}
+     if(!confirm(`${row.name||row.id} को स्थिति ${status} बनाउने? यो निर्णय Supabase मा सुरक्षित हुनेछ।`))return;
+     const sb=window.nsewaSupabaseReady&&window.nsewaSupabase;if(!sb)throw new Error('Supabase client उपलब्ध छैन।');
+     const {error}=await sb.rpc('nsewa_ceo_review_profile',{p_user_id:row.id,p_status:status,p_note:note});if(error)throw error;
+     await backendAudit('PROFILE_'+status,'profile',row.id,{note});
+     loaded=false;await window.nsewaRenderApprovalCenter(true);
+     window.addNsewaNotification?.('CEO Approval सफल भयो',`${row.name||row.id}: ${status} — Supabase मा सुरक्षित भयो।`,'success');
+   }catch(e){console.error('CEO profile review RPC failed:',e);alert('Supabase Approval असफल भयो: '+(e.message||e));}
+ };
+ async function backendAudit(action,type,id,details){if(window.nsewaCeoBackend)await window.nsewaCeoBackend.audit(action,type,id,details);}
+ window.nsewaClearApprovalSearch=function(){const a=$('nsewa-approval-search'),b=$('nsewa-approval-filter');if(a)a.value='';if(b)b.value='ALL';window.nsewaRenderApprovalCenter(true);};
+ window.nsewaExportApprovalLog=async function(){try{if(!allowed())throw new Error('CEO सुरक्षित सत्र आवश्यक छ।');const data=await window.nsewaCeoBackend.listAudit(500);const blob=new Blob([JSON.stringify({exportedAt:new Date().toISOString(),source:'Supabase server audit log',records:data},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='nepali-sewa-ceo-review-log.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(e){alert('Server audit export उपलब्ध भएन: '+e.message);}};
+ window.addEventListener('nsewa:supabase-ready',()=>{loaded=false;});
+ document.addEventListener('DOMContentLoaded',()=>{window.nsewaRenderApprovalCenter(true);});
 })();
 </script>
 
-<script>
+
+<script id="nsewa-ceo-marketplace-backend">
 (function(){'use strict';
- const KEY='nsewa-market-admin-v1', REPORTS='nsewa-market-reports-v1', ORDERS='ns_market_orders_v1', LISTINGS='ns_market_listings_v1';
  const $=id=>document.getElementById(id), esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- const read=(k,d)=>{try{const x=JSON.parse(localStorage.getItem(k)||'null');return x==null?d:x}catch(e){return d}};
- const write=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){alert('ब्राउजर स्टोरेजमा सुरक्षित गर्न सकिएन।');return false}};
- const allowed=()=>typeof window.hasVerifiedCeoLayoutSession==='function'&&window.hasVerifiedCeoLayoutSession();
- const state=()=>Object.assign({minPrice:0,maxPrice:0,sellerLimit:50,commission:5,sellerRules:{},delivery:{},productStatus:{},featured:{},stockOverrides:{},reports:[],ordersStatus:{}},read(KEY,{}));
- function allProducts(){let out=[];try{if(typeof products!=='undefined'&&Array.isArray(products))out=out.concat(products);else if(Array.isArray(window.products))out=out.concat(window.products)}catch(e){}const api=Array.isArray(window.__nsewaApiProducts)?window.__nsewaApiProducts:[];if(window.__nsewaApiSearchActive)out=api.slice();else out=out.concat(api);out=out.concat(read(LISTINGS,[]));const m=new Map();out.forEach(p=>{if(p&&p.id!=null&&!m.has(String(p.id)))m.set(String(p.id),p)});return [...m.values()]}
- function statusOf(p,s){return s.productStatus[String(p.id)]||((String(p.id).startsWith('L'))?'PENDING':'APPROVED')}
- function requireCeo(){if(!allowed()){alert('यो सुविधा प्रयोग गर्न CEO सुरक्षित सत्रमा प्रवेश गर्नुहोस्।');return false}return true}
- function persist(s){write(KEY,s)}
- window.nsewaMarketSaveSettings=function(){if(!requireCeo())return;const s=state(),min=Number($('nma-min-price').value)||0,max=Number($('nma-max-price').value)||0,lim=Math.max(1,Math.min(10000,Number($('nma-seller-limit').value)||50));if(max&&min>max){alert('अधिकतम मूल्य न्यूनतमभन्दा कम हुन मिल्दैन।');return}s.minPrice=min;s.maxPrice=max;s.sellerLimit=lim;persist(s);nsewaApplyPublicMarketRules();nsewaMarketAdminRender();alert('मूल्य र विक्रेता सूची सीमा सुरक्षित भयो (यस ब्राउजरमा मात्र)।')};
- window.nsewaMarketSaveSellerRules=function(){if(!requireCeo())return;const s=state(),name=$('nma-seller-name').value.trim(),rate=Number($('nma-seller-commission').value),badge=$('nma-badge').value,base=Number($('nma-commission').value);if(!Number.isFinite(base)||base<0||base>100||($('nma-seller-commission').value!==''&&(!Number.isFinite(rate)||rate<0||rate>100))){alert('कमिसन ० देखि १०० प्रतिशतभित्र राख्नुहोस्।');return}s.commission=base;if(name)s.sellerRules[name]={commission:$('nma-seller-commission').value===''?null:rate,badge};persist(s);nsewaMarketAdminRender();alert('कमिसन/ब्याज सेटिङ सुरक्षित भयो। यसले पैसा वा subscription आफैँ असुल्दैन।')};
- window.nsewaMarketSaveDelivery=function(){if(!requireCeo())return;const s=state(),district=$('nma-delivery-district').value,fee=Number($('nma-delivery-fee').value);if(!Number.isFinite(fee)||fee<0){alert('डेलिभरी शुल्क शून्य वा सोभन्दा बढी हुनुपर्छ।');return}s.delivery[district]=fee;persist(s);nsewaMarketAdminRender();alert('डेलिभरी शुल्क सुरक्षित भयो (यस ब्राउजरमा मात्र)।')};
- window.nsewaMarketProductAction=function(id,action){if(!requireCeo())return;const s=state(),p=allProducts().find(x=>String(x.id)===String(id));if(!p)return;if(action==='APPROVED'){s.productStatus[String(id)]='APPROVED'}else if(action==='REJECTED'){const why=prompt('अस्वीकृत गर्नुको कारण लेख्नुहोस्:','');if(why===null)return;if(!why.trim()){alert('कारण आवश्यक छ।');return}s.productStatus[String(id)]='REJECTED';s.productStatus[String(id)+'_reason']=why}else if(action==='REMOVE'){if(!confirm('यो सामानलाई यस ब्राउजरको बजारबाट हटाउने?'))return;s.productStatus[String(id)]='REMOVED'}else if(action==='FEATURE'){const fee=prompt('Featured Listing शुल्क/सम्झौता रकम (रू.) लेख्नुहोस्। भुक्तानी यहाँ स्वतः हुँदैन:','0');if(fee===null)return;s.featured[String(id)]={active:!s.featured[String(id)]?.active,fee:Number(fee)||0,at:new Date().toISOString()}}else if(action==='STOCK'){const n=prompt('हालको स्टक संख्या लेख्नुहोस्:',String(s.stockOverrides[String(id)]??p.stock??1));if(n===null)return;if(!/^\d+$/.test(n)){alert('० वा धनात्मक पूर्ण संख्या राख्नुहोस्।');return}s.stockOverrides[String(id)]=Number(n)}persist(s);nsewaMarketAdminRender();try{if(typeof window.renderProducts==='function')window.renderProducts()}catch(e){}}
- window.nsewaMarketResolveReport=function(i,action){if(!requireCeo())return;const s=state();if(!s.reports[i])return;if(action==='REMOVE'){const id=s.reports[i].productId;s.productStatus[String(id)]='REMOVED'}s.reports[i].status=action==='REMOVE'?'ACTION_TAKEN':'REVIEWED';s.reports[i].resolvedAt=new Date().toISOString();persist(s);nsewaMarketAdminRender();try{window.renderProducts?.()}catch(e){}};
- window.nsewaMarketUpdateOrder=function(id,status){if(!requireCeo())return;const s=state();s.ordersStatus[id]=status;persist(s);const orders=read(ORDERS,[]);const x=orders.find(o=>o.id===id);if(x){x.status=status;write(ORDERS,orders)}nsewaMarketAdminRender()};
- window.nsewaReportProduct=function(id){const p=allProducts().find(x=>String(x.id)===String(id));if(!p)return;const reason=prompt('उजुरीको कारण छान्नुहोस्/लेख्नुहोस्: नक्कली सामान, अत्यधिक मूल्य, गलत विवरण वा अन्य।');if(reason===null||!reason.trim())return;const s=state();s.reports.unshift({productId:String(id),productTitle:p.title,seller:p.seller||'',reason:reason.trim(),at:new Date().toISOString(),status:'OPEN'});persist(s);alert('उजुरी यस ब्राउजरमा सुरक्षित भयो। CEO ले बजार नियन्त्रण प्यानलमा हेर्न सक्छन्।');nsewaMarketAdminRender()};
- window.nsewaApplyPublicMarketRules=function(){const s=state(),min=Math.max(Number(s.minPrice)||0,Number($('nsewa-public-min')?.value)||0),userMax=Number($('nsewa-public-max')?.value)||0,max=[Number(s.maxPrice)||0,userMax].filter(x=>x>0).reduce((a,b)=>Math.min(a,b),Infinity);const featured=s.featured||{};document.querySelectorAll('#products-grid [data-product]').forEach(card=>{const id=card.getAttribute('data-product'),p=allProducts().find(x=>String(x.id)===String(id));if(!p)return;const st=statusOf(p,s),stock=Number(s.stockOverrides[id]??p.stock??1);const visible=st==='APPROVED'&&stock>0&&Number(p.price)>=min&&(!Number.isFinite(max)||Number(p.price)<=max);card.classList.toggle('hidden',!visible);const feat=featured[id]?.active;card.classList.toggle('ring-2',!!feat);card.classList.toggle('ring-amber-400',!!feat);});const grid=$('products-grid');if(grid){const cards=[...grid.querySelectorAll('[data-product]')],sorted=cards.slice().sort((a,b)=>Number(!!featured[b.getAttribute('data-product')]?.active)-Number(!!featured[a.getAttribute('data-product')]?.active));if(cards.some((c,i)=>c!==sorted[i]))sorted.forEach(c=>grid.appendChild(c));}};
- window.nsewaMarketAdminRender=function(){const box=$('nma-product-list');if(!box)return;const s=state(),ps=allProducts(),reports=s.reports||[],orders=read(ORDERS,[]),q=($('nma-product-search')?.value||'').trim().toLowerCase();if($('nma-min-price'))$('nma-min-price').value=s.minPrice||'';if($('nma-max-price'))$('nma-max-price').value=s.maxPrice||'';if($('nma-seller-limit'))$('nma-seller-limit').value=s.sellerLimit||50;if($('nma-commission'))$('nma-commission').value=s.commission??5;
- $('nma-pending').textContent=ps.filter(p=>statusOf(p,s)==='PENDING').length;$('nma-reports').textContent=reports.filter(r=>r.status==='OPEN').length;$('nma-stock-alerts').textContent=ps.filter(p=>Number(s.stockOverrides[p.id]??p.stock??1)<=2).length;$('nma-orders').textContent=orders.length;
- $('nma-delivered').textContent=orders.filter(o=>(s.ordersStatus[o.id]||o.status)==='DELIVERED').length;$('nma-cancelled').textContent=orders.filter(o=>(s.ordersStatus[o.id]||o.status)==='CANCELLED').length;$('nma-other-orders').textContent=orders.length-Number($('nma-delivered').textContent)-Number($('nma-cancelled').textContent);
- $('nma-delivery-list').innerHTML=Object.entries(s.delivery||{}).map(([d,f])=>`<div class="flex justify-between border-b border-white/10 py-1"><span>${esc(d)}</span><b>रू. ${esc(f)}</b></div>`).join('')||'<p>अहिलेसम्म जिल्लाको शुल्क तोकिएको छैन।</p>';
- const shown=ps.filter(p=>!q||[p.title,p.seller,p.id,p.district].some(v=>String(v||'').toLowerCase().includes(q)));
- box.innerHTML=shown.map(p=>{const id=String(p.id),st=statusOf(p,s),stock=Number(s.stockOverrides[id]??p.stock??1),featured=!!s.featured[id]?.active,rule=s.sellerRules[p.seller||'']||{};return `<article class="rounded-xl border border-white/10 bg-slate-900 p-3"><div class="flex flex-col gap-3 sm:flex-row"><img src="${esc(p.img||'')}" alt="" loading="lazy" decoding="async" class="h-20 w-24 rounded-lg bg-slate-700 object-cover" onerror="this.style.display='none'"><div class="min-w-0 flex-1"><div class="flex flex-wrap items-center gap-2"><b>${esc(p.title)}</b><span class="rounded-full bg-slate-700 px-2 py-1 text-xs">${esc(st)}</span>${featured?'<span class="rounded-full bg-amber-300 px-2 py-1 text-xs font-black text-slate-900">FEATURED</span>':''}${rule.badge?`<span class="rounded-full bg-emerald-900 px-2 py-1 text-xs text-emerald-100">${esc(rule.badge)}</span>`:''}</div><p class="mt-1 text-xs text-slate-300">ID ${esc(id)} · ${esc(p.seller||'बिक्रेता अज्ञात')} · ${esc(p.district||'जिल्ला छैन')} · रू. ${esc(p.price)} · स्टक ${stock}</p><p class="mt-1 text-xs text-slate-400">कमिसन दर: ${esc(rule.commission==null?(s.commission??5):rule.commission)}% · ${reports.filter(r=>r.productId===id&&r.status==='OPEN').length} खुला उजुरी</p><div class="mt-2 flex flex-wrap gap-2">${st!=='APPROVED'?`<button onclick="nsewaMarketProductAction('${esc(id)}','APPROVED')" class="rounded-lg bg-emerald-700 px-3 py-2 text-xs font-bold">स्वीकृत/Live</button>`:''}<button onclick="nsewaMarketProductAction('${esc(id)}','REJECTED')" class="rounded-lg bg-orange-700 px-3 py-2 text-xs font-bold">अस्वीकृत</button><button onclick="nsewaMarketProductAction('${esc(id)}','FEATURE')" class="rounded-lg bg-amber-500 px-3 py-2 text-xs font-bold text-slate-900">${featured?'Featured हटाउनुहोस्':'Featured Listing'}</button><button onclick="nsewaMarketProductAction('${esc(id)}','STOCK')" class="rounded-lg bg-sky-700 px-3 py-2 text-xs font-bold">स्टक सेट</button><button onclick="nsewaMarketProductAction('${esc(id)}','REMOVE')" class="rounded-lg bg-rose-800 px-3 py-2 text-xs font-bold">बजारबाट हटाउनुहोस्</button></div></div></div></article>`}).join('')||'<p class="rounded-lg bg-slate-900 p-4 text-sm text-slate-300">कुनै सामान भेटिएन।</p>';
- $('nma-report-list').innerHTML=reports.filter(r=>r.status==='OPEN').map(r=>`<article class="rounded-lg border border-rose-400/20 bg-slate-900 p-3"><b>${esc(r.productTitle)}</b><p class="text-xs text-slate-300">बिक्रेता: ${esc(r.seller)} · ${esc(new Date(r.at).toLocaleString())}</p><p class="mt-1 text-sm">उजुरी: ${esc(r.reason)}</p><div class="mt-2 flex gap-2"><button onclick="nsewaMarketResolveReport(${reports.indexOf(r)},'REVIEWED')" class="rounded-lg bg-sky-700 px-3 py-2 text-xs font-bold">समीक्षा भयो</button><button onclick="nsewaMarketResolveReport(${reports.indexOf(r)},'REMOVE')" class="rounded-lg bg-rose-700 px-3 py-2 text-xs font-bold">सामान हटाउनुहोस्</button></div></article>`).join('')||'<p class="rounded-lg bg-slate-900 p-3 text-sm text-slate-400">खुला उजुरी छैन।</p>';
- $('nma-order-list').innerHTML=orders.slice(0,12).map(o=>{const st=s.ordersStatus[o.id]||o.status||'PENDING';return `<div class="rounded-lg border border-white/10 p-2"><div class="flex flex-wrap justify-between gap-2"><b class="text-xs">${esc(o.id)} · रू. ${esc(o.total||0)}</b><select onchange="nsewaMarketUpdateOrder('${esc(o.id)}',this.value)" class="rounded border border-slate-600 bg-slate-900 p-1 text-xs"><option value="PENDING" ${st==='PENDING'?'selected':''}>पुष्टि बाँकी</option><option value="PROCESSING" ${st==='PROCESSING'?'selected':''}>तयारीमा</option><option value="SHIPPED" ${st==='SHIPPED'?'selected':''}>पठाइयो</option><option value="DELIVERED" ${st==='DELIVERED'?'selected':''}>डेलिभर</option><option value="CANCELLED" ${st==='CANCELLED'?'selected':''}>रद्द</option></select></div><p class="mt-1 text-xs text-slate-400">${esc((o.items||[]).map(i=>i.title+' × '+i.quantity).join(', '))}</p></div>`}).join('')||'<p class="text-xs text-slate-400">अहिलेसम्म स्थानीय अर्डर छैन।</p>';
- nsewaApplyPublicMarketRules();};
- // Add report buttons and premium badges after the original marketplace renderer draws cards.
- function decorate(){const s=state();document.querySelectorAll('#products-grid [data-product]').forEach(card=>{const id=card.getAttribute('data-product');if(card.querySelector('[data-nsewa-report]'))return;const p=allProducts().find(x=>String(x.id)===String(id));if(!p)return;const feat=s.featured[id]?.active,rule=s.sellerRules[p.seller||'']||{};if(feat){const badge=document.createElement('span');badge.className='absolute bottom-3 left-3 rounded-full bg-amber-300 px-2 py-1 text-xs font-black text-slate-900';badge.textContent='★ Featured';const im=card.querySelector('.ns-product-image');if(im)im.appendChild(badge)}if(rule.badge){const seller=card.querySelector('.text-xs.text-gray-600');if(seller&&!seller.textContent.includes(rule.badge)){const b=document.createElement('span');b.className='ml-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800';b.textContent=rule.badge;seller.appendChild(b)}}const btn=document.createElement('button');btn.type='button';btn.dataset.nsewaReport='1';btn.className='mt-2 w-full rounded-lg border border-rose-200 px-3 py-2 text-xs font-bold text-rose-700';btn.textContent='उजुरी गर्नुहोस्';btn.onclick=()=>nsewaReportProduct(id);const area=card.querySelector('.p-4.flex.flex-col.flex-1');if(area)area.appendChild(btn)});}
+ const defaults={minPrice:0,maxPrice:0,sellerLimit:50,commission:5,sellerRules:{},delivery:{},featured:{},stockOverrides:{}};
+ let cfg={...defaults},productsDb=[],reportsDb=[],ordersDb=[],loaded=false,loading=false;
+ const backend=()=>window.nsewaCeoBackend;
+ function status(t,ok=false){const e=$('nma-backend-status');if(e){e.textContent=t;e.className='mt-2 text-xs '+(ok?'text-emerald-300':'text-amber-200');}}
+ function state(){window.nsewaMarketplaceConfig=cfg;return cfg;}
+ async function loadPublicConfig(){const sb=window.nsewaSupabaseReady&&window.nsewaSupabase;if(!sb)return;try{const {data,error}=await sb.rpc('nsewa_get_public_marketplace_config');if(error)throw error;if(data&&typeof data==='object'){cfg={...defaults,...data};window.nsewaMarketplaceConfig=cfg;nsewaApplyPublicMarketRules();}}catch(e){console.debug('Public marketplace configuration not loaded:',e.message);}}
+ function allProducts(){
+   let out=productsDb.map(p=>({id:p.id,title:p.title,price:Number(p.price)||0,district:p.district||'',img:p.image_url||'',seller:p.seller_name||'',status:String(p.status||'PENDING').toUpperCase()}));
+   try{if(typeof products!=='undefined'&&Array.isArray(products))out=out.concat(products);else if(Array.isArray(window.products))out=out.concat(window.products)}catch(_){}
+   out=out.concat(Array.isArray(window.__nsewaApiProducts)?window.__nsewaApiProducts:[]);
+   const map=new Map();out.forEach(p=>{if(p&&p.id!=null&&!map.has(String(p.id)))map.set(String(p.id),p)});return [...map.values()];
+ }
+ function statusOf(p,s){return s.productStatus?.[String(p.id)]||String(p.status||((String(p.id).startsWith('L'))?'PENDING':'APPROVED')).toUpperCase();}
+ async function requireCeo(){if(!backend())throw new Error('CEO database adapter लोड भएन।');return await backend().requireCeo();}
+ async function refreshServerData(){
+   if(loading)return;loading=true;status('Supabase बाट marketplace controls, products, reports र orders लोड हुँदैछन्…');
+   try{
+     await requireCeo();
+     const [stateResult,productResult,reportResult,orderResult]=await Promise.all([
+       backend().getState('marketplace'),
+       window.nsewaSupabase.from('products').select('id,title,price,district,image_url,seller_name,status,created_at').order('created_at',{ascending:false}).limit(300),
+       window.nsewaSupabase.from('nsewa_marketplace_reports').select('id,product_id,product_title,seller_name,reason,status,created_at,resolved_at').order('created_at',{ascending:false}).limit(200),
+       window.nsewaSupabase.from('orders').select('id,created_at,status,total_amount').order('created_at',{ascending:false}).limit(100)
+     ]);
+     if(productResult.error)throw productResult.error;
+     if(reportResult.error)throw reportResult.error;
+     if(orderResult.error)throw orderResult.error;
+     cfg={...defaults,...(stateResult&&typeof stateResult==='object'?stateResult:{})};window.nsewaMarketplaceConfig=cfg;
+     productsDb=productResult.data||[];reportsDb=reportResult.data||[];ordersDb=orderResult.data||[];loaded=true;
+     status('Marketplace configuration, products, reports र orders Supabase बाट लोड भए।',true);
+   }catch(e){status('Database load असफल: '+(e.message||e)+' · SQL migration/RLS जाँच्नुहोस्।');throw e;}
+   finally{loading=false;}
+ }
+ async function persist(next,note){
+   await requireCeo();
+   await backend().saveState('marketplace',next,note||'CEO marketplace settings update');
+   cfg={...defaults,...next};window.nsewaMarketplaceConfig=cfg;loaded=true;
+   await backend().audit('MARKETPLACE_SETTINGS_UPDATED','marketplace','settings',{note:note||'Marketplace settings saved'});
+   return true;
+ }
+ window.nsewaMarketSaveSettings=async function(){
+   try{await requireCeo();const s=state(),min=Number($('nma-min-price').value)||0,max=Number($('nma-max-price').value)||0,lim=Math.max(1,Math.min(10000,Number($('nma-seller-limit').value)||50));if(max&&min>max)throw new Error('अधिकतम मूल्य न्यूनतमभन्दा कम हुन मिल्दैन।');const next={...s,minPrice:min,maxPrice:max,sellerLimit:lim};await persist(next,'Price and seller listing limits updated');nsewaMarketAdminRender();alert('Marketplace settings Supabase मा सुरक्षित भए।');}catch(e){alert('Settings सुरक्षित भएनन्: '+e.message);}
+ };
+ window.nsewaMarketSaveSellerRules=async function(){
+   try{await requireCeo();const s=state(),name=$('nma-seller-name').value.trim(),rate=Number($('nma-seller-commission').value),badge=$('nma-badge').value,base=Number($('nma-commission').value);if(!Number.isFinite(base)||base<0||base>100||($('nma-seller-commission').value!==''&&(!Number.isFinite(rate)||rate<0||rate>100)))throw new Error('कमिसन ० देखि १०० प्रतिशतभित्र राख्नुहोस्।');const next={...s,sellerRules:{...(s.sellerRules||{})},commission:base};if(name)next.sellerRules[name]={commission:$('nma-seller-commission').value===''?null:rate,badge};await persist(next,'Commission and seller rules updated');nsewaMarketAdminRender();alert('कमिसन/स्टोर ब्याज Supabase मा सुरक्षित भयो। यसले पैसा स्वतः असुल्दैन।');}catch(e){alert('कमिसन सुरक्षित भएन: '+e.message);}
+ };
+ window.nsewaMarketSaveDelivery=async function(){
+   try{await requireCeo();const s=state(),district=$('nma-delivery-district').value,fee=Number($('nma-delivery-fee').value);if(!Number.isFinite(fee)||fee<0)throw new Error('डेलिभरी शुल्क शून्य वा सोभन्दा बढी हुनुपर्छ।');const next={...s,delivery:{...(s.delivery||{}),[district]:fee}};await persist(next,'Delivery fee updated for '+district);nsewaMarketAdminRender();alert('डेलिभरी शुल्क Supabase मा सुरक्षित भयो।');}catch(e){alert('डेलिभरी शुल्क सुरक्षित भएन: '+e.message);}
+ };
+ window.nsewaMarketProductAction=async function(id,action){
+   try{
+     await requireCeo();const p=allProducts().find(x=>String(x.id)===String(id));if(!p)throw new Error('सामान भेटिएन।');
+     if(['APPROVED','REJECTED','REMOVED'].includes(action)){
+       let reason='';
+       if(action==='REJECTED'){reason=prompt('अस्वीकृत गर्नुको कारण लेख्नुहोस्:','')??null;if(reason===null)return;if(!reason.trim())throw new Error('कारण आवश्यक छ।');}
+       if(action==='REMOVED'&&!confirm('यो सामानलाई सार्वजनिक बजारबाट हटाउने?'))return;
+       const {error}=await window.nsewaSupabase.rpc('nsewa_ceo_set_product_status',{p_product_id:String(id),p_status:action,p_reason:reason});
+       if(error)throw error;
+       await backend().audit('PRODUCT_'+action,'product',id,{title:p.title,reason});
+     }else{
+       const s=state(),next={...s,featured:{...(s.featured||{})},stockOverrides:{...(s.stockOverrides||{})}};
+       if(action==='FEATURE'){const fee=prompt('Featured Listing शुल्क/सम्झौता रकम (रू.) लेख्नुहोस्। भुक्तानी यहाँ स्वतः हुँदैन:',String(s.featured?.[String(id)]?.fee||0));if(fee===null)return;next.featured[String(id)]={active:!s.featured?.[String(id)]?.active,fee:Number(fee)||0,at:new Date().toISOString()};}
+       else if(action==='STOCK'){const n=prompt('हालको स्टक संख्या लेख्नुहोस्:',String(s.stockOverrides?.[String(id)]??p.stock??1));if(n===null)return;if(!/^\\d+$/.test(n))throw new Error('० वा धनात्मक पूर्ण संख्या राख्नुहोस्।');next.stockOverrides[String(id)]=Number(n);}
+       await persist(next,'Product '+action+' updated: '+id);
+     }
+     await refreshServerData();nsewaMarketAdminRender();
+   }catch(e){alert('Product action असफल: '+(e.message||e));}
+ };
+ window.nsewaMarketResolveReport=async function(reportId,action){
+   try{await requireCeo();if(!['REVIEWED','REMOVE'].includes(action))throw new Error('अमान्य report action');const {error}=await window.nsewaSupabase.rpc('nsewa_ceo_resolve_marketplace_report',{p_report_id:String(reportId),p_action:action});if(error)throw error;await backend().audit('REPORT_'+action,'marketplace_report',reportId,{});await refreshServerData();nsewaMarketAdminRender();}
+   catch(e){alert('उजुरी समाधान भएन: '+(e.message||e));}
+ };
+ window.nsewaMarketUpdateOrder=async function(id,statusValue){
+   try{await requireCeo();const allowed=['PENDING_PAYMENT','PROCESSING','SHIPPED','DELIVERED','CANCELLED'];if(!allowed.includes(statusValue))throw new Error('अमान्य order status');const {error}=await window.nsewaSupabase.rpc('nsewa_ceo_update_order_status',{p_order_id:String(id),p_status:statusValue});if(error)throw error;await backend().audit('ORDER_STATUS_UPDATED','order',id,{status:statusValue});await refreshServerData();nsewaMarketAdminRender();}
+   catch(e){alert('Order status परिवर्तन भएन: '+(e.message||e));}
+ };
+ window.nsewaReportProduct=async function(id){
+   const p=allProducts().find(x=>String(x.id)===String(id));if(!p)return;
+   const reason=prompt('उजुरीको कारण लेख्नुहोस्: नक्कली सामान, अत्यधिक मूल्य, गलत विवरण वा अन्य।');if(reason===null||!reason.trim())return;
+   try{const sb=window.nsewaSupabaseReady&&window.nsewaSupabase;if(!sb)throw new Error('Supabase उपलब्ध छैन।');const {data:{user},error:authError}=await sb.auth.getUser();if(authError||!user)throw new Error('पहिले लगइन गर्नुहोस्।');const {error}=await sb.from('nsewa_marketplace_reports').insert({product_id:String(id),product_title:String(p.title||'').slice(0,200),seller_name:String(p.seller||'').slice(0,160),reason:reason.trim().slice(0,1000),reporter_id:user.id,status:'OPEN'});if(error)throw error;alert('उजुरी Supabase मा सुरक्षित भयो।');}
+   catch(e){alert('उजुरी सुरक्षित भएन: '+(e.message||e));}
+ };
+ window.nsewaApplyPublicMarketRules=function(){
+   const s=state(),min=Math.max(Number(s.minPrice)||0,Number($('nsewa-public-min')?.value)||0),userMax=Number($('nsewa-public-max')?.value)||0,max=[Number(s.maxPrice)||0,userMax].filter(x=>x>0).reduce((a,b)=>Math.min(a,b),Infinity),featured=s.featured||{};
+   document.querySelectorAll('#products-grid [data-product]').forEach(card=>{const id=card.getAttribute('data-product'),p=allProducts().find(x=>String(x.id)===String(id));if(!p)return;const st=statusOf(p,s),stock=Number(s.stockOverrides?.[id]??p.stock??1),visible=st==='APPROVED'&&stock>0&&Number(p.price)>=min&&(!Number.isFinite(max)||Number(p.price)<=max);card.classList.toggle('hidden',!visible);const feat=featured[id]?.active;card.classList.toggle('ring-2',!!feat);card.classList.toggle('ring-amber-400',!!feat);});
+   const grid=$('products-grid');if(grid){const cards=[...grid.querySelectorAll('[data-product]')],sorted=cards.slice().sort((a,b)=>Number(!!featured[b.getAttribute('data-product')]?.active)-Number(!!featured[a.getAttribute('data-product')]?.active));if(cards.some((c,i)=>c!==sorted[i]))sorted.forEach(c=>grid.appendChild(c));}
+ };
+ window.nsewaMarketAdminRender=async function(force=false){
+   const box=$('nma-product-list');if(!box)return;
+   if(!loaded||force){try{await refreshServerData();}catch(e){box.textContent='Supabase marketplace data लोड भएन। SQL migration र RLS जाँच्नुहोस्।';return;}}
+   const s=state(),ps=allProducts(),reports=reportsDb.filter(r=>r.status==='OPEN'),orders=ordersDb,q=($('nma-product-search')?.value||'').trim().toLowerCase();
+   if($('nma-min-price'))$('nma-min-price').value=s.minPrice||'';if($('nma-max-price'))$('nma-max-price').value=s.maxPrice||'';if($('nma-seller-limit'))$('nma-seller-limit').value=s.sellerLimit||50;if($('nma-commission'))$('nma-commission').value=s.commission??5;
+   $('nma-pending').textContent=ps.filter(p=>statusOf(p,s)==='PENDING').length;$('nma-reports').textContent=reports.length;$('nma-stock-alerts').textContent=ps.filter(p=>Number(s.stockOverrides?.[p.id]??p.stock??1)<=2).length;$('nma-orders').textContent=orders.length;
+   $('nma-delivered').textContent=orders.filter(o=>o.status==='DELIVERED').length;$('nma-cancelled').textContent=orders.filter(o=>o.status==='CANCELLED').length;$('nma-other-orders').textContent=orders.length-Number($('nma-delivered').textContent)-Number($('nma-cancelled').textContent);
+   $('nma-delivery-list').innerHTML=Object.entries(s.delivery||{}).map(([d,f])=>`<div class="flex justify-between border-b border-white/10 py-1"><span>${esc(d)}</span><b>रू. ${esc(f)}</b></div>`).join('')||'<p>अहिलेसम्म जिल्लाको शुल्क तोकिएको छैन।</p>';
+   const shown=ps.filter(p=>!q||[p.title,p.seller,p.id,p.district].some(v=>String(v||'').toLowerCase().includes(q)));
+   box.innerHTML=shown.map(p=>{const id=String(p.id),st=statusOf(p,s),stock=Number(s.stockOverrides?.[id]??p.stock??1),featured=!!s.featured?.[id]?.active,rule=s.sellerRules?.[p.seller||'']||{};return `<article class="rounded-xl border border-white/10 bg-slate-900 p-3"><div class="flex flex-col gap-3 sm:flex-row"><img src="${esc(p.img||'')}" alt="" loading="lazy" decoding="async" class="h-20 w-24 rounded-lg bg-slate-700 object-cover" onerror="this.style.display='none'"><div class="min-w-0 flex-1"><div class="flex flex-wrap items-center gap-2"><b>${esc(p.title)}</b><span class="rounded-full bg-slate-700 px-2 py-1 text-xs">${esc(st)}</span>${featured?'<span class="rounded-full bg-amber-300 px-2 py-1 text-xs font-black text-slate-900">FEATURED</span>':''}${rule.badge?`<span class="rounded-full bg-emerald-900 px-2 py-1 text-xs text-emerald-100">${esc(rule.badge)}</span>`:''}</div><p class="mt-1 text-xs text-slate-300">ID ${esc(id)} · ${esc(p.seller||'बिक्रेता अज्ञात')} · ${esc(p.district||'जिल्ला छैन')} · रू. ${esc(p.price)} · स्टक ${stock}</p><p class="mt-1 text-xs text-slate-400">कमिसन दर: ${esc(rule.commission==null?(s.commission??5):rule.commission)}% · ${reports.filter(r=>String(r.product_id)===id).length} खुला उजुरी</p><div class="mt-2 flex flex-wrap gap-2">${st!=='APPROVED'?`<button onclick="nsewaMarketProductAction(${window.nsewaJsArg(id)},'APPROVED')" class="rounded-lg bg-emerald-700 px-3 py-2 text-xs font-bold">स्वीकृत/Live</button>`:''}<button onclick="nsewaMarketProductAction(${window.nsewaJsArg(id)},'REJECTED')" class="rounded-lg bg-orange-700 px-3 py-2 text-xs font-bold">अस्वीकृत</button><button onclick="nsewaMarketProductAction(${window.nsewaJsArg(id)},'FEATURE')" class="rounded-lg bg-amber-500 px-3 py-2 text-xs font-bold text-slate-900">${featured?'Featured हटाउनुहोस्':'Featured Listing'}</button><button onclick="nsewaMarketProductAction(${window.nsewaJsArg(id)},'STOCK')" class="rounded-lg bg-sky-700 px-3 py-2 text-xs font-bold">स्टक सेट</button><button onclick="nsewaMarketProductAction(${window.nsewaJsArg(id)},'REMOVED')" class="rounded-lg bg-rose-800 px-3 py-2 text-xs font-bold">बजारबाट हटाउनुहोस्</button></div></div></div></article>`}).join('')||'<p class="rounded-lg bg-slate-900 p-4 text-sm text-slate-300">कुनै सामान भेटिएन।</p>';
+   $('nma-report-list').innerHTML=reports.map(r=>`<article class="rounded-lg border border-rose-400/20 bg-slate-900 p-3"><b>${esc(r.product_title)}</b><p class="text-xs text-slate-300">बिक्रेता: ${esc(r.seller_name)} · ${esc(new Date(r.created_at).toLocaleString())}</p><p class="mt-1 text-sm">उजुरी: ${esc(r.reason)}</p><div class="mt-2 flex gap-2"><button onclick="nsewaMarketResolveReport(${window.nsewaJsArg(r.id)},'REVIEWED')" class="rounded-lg bg-sky-700 px-3 py-2 text-xs font-bold">समीक्षा भयो</button><button onclick="nsewaMarketResolveReport(${window.nsewaJsArg(r.id)},'REMOVE')" class="rounded-lg bg-rose-700 px-3 py-2 text-xs font-bold">सामान हटाउनुहोस्</button></div></article>`).join('')||'<p class="rounded-lg bg-slate-900 p-3 text-xs text-slate-400">खुला उजुरी छैन।</p>';
+   $('nma-order-list').innerHTML=orders.slice(0,12).map(o=>{const st=o.status||'PENDING_PAYMENT';return `<div class="rounded-lg border border-white/10 p-2"><div class="flex flex-wrap justify-between gap-2"><b class="text-xs">${esc(o.id)} · रू. ${esc(o.total_amount||0)}</b><select onchange="nsewaMarketUpdateOrder(${window.nsewaJsArg(o.id)},this.value)" class="rounded border border-slate-600 bg-slate-900 p-1 text-xs"><option value="PENDING_PAYMENT" ${st==='PENDING_PAYMENT'?'selected':''}>भुक्तानी/पुष्टि बाँकी</option><option value="PROCESSING" ${st==='PROCESSING'?'selected':''}>तयारीमा</option><option value="SHIPPED" ${st==='SHIPPED'?'selected':''}>पठाइयो</option><option value="DELIVERED" ${st==='DELIVERED'?'selected':''}>डेलिभर</option><option value="CANCELLED" ${st==='CANCELLED'?'selected':''}>रद्द</option></select></div><p class="mt-1 text-xs text-slate-400">अर्डर मिति: ${esc(new Date(o.created_at).toLocaleString())}</p></div>`}).join('')||'<p class="text-xs text-slate-400">अहिलेसम्म Database order छैन।</p>';
+   window.nsewaApplyPublicMarketRules();
+ };
+ function decorate(){const s=state();document.querySelectorAll('#products-grid [data-product]').forEach(card=>{const id=card.getAttribute('data-product');if(card.querySelector('[data-nsewa-report]'))return;const p=allProducts().find(x=>String(x.id)===String(id));if(!p)return;const feat=s.featured?.[id]?.active,rule=s.sellerRules?.[p.seller||'']||{};if(feat){const badge=document.createElement('span');badge.className='absolute bottom-3 left-3 rounded-full bg-amber-300 px-2 py-1 text-xs font-black text-slate-900';badge.textContent='★ Featured';const im=card.querySelector('.ns-product-image');if(im)im.appendChild(badge)}if(rule.badge){const seller=card.querySelector('.text-xs.text-gray-600');if(seller&&!seller.textContent.includes(rule.badge)){const b=document.createElement('span');b.className='ml-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800';b.textContent=rule.badge;seller.appendChild(b)}}const btn=document.createElement('button');btn.type='button';btn.dataset.nsewaReport='1';btn.className='mt-2 w-full rounded-lg border border-rose-200 px-3 py-2 text-xs font-bold text-rose-700';btn.textContent='उजुरी गर्नुहोस्';btn.onclick=()=>nsewaReportProduct(id);const area=card.querySelector('.p-4.flex.flex-col.flex-1');if(area)area.appendChild(btn)});}
  const oldRender=window.renderProducts;if(typeof oldRender==='function'&&!oldRender.__nmaWrapped){const wrapped=function(){const out=oldRender.apply(this,arguments);try{decorate();nsewaApplyPublicMarketRules()}catch(e){}return out};wrapped.__nmaWrapped=true;window.renderProducts=wrapped;}
- const oldAdd=window.handleAddProduct;if(typeof oldAdd==='function'&&!oldAdd.__nmaWrapped){const wrappedAdd=function(e){const s=state();let listings=read(LISTINGS,[]);const seller=(typeof currentUserRole!=='undefined'&&currentUserRole==='Seller')?'हालको बिक्रेता':'नेपाली सेवा प्रयोगकर्ता';const limit=Number(s.sellerLimit)||50;if(listings.filter(p=>(p.seller||'')===seller).length>=limit){e?.preventDefault?.();alert('तपाईंको स्टोरले तोकिएको अधिकतम सामान सीमा पूरा गरिसकेको छ।');return}const before=new Set(allProducts().map(p=>String(p.id)));const result=oldAdd.apply(this,arguments);listings=read(LISTINGS,[]);const added=listings.find(p=>!before.has(String(p.id)));if(added){const st=state();st.productStatus[String(added.id)]='PENDING';persist(st);alert('नयाँ सामान CEO स्वीकृति नभएसम्म सार्वजनिक बजारमा देखिने छैन।')}nsewaMarketAdminRender();return result};wrappedAdd.__nmaWrapped=true;window.handleAddProduct=wrappedAdd;}
- // Keep filtering/decorations fresh after marketplace renders and when the CEO hub opens.
- const observer=new MutationObserver(()=>{try{decorate();nsewaApplyPublicMarketRules()}catch(e){}});document.addEventListener('DOMContentLoaded',()=>{const g=$('products-grid');if(g)observer.observe(g,{childList:true});nsewaMarketAdminRender()});setTimeout(()=>{try{nsewaMarketAdminRender()}catch(e){}},900);
+ window.addEventListener('nsewa:supabase-ready',()=>{loaded=false;loadPublicConfig();});
+ document.addEventListener('DOMContentLoaded',loadPublicConfig);
+ const observer=new MutationObserver(()=>{try{decorate();nsewaApplyPublicMarketRules()}catch(_){}});
+ document.addEventListener('DOMContentLoaded',()=>{const g=$('products-grid');if(g)observer.observe(g,{childList:true});});
 })();
 </script>
+
 
 <!-- Removed unused Socket.IO client: no Socket.IO calls exist in this page. -->
 
 
 <script>
-/* CEO Personal Accounts — local browser prototype. Production must authorize every action server-side. */
+/* CEO Personal Accounts — real Supabase profiles, read-only from browser. */
 (function(){
  'use strict';
- const KEY='nsewa-ceo-managed-accounts-v2', AUDIT='nsewa-ceo-managed-accounts-audit-v1';
  const $=id=>document.getElementById(id);
- const sessionOk=()=>typeof window.hasVerifiedCeoLayoutSession==='function'&&window.hasVerifiedCeoLayoutSession()&&typeof currentUserRole!=='undefined'&&currentUserRole==='CEO';
- const phoneNorm=v=>String(v||'').replace(/[\s()-]/g,'');
- function read(key,fallback){try{const v=JSON.parse(localStorage.getItem(key)||'null');return v==null?fallback:v}catch(_){return fallback}}
- function get(){const a=read(KEY,[]);if(!Array.isArray(a))return [];const clean=a.map(({passport,...rest})=>rest);if(a.some(x=>Object.prototype.hasOwnProperty.call(x||{},'passport'))){try{localStorage.setItem(KEY,JSON.stringify(clean))}catch(_){}}return clean}
- function put(a){try{localStorage.setItem(KEY,JSON.stringify(a));return true}catch(e){alert('ब्राउजर storage भरिएको वा उपलब्ध नभएको हुन सक्छ। डेटा सुरक्षित भएन।');return false}}
- function audit(action,record,extra=''){const logs=read(AUDIT,[]);logs.unshift({at:new Date().toISOString(),action,accountId:record?.id||'',name:record?.name||'',phone:record?.phone||'',details:extra});try{localStorage.setItem(AUDIT,JSON.stringify(logs.slice(0,1000)))}catch(_){};}
- function requireCeo(){if(!sessionOk()){alert('यो काम CEO को सक्रिय login बाट मात्र गर्न सकिन्छ।');return false}return true}
- function msg(t,ok=false){const el=$('ceo-account-status');if(el){el.textContent=t;el.className='text-sm '+(ok?'text-emerald-700':'text-red-700')}}
- window.renderCeoManagedAccounts=function(){
+ let rows=[], loaded=false, loading=false;
+ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const sessionOk=()=>typeof window.hasVerifiedCeoLayoutSession==='function'&&window.hasVerifiedCeoLayoutSession();
+ function msg(t,ok=false){const el=$('ceo-account-status');if(el){el.textContent=t;el.className='mb-2 text-sm '+(ok?'text-emerald-700':'text-red-700');}}
+ window.renderCeoManagedAccounts=async function(force=false){
    const host=$('ceo-account-list');if(!host)return;
-   if(!sessionOk()){host.textContent='CEO login आवश्यक छ।';return}
+   if(!sessionOk()){host.textContent='CEO login आवश्यक छ।';return;}
+   if(loading)return;
+   if(!loaded||force){
+     const sb=window.nsewaSupabaseReady&&window.nsewaSupabase;
+     if(!sb){msg('Supabase client उपलब्ध छैन।');return;}
+     loading=true;msg('Supabase profiles लोड हुँदैछन्…');
+     try{
+       const {data:{user},error:authError}=await sb.auth.getUser();
+       if(authError||!user||String(user.app_metadata?.role||'').toLowerCase()!=='ceo')throw new Error('Server-verified CEO session आवश्यक छ।');
+       const {data,error}=await sb.from('profiles').select('id,full_name,phone,role,district,status,updated_at').order('updated_at',{ascending:false}).limit(500);
+       if(error)throw error;
+       rows=Array.isArray(data)?data:[];loaded=true;
+       msg('Supabase बाट '+rows.length+' वास्तविक profiles लोड भए।',true);
+     }catch(e){msg('Database profiles लोड भएन: '+(e.message||e));}
+     finally{loading=false;}
+   }
    const q=($('ceo-account-search')?.value||'').trim().toLocaleLowerCase();
-   const all=get(), arr=all.filter(a=>[a.name,a.phone,a.role].join(' ').toLocaleLowerCase().includes(q));
+   const filtered=rows.filter(a=>[a.full_name,a.phone,a.role,a.district,a.status,a.id].join(' ').toLocaleLowerCase().includes(q));
+   const summary=$('ceo-account-audit-summary');if(summary)summary.textContent=`Database profiles: ${rows.length} · देखाइएका: ${filtered.length} · Read-only`;
    host.replaceChildren();
-   const summary=$('ceo-account-audit-summary');if(summary)summary.textContent=`कुल खाता: ${all.length} · पछिल्लो गतिविधि: ${(read(AUDIT,[])[0]?.at||'अहिलेसम्म छैन')}`;
-   if(!arr.length){const p=document.createElement('p');p.className='rounded-lg border p-3 text-sm text-gray-500';p.textContent='कुनै खाता भेटिएन।';host.append(p);return}
-   arr.forEach(a=>{const card=document.createElement('article');card.className='rounded-xl border border-gray-200 p-3';const head=document.createElement('div');head.className='flex items-center gap-3';if(a.imageData&&/^data:image\/(png|jpeg|webp);base64,/.test(a.imageData)){const avatar=document.createElement('img');avatar.src=a.imageData;avatar.alt='प्रोफाइल तस्वीर';avatar.className='h-14 w-14 rounded-full object-cover border';head.append(avatar)}const info=document.createElement('div');info.className='font-bold break-words';info.textContent=a.name+' · '+a.role;head.append(info);const sub=document.createElement('p');sub.className='text-xs text-gray-600 mt-1 break-words';sub.textContent='मोबाइल: '+a.phone+' · संवेदनशील कागजात: सुरक्षित server जडानपछि मात्र';const meta=document.createElement('p');meta.className='text-[11px] text-gray-400 mt-1';meta.textContent='ID: '+a.id+' · अद्यावधिक: '+(a.updatedAt||a.createdAt||'');const actions=document.createElement('div');actions.className='flex flex-wrap gap-2 mt-3';const edit=document.createElement('button');edit.type='button';edit.className='rounded-lg border px-3 py-2 text-sm font-bold';edit.textContent='सम्पादन';edit.onclick=()=>window.editCeoManagedAccount(a.id);const del=document.createElement('button');del.type='button';del.className='rounded-lg bg-red-700 px-3 py-2 text-sm font-bold text-white';del.textContent='स्थायी रूपमा मेटाउनुहोस्';del.onclick=()=>window.deleteCeoManagedAccount(a.id);actions.append(edit,del);card.append(head,sub,meta,actions);host.append(card)});
+   if(!filtered.length){const p=document.createElement('p');p.className='rounded-lg border p-3 text-sm text-gray-500';p.textContent='कुनै Supabase profile भेटिएन।';host.append(p);return;}
+   filtered.forEach(a=>{
+     const card=document.createElement('article');card.className='rounded-xl border border-gray-200 p-3';
+     const title=document.createElement('div');title.className='flex flex-wrap items-center justify-between gap-2';
+     const name=document.createElement('b');name.textContent=a.full_name||'नाम उपलब्ध छैन';
+     const status=document.createElement('span');status.className='rounded-full bg-slate-100 px-2 py-1 text-xs font-bold';status.textContent=String(a.status||'UNKNOWN');
+     title.append(name,status);
+     const meta=document.createElement('p');meta.className='mt-1 text-xs text-slate-600';meta.textContent=[a.role||'भूमिका छैन',a.phone||'मोबाइल छैन',a.district||'जिल्ला छैन'].join(' · ');
+     const id=document.createElement('p');id.className='mt-1 break-all text-[10px] text-slate-400';id.textContent='Auth UID: '+a.id;
+     card.append(title,meta,id);host.append(card);
+   });
  };
- window.loadCeoAccountImage=function(e){
-   const file=e.target.files?.[0];if(!file)return;
-   if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>1024*1024){msg('PNG/JPG/WebP तस्वीर 1 MB भन्दा सानो हुनुपर्छ।');e.target.value='';return}
-   const reader=new FileReader();reader.onload=()=>{const data=String(reader.result||'');$('ceo-account-image-data').value=data;$('ceo-account-image-preview').src=data;msg('तस्वीर चयन भयो। खाता सुरक्षित गर्नुहोस्।',true)};reader.onerror=()=>msg('तस्वीर पढ्न सकिएन।');reader.readAsDataURL(file);
- };
- window.saveCeoManagedAccount=function(e){
-   e?.preventDefault?.();if(!requireCeo())return;
-   const id=$('ceo-account-edit-id').value,name=$('ceo-account-name').value.trim(),phone=phoneNorm($('ceo-account-phone').value),role=$('ceo-account-role').value,imageData=$('ceo-account-image-data').value;
-   if(name.length<2){msg('कृपया कम्तीमा २ अक्षरको पूरा नाम राख्नुहोस्।');return}
-   if(!/^\+?[0-9]{7,15}$/.test(phone)){msg('मोबाइल नम्बरमा ७–१५ अङ्क राख्नुहोस्।');return}
-   if(!['Client','Worker','Seller'].includes(role)){msg('मान्य खाता भूमिका छान्नुहोस्।');return}
-   const arr=get();if(arr.some(a=>phoneNorm(a.phone)===phone&&a.id!==id)){msg('यो मोबाइल नम्बर अर्को खातामा प्रयोग भएको छ।');return}
-   if(passport&&arr.some(a=>String(a.passport||'').toLowerCase()===passport.toLowerCase()&&a.id!==id)){msg('यो पासपोर्ट नम्बर अर्को खातामा प्रयोग भएको छ।');return}
-   const now=new Date().toISOString();let record;
-   if(id){const i=arr.findIndex(a=>a.id===id);if(i<0){msg('सम्पादन गर्न खोजिएको खाता भेटिएन।');return}record={...arr[i],name,phone,role,imageData:imageData||arr[i].imageData||'',updatedAt:now};arr[i]=record;}
-   else {record={id:(crypto.randomUUID?crypto.randomUUID():'NS-'+Date.now()+'-'+Math.random().toString(36).slice(2,8)),name,phone,role,imageData:imageData||'',createdAt:now,updatedAt:now};arr.unshift(record)}
-   if(!put(arr))return;audit(id?'UPDATE':'CREATE',record);msg(id?'खाता विवरण परिवर्तन गरी सुरक्षित गरियो।':'नयाँ खाता दर्ता गरी सुरक्षित गरियो।',true);window.resetCeoManagedAccountForm();window.renderCeoManagedAccounts();
- };
- window.editCeoManagedAccount=function(id){if(!requireCeo())return;const a=get().find(x=>x.id===id);if(!a){msg('खाता भेटिएन।');return}$('ceo-account-edit-id').value=a.id;$('ceo-account-image-data').value=a.imageData||'';$('ceo-account-image-preview').src=a.imageData||'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22%3E%3Crect width=%22100%25%22 height=%22100%25%22 fill=%22%23e5e7eb%22/%3E%3Ctext x=%2250%25%22 y=%2255%25%22 text-anchor=%22middle%22 font-size=%2228%22 fill=%22%236b7280%22%3E%3F%3C/text%3E%3C/svg%3E';$('ceo-account-image-file').value='';$('ceo-account-name').value=a.name;$('ceo-account-phone').value=a.phone;$('ceo-account-role').value=a.role;$('ceo-account-form-title').textContent='खाता सम्पादन';msg('विवरण परिवर्तन गरी सुरक्षित गर्नुहोस्।',true);$('ceo-account-name').focus()};
- window.deleteCeoManagedAccount=function(id){if(!requireCeo())return;const arr=get(),a=arr.find(x=>x.id===id);if(!a)return;const confirmation=prompt(`खाता स्थायी रूपमा मेटाउन DELETE लेख्नुहोस्।\nखातावालाको नाम: ${a.name}`);if(confirmation!=='DELETE'){msg('मेटाउने प्रक्रिया रद्द गरियो।');return}if(!put(arr.filter(x=>x.id!==id)))return;audit('PERMANENT_DELETE',a,'CEO confirmed DELETE');window.renderCeoManagedAccounts();msg('खाता यस ब्राउजरको सूचीबाट स्थायी रूपमा मेटाइयो।',true)};
- window.resetCeoManagedAccountForm=function(){if(!$('ceo-account-form'))return;$('ceo-account-form').reset();$('ceo-account-edit-id').value='';$('ceo-account-image-data').value='';$('ceo-account-image-preview').src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22%3E%3Crect width=%22100%25%22 height=%22100%25%22 fill=%22%23e5e7eb%22/%3E%3Ctext x=%2250%25%22 y=%2255%25%22 text-anchor=%22middle%22 font-size=%2228%22 fill=%22%236b7280%22%3E%3F%3C/text%3E%3C/svg%3E';$('ceo-account-form-title').textContent='नयाँ खाता दर्ता / Personal Account';msg('',true)};
- window.exportCeoManagedAccounts=function(){if(!requireCeo())return;const payload={product:'Nepali Sewa CEO Account Backup',version:2,exportedAt:new Date().toISOString(),accounts:get(),audit:read(AUDIT,[]),note:'Local browser backup. Protect this file; it may contain personal/passport information.'};const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='nepali-sewa-ceo-account-backup.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);audit('EXPORT',null,'Account backup exported');};
- window.importCeoManagedAccounts=function(e){if(!requireCeo()){e.target.value='';return}const file=e.target.files?.[0];if(!file)return;if(file.size>5*1024*1024){msg('Backup फाइल ५ MB भन्दा सानो हुनुपर्छ।');e.target.value='';return}const reader=new FileReader();reader.onload=()=>{try{const obj=JSON.parse(String(reader.result||''));const incoming=Array.isArray(obj)?obj:obj.accounts;if(!Array.isArray(incoming))throw new Error('Backup मा accounts सूची भेटिएन।');if(!confirm(`${incoming.length} वटा खाता हालको सूचीसँग बदल्ने? हालको सूची पहिला Backup Export गर्नुहोस्।`))return;const seenPhones=new Set();const cleaned=incoming.map((a,i)=>{if(!a||typeof a.name!=='string'||typeof a.phone!=='string'||!['Client','Worker','Seller'].includes(a.role))throw new Error(`खाता ${i+1} मा विवरण अमान्य छ।`);const phone=phoneNorm(a.phone);if(!/^\+?[0-9]{7,15}$/.test(phone)||seenPhones.has(phone))throw new Error(`खाता ${i+1} को मोबाइल नम्बर अमान्य वा दोहोरिएको छ।`);seenPhones.add(phone);return {id:String(a.id||('NS-'+Date.now()+'-'+i)),name:a.name.trim(),phone,role:a.role,createdAt:a.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString()}});if(!put(cleaned))return;if(Array.isArray(obj.audit))localStorage.setItem(AUDIT,JSON.stringify(obj.audit.slice(0,1000)));audit('RESTORE',null,`${cleaned.length} accounts restored`);window.renderCeoManagedAccounts();msg('Backup बाट खाता सूची Restore भयो।',true)}catch(err){msg(err.message||'Backup पढ्न सकिएन।')}finally{e.target.value=''}};reader.readAsText(file)};
- window.openCeoAccountFolderFromHub=function(){if(!requireCeo())return;document.getElementById('ceo-layout-hub')?.classList.add('hidden');window.openPersonalAccountsFolder()};
+ window.openCeoAccountFolderFromHub=async function(){if(!(await window.nsewaEnsureCeoFolderSession?.())){alert('CEO login सत्र प्रमाणित हुन सकेन। कृपया CEO Email OTP बाट पुनः login गर्नुहोस्।');return;}document.getElementById('ceo-layout-hub')?.classList.add('hidden');window.openPersonalAccountsFolder()};
  window.closeCeoAccountsFolder=function(){const m=$('personal-accounts-folder-modal');if(m){m.classList.add('hidden');m.classList.remove('flex')}if(sessionOk())$('ceo-layout-hub')?.classList.remove('hidden')};
- const oldOpen=window.openPersonalAccountsFolder;window.openPersonalAccountsFolder=function(){if(!requireCeo())return;if(typeof oldOpen==='function')oldOpen();const m=$('personal-accounts-folder-modal');if(m){m.classList.remove('hidden');m.classList.add('flex')}window.renderCeoManagedAccounts()};
+ const oldOpen=window.openPersonalAccountsFolder;window.openPersonalAccountsFolder=async function(){if(!(await window.nsewaEnsureCeoFolderSession?.())){alert('CEO login सत्र प्रमाणित हुन सकेन। कृपया CEO Email OTP बाट पुनः login गर्नुहोस्।');return;}if(typeof oldOpen==='function')await oldOpen();const m=$('personal-accounts-folder-modal');if(m){m.classList.remove('hidden');m.classList.add('flex')}await window.renderCeoManagedAccounts(true)};
 })();
 </script>
 
@@ -3905,7 +4022,7 @@ document.addEventListener('DOMContentLoaded',()=>{const e=$('nsewa-analytics-sql
     <script>
     (function(){
       'use strict';
-      const KEY='nsewa-ai-ui-settings-v1', AUDIT='nsewa-ai-local-audit-v1', $=id=>document.getElementById(id);
+      const KEY='nsewa-ai-ui-settings-v1', AUDIT='nsewa-ai-local-audit-v1', $=id=>document.getElementById(id); let serverLoaded=false;
       const boolIds=new Set(['privacy','moderation','ratelimit','audit','chat-enabled','translate','writing','search','image-tool','feedback','quarterly','auto-check','auto-deploy','rollback','enabled','images-enabled','review']);
       const fieldIds=['name','language','style','length','purpose','fallback','theme','template','density','motion','fontsize','responsive','provider','model','endpoint-status','timeout','privacy','moderation','ratelimit','audit','retention','risk','chat-enabled','translate','writing','search','image-tool','feedback','daily-limit','image-limit','quarterly','auto-check','auto-deploy','rollback','update-channel','review-window','change-note','risk-note','enabled','images-enabled','review'];
       const defaults={schemaVersion:4,enabled:true,'images-enabled':true,'chat-enabled':true,theme:'nepal',template:'balanced',density:'Balanced',motion:'Reduced motion',fontsize:'Standard',language:'नेपाली',name:'Nepali Sewa AI',provider:'not-connected'};
@@ -3951,13 +4068,13 @@ document.addEventListener('DOMContentLoaded',()=>{const e=$('nsewa-analytics-sql
         const hub=$('ceo-layout-hub');
         if(hub && typeof window.hasVerifiedCeoLayoutSession==='function' && window.hasVerifiedCeoLayoutSession())hub.classList.remove('hidden');
       };
-      window.nsewaAIView=function(v){if(v!=='settings'&&read().enabled===false){alert('AI OFF छ। CEO Dashboard को AI Control & Settings बाट ON गर्नुहोस्।');return;}if(v==='image'&&read()['images-enabled']===false){alert('Image AI OFF छ। CEO Dashboard सेटिङ जाँच्नुहोस्।');return;}['chat','image','settings'].forEach(k=>$('nsewa-ai-'+k+'-view')?.classList.toggle('hidden',k!==v));if(v==='settings'){load();api('/api/ceo/ai-settings').then(d=>{if(d&&d.settings&&typeof d.settings==='object'){localStorage.setItem(KEY,JSON.stringify({...read(),...d.settings}));load();const st=$('nsewa-ai-settings-status');if(st)st.textContent='Server settings लोड भयो।';}}).catch(()=>{});}};
+      window.nsewaAIView=async function(v){if(v!=='settings'&&read().enabled===false){alert('AI OFF छ। CEO Dashboard को AI Control & Settings बाट ON गर्नुहोस्।');return;}if(v==='image'&&read()['images-enabled']===false){alert('Image AI OFF छ। CEO Dashboard सेटिङ जाँच्नुहोस्।');return;}['chat','image','settings'].forEach(k=>$('nsewa-ai-'+k+'-view')?.classList.toggle('hidden',k!==v));if(v==='settings'){serverLoaded=false;load();const st=$('nsewa-ai-settings-status');try{const server=await window.nsewaCeoBackend.getState('ai_settings');if(server&&typeof server==='object'){localStorage.setItem(KEY,JSON.stringify({...defaults,...server}));load();}serverLoaded=true;if(st)st.textContent='Supabase Database बाट AI settings लोड भयो।';}catch(e){if(st)st.textContent='Server settings लोड भएनन्: '+e.message+' · SQL migration/RLS जाँच्नुहोस्।';}}};
       window.previewNsewaAIToggles=sync;
       window.sendNsewaAIChat=async function(e){e.preventDefault();const s=read();if(s.enabled===false||s['chat-enabled']===false){alert('AI Chat OFF छ। CEO Dashboard सेटिङ जाँच्नुहोस्।');return;}const box=$('nsewa-ai-chat-log'),p=$('nsewa-ai-prompt'),q=p?.value.trim();if(!q||!box)return;const u=document.createElement('p');u.className='rounded-lg bg-slate-100 p-3 text-sm';u.textContent='तपाईं: '+q;box.appendChild(u);p.value='';const a=document.createElement('p');a.className='rounded-lg bg-amber-50 p-3 text-sm';a.textContent='AI बाट उत्तर ल्याउँदै…';box.appendChild(a);box.scrollTop=box.scrollHeight;try{const d=await api('/api/ai/chat',{method:'POST',body:JSON.stringify({message:q,language:s.language,style:s.style,answerLength:s.length,purpose:s.purpose,assistantName:s.name,model:s.model,features:{search:s.search===true,translation:s.translate===true,writing:s.writing===true,images:s['images-enabled']!==false},responsePolicy:'Be accurate, clearly distinguish verified facts from uncertainty, answer in the selected language and style, ask clarifying questions when needed, protect personal data, refuse harmful requests, and never claim a tool/action succeeded unless the server confirms it.'})});a.textContent=String(d.answer||d.message||'सर्भरले खाली उत्तर दियो।');a.className='rounded-lg bg-emerald-50 p-3 text-sm';}catch(err){a.textContent='वास्तविक AI सेवा उपलब्ध भएन। /api/ai/chat backend जडान र CEO/प्रयोगकर्ता अनुमति जाँच्नुहोस्। ('+err.message+')';a.className='rounded-lg bg-amber-50 p-3 text-sm';}box.scrollTop=box.scrollHeight;};
       window.prepareNsewaAIImagePrompt=function(){const s=read();if(s.enabled===false||s['images-enabled']===false){alert('Image AI OFF छ। CEO Dashboard सेटिङ जाँच्नुहोस्।');return;}const p=$('nsewa-ai-image-prompt')?.value.trim(),o=$('nsewa-ai-image-output');if(o)o.value=p?('Create a polished Nepali Sewa marketplace promotional image. Context: '+p+'. Use a clear composition, culturally appropriate Nepal context, professional lighting, and avoid fake logos or illegible text.') : '';};
       window.copyNsewaAIImagePrompt=function(){const t=$('nsewa-ai-image-output')?.value;if(t&&navigator.clipboard)navigator.clipboard.writeText(t).then(()=>alert('Prompt copy भयो।')).catch(()=>alert('Prompt चयन गरेर copy गर्नुहोस्।'));else alert('पहिले prompt तयार गर्नुहोस्।');};
-      window.saveNsewaAISettings=async function(){const st=$('nsewa-ai-settings-status');try{const s=get();localStorage.setItem(KEY,JSON.stringify(s));sync();window.dispatchEvent(new CustomEvent('nsewa-ai-settings-updated',{detail:{enabled:s.enabled!==false,theme:s.theme,template:s.template}}));audit('SAVE_SETTINGS','Browser settings saved');if(st)st.textContent='ब्राउजरमा सुरक्षित भयो। Server मा सुरक्षित गर्ने प्रयास हुँदैछ…';try{await api('/api/ceo/ai-settings',{method:'PUT',body:JSON.stringify({settings:s,changeNote:s['change-note']||'',riskNote:s['risk-note']||''})});audit('SERVER_SAVE','Server settings saved');if(st)st.textContent='ब्राउजर र Server दुवैमा सुरक्षित भयो।';}catch(err){if(st)st.textContent='ब्राउजरमा सुरक्षित भयो; Server save भएन। CEO-authenticated backend endpoint आवश्यक छ।';}}catch(_){if(st)st.textContent='सेभ असफल भयो। ब्राउजर storage उपलब्ध छ कि जाँच्नुहोस्।';}};
-      window.resetNsewaAISettings=function(){if(!confirm('AI Settings default मा फर्काउने? पहिले Backup लिनुहोस्।'))return;localStorage.removeItem(KEY);audit('RESET_SETTINGS','Defaults restored');load();const st=$('nsewa-ai-settings-status');if(st)st.textContent='Default सेटिङ ब्राउजरमा लागू भयो। Server reset गर्न छुट्टै CEO endpoint चाहिन्छ।';};
+      window.saveNsewaAISettings=async function(){const st=$('nsewa-ai-settings-status');try{if(!serverLoaded)throw new Error('पहिले Server settings सफलतापूर्वक Load गर्नुहोस्।');const s=get();if(!window.nsewaCeoBackend)throw new Error('CEO Database adapter उपलब्ध छैन।');await window.nsewaCeoBackend.saveState('ai_settings',s,s['change-note']||'AI settings update');await window.nsewaCeoBackend.audit('AI_SETTINGS_UPDATED','ai_settings','global',{riskNote:s['risk-note']||''});localStorage.setItem(KEY,JSON.stringify(s));sync();window.dispatchEvent(new CustomEvent('nsewa-ai-settings-updated',{detail:{enabled:s.enabled!==false,theme:s.theme,template:s.template}}));audit('SERVER_SAVE','Supabase settings saved');if(st)st.textContent='AI settings Supabase Database मा सुरक्षित भए।';}catch(e){if(st)st.textContent='Database save असफल भयो; local cache लाई सफल भनेर देखाइएको छैन: '+e.message;}};
+      window.resetNsewaAISettings=async function(){if(!confirm('AI Settings default मा फर्काउने? पहिले Backup लिनुहोस्।'))return;const st=$('nsewa-ai-settings-status');try{const reset={...defaults,schemaVersion:4,savedAt:new Date().toISOString()};await window.nsewaCeoBackend.saveState('ai_settings',reset,'CEO reset AI settings');await window.nsewaCeoBackend.audit('AI_SETTINGS_RESET','ai_settings','global',{});localStorage.setItem(KEY,JSON.stringify(reset));load();if(st)st.textContent='Default AI settings Supabase मा सुरक्षित भए।';}catch(e){if(st)st.textContent='Server reset असफल भयो: '+e.message;}};
       function showNsewaAINextReview(){const e=$('nsewa-ai-next-review');if(e){const d=new Date();d.setMonth(d.getMonth()+3);e.textContent='अर्को त्रैमासिक समीक्षा लक्ष्य: '+d.toLocaleDateString('ne-NP')+' (स्मरण मात्र; स्वचालित deployment होइन)।';}}
       window.exportNsewaAISettings=function(){const payload={product:'Nepali Sewa AI',exportedAt:new Date().toISOString(),settings:read(),audit:safeParse(localStorage.getItem(AUDIT),'[]')};const a=document.createElement('a'),u=URL.createObjectURL(new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}));a.href=u;a.download='nepali-sewa-ai-backup.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),1500);};
       window.importNsewaAISettings=function(ev){const f=ev.target.files?.[0];if(!f)return;if(f.size>1048576){alert('Backup 1 MB भन्दा सानो हुनुपर्छ।');ev.target.value='';return;}const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result),src=d.settings&&typeof d.settings==='object'?d.settings:d;if(!src||typeof src!=='object'||Array.isArray(src))throw new Error('Invalid backup');const o={...defaults,schemaVersion:4,savedAt:new Date().toISOString()};fieldIds.forEach(k=>{if(Object.prototype.hasOwnProperty.call(src,k)){if(boolIds.has(k))o[k]=src[k]===true;else if(['daily-limit','image-limit'].includes(k)){const n=Number(src[k]);if(Number.isFinite(n)&&n>=0&&n<=100000)o[k]=String(n);}else o[k]=String(src[k]).slice(0,2000);}});localStorage.setItem(KEY,JSON.stringify(o));audit('IMPORT_BACKUP','Settings restored');load();alert('Backup restore भयो। Server मा लागू गर्न Save गर्नुहोस्।');}catch(_){alert('Backup फाइल मान्य छैन।');}finally{ev.target.value='';}};r.readAsText(f);};
@@ -4026,6 +4143,47 @@ document.addEventListener('DOMContentLoaded',()=>{const e=$('nsewa-analytics-sql
     console.error('Supabase initialization failed:', error);
     show('Supabase सुरु हुन सकेन। Project URL र Publishable key जाँच्नुहोस्।', false);
   }
+})();
+</script>
+
+<script id="nsewa-ceo-database-adapter">
+(function(){
+ 'use strict';
+ /*
+  SQL migration contract for this frontend:
+  Tables: profiles, user_documents, products, orders, system_error_events, website_analytics_events,
+          nsewa_marketplace_reports, nsewa_ceo_dashboard_state, nsewa_ceo_audit_log.
+  Dashboard state keys: marketplace, ai_settings, layout_preferences, theme_preferences.
+  RPCs: nsewa_ceo_get_dashboard_state(text), nsewa_ceo_save_dashboard_state(text,jsonb,text),
+        nsewa_ceo_write_audit(text,text,text,jsonb), nsewa_ceo_list_audit(integer),
+        nsewa_get_public_marketplace_config(), nsewa_ceo_set_product_status(text,text,text),
+        nsewa_ceo_resolve_marketplace_report(text,text), nsewa_ceo_update_order_status(text,text),
+        nsewa_ceo_review_profile(uuid,text,text), nsewa_ceo_analytics_summary(text).
+  AuthZ: every CEO RPC must independently check auth.jwt()->app_metadata->>'role' = 'ceo';
+         browser-side session checks are UX only, never the security boundary.
+ */
+ const sb=()=>window.nsewaSupabaseReady&&window.nsewaSupabase?window.nsewaSupabase:null;
+ async function requireCeo(){
+   const client=sb();if(!client)throw new Error('Supabase client उपलब्ध छैन।');
+   if(typeof window.hasVerifiedCeoLayoutSession!=='function'||!window.hasVerifiedCeoLayoutSession())throw new Error('CEO verified session आवश्यक छ।');
+   const {data:{user},error}=await client.auth.getUser();
+   if(error||!user||String(user.app_metadata?.role||'').toLowerCase()!=='ceo')throw new Error('Supabase app_metadata बाट CEO अधिकार पुष्टि भएन।');
+   return {client,user};
+ }
+ async function rpc(name,args){
+   const {client}=await requireCeo();
+   const {data,error}=await client.rpc(name,args||{});
+   if(error)throw error;
+   return data;
+ }
+ window.nsewaCeoBackend=Object.freeze({
+   requireCeo,
+   async getState(key){return await rpc('nsewa_ceo_get_dashboard_state',{p_key:String(key)} )||{};},
+   async saveState(key,state,note){return await rpc('nsewa_ceo_save_dashboard_state',{p_key:String(key),p_state:state,p_note:String(note||'').slice(0,1000)});},
+   async audit(action,entityType,entityId,details){return await rpc('nsewa_ceo_write_audit',{p_action:String(action).slice(0,80),p_entity_type:String(entityType||'dashboard').slice(0,80),p_entity_id:entityId==null?null:String(entityId).slice(0,120),p_details:details&&typeof details==='object'?details:{note:String(details||'').slice(0,1000)}});},
+   async listAudit(limit){return await rpc('nsewa_ceo_list_audit',{p_limit:Math.max(1,Math.min(500,Number(limit)||100))})||[];}
+ });
+ window.dispatchEvent(new CustomEvent('nsewa:ceo-database-adapter-ready'));
 })();
 </script>
 <!-- Mero-Sewa Supabase integration adapter (preserves the original public UI) -->
@@ -4476,6 +4634,7 @@ document.addEventListener('DOMContentLoaded',()=>{const e=$('nsewa-analytics-sql
     const state=$('nsewa-ceo-event-state')?.value||'all';
     const count={Critical:0,High:0,Medium:0,Low:0}; all.forEach(x=>{if(count[x.severity]!==undefined)count[x.severity]++});
     Object.keys(count).forEach(k=>{const el=$('nsewa-ceo-'+k.toLowerCase()+'-count');if(el)el.textContent=String(count[k])});
+    const unread=$('nsewa-ceo-unread-count');if(unread)unread.textContent=all.filter(x=>!x.read).length+' नयाँ';
     const list=all.filter(x=>(sev==='all'||x.severity===sev)&&(cat==='all'||x.category===cat)&&(state==='all'||(state==='read'?x.read:!x.read)));
     host.replaceChildren();
     if(!list.length){const p=document.createElement('p');p.className='p-3 text-center text-sm text-slate-400';p.textContent='यस Filter मा सूचना छैन।';host.appendChild(p);return;}
@@ -4489,12 +4648,16 @@ document.addEventListener('DOMContentLoaded',()=>{const e=$('nsewa-analytics-sql
       const meta=document.createElement('div');meta.className='mt-2 flex flex-wrap items-center justify-between gap-2 text-[10px] text-slate-400';
       const detail=document.createElement('span');detail.textContent=item.category+' · '+item.source+' · '+new Date(item.at).toLocaleString('ne-NP');
       const btn=document.createElement('button');btn.type='button';btn.className='rounded border border-slate-600 px-2 py-1 text-slate-200';btn.textContent=item.read?'पढियो':'पढियो चिन्ह लगाउनुहोस्';
-      btn.addEventListener('click',()=>{const rows=read().map(x=>x.id===item.id?{...x,read:true}:x);write(rows);render()});
+      btn.addEventListener('click',async()=>{try{if(String(item.id).startsWith('db-')){const sb=window.nsewaSupabaseReady&&window.nsewaSupabase;if(!sb)throw new Error('Supabase उपलब्ध छैन।');const id=String(item.id).slice(3);const {error}=await sb.from('system_error_events').update({read_at:new Date().toISOString()}).eq('id',id);if(error)throw error;}const rows=read().map(x=>x.id===item.id?{...x,read:true}:x);write(rows);render();}catch(e){alert('Server notification पढियो भनेर चिन्ह लगाउन सकिएन: '+e.message);}});
       meta.append(detail,btn);card.append(row,body,meta);host.appendChild(card);
     });
   }
   window.nsewaCeoRenderEvents=render;
-  window.nsewaCeoMarkAllRead=function(){write(read().map(x=>({...x,read:true})));render()};
+  window.nsewaCeoMarkAllRead=async function(){try{if(isCeo()&&window.nsewaSupabaseReady&&window.nsewaSupabase){const {error}=await window.nsewaSupabase.from('system_error_events').update({read_at:new Date().toISOString()}).is('read_at',null);if(error)throw error;}write(read().map(x=>({...x,read:true})));render();}catch(e){alert('सबै Server events पढियो भनेर चिन्ह लगाउन सकिएन: '+e.message);}};
+  window.nsewaCeoClearEvents=function(){
+    if(!confirm('CEO Notification Center का सबै स्थानीय notification हटाउने? Server history मा रहेका घटना यहाँबाट delete हुँदैनन्।'))return;
+    write([]);render();
+  };
   window.nsewaCeoExportEvents=function(){const blob=new Blob([JSON.stringify(read(),null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='mero-sewa-system-audit.json';a.click();URL.revokeObjectURL(url)};
   window.nsewaCeoRefreshEvents=async function(){
     render();
@@ -4506,7 +4669,7 @@ document.addEventListener('DOMContentLoaded',()=>{const e=$('nsewa-analytics-sql
       const {data,error}=await sb.from('system_error_events').select('id,event_key,category,severity,source,message,created_at,read_at').order('created_at',{ascending:false}).limit(150);
       if(error)throw error;
       const merged=read();
-      (data||[]).forEach(x=>{if(!merged.some(y=>y.key===x.event_key)){merged.push({id:'db-'+x.id,key:x.event_key,title:x.category+' Alert',category:x.category,severity:x.severity,source:x.source,message:x.message,at:x.created_at,read:!!x.read_at})}});
+      (data||[]).forEach(x=>{const dbId='db-'+x.id;if(!merged.some(y=>y.id===dbId)){merged.push({id:dbId,key:String(x.event_key||'event')+'#'+String(x.id),eventKey:x.event_key,title:x.category+' Alert',category:x.category,severity:x.severity,source:x.source,message:x.message,at:x.created_at,read:!!x.read_at})}});
       write(merged);
       if(label)label.textContent='स्थानीय घटना र Supabase Server History दुवै लोड भए। Server access RLS/CEO permission अनुसार सीमित छ।';
       render();
@@ -4521,15 +4684,22 @@ document.addEventListener('DOMContentLoaded',()=>{const e=$('nsewa-analytics-sql
   window.addEventListener('nsewa:system-event',e=>{const d=e.detail||{};record(d.title||'System Event',d.message||'',d.category||classify(d.message,d.source),d.source||'Application')});
   const oldAdd=window.addNsewaNotification;
   window.addNsewaNotification=function(title,body,type){
+    // Keep the legacy writer temporarily for backward compatibility, but mirror every
+    // CEO/system notice into the single advanced inbox. The legacy panel is no longer rendered.
     if(typeof oldAdd==='function')oldAdd.apply(this,arguments);
     const kind=String(type||'').toLowerCase();
     const text=String(title||'')+' '+String(body||'');
-    if(['warning','error','critical','backend','security'].includes(kind) ||
-       /backend|supabase|database|authentication|security|api error|otp error|realtime error|javascript error/i.test(text)){
-      const category=classify(text,type||'Application');
-      record(title,body,category,type||'Application');
-    }
+    const category=classify(text,type||'Application');
+    record(title||'System Notification',body||'',category,type||'Application');
   };
+  // One-time migration of notices created before the unified CEO Notification Center.
+  try{
+    if(!localStorage.getItem('nsewa-ceo-unified-notice-migration-v1')){
+      const legacy=JSON.parse(localStorage.getItem('nsewa-ceo-system-notices-v2')||'[]');
+      if(Array.isArray(legacy))legacy.slice(0,150).reverse().forEach(x=>record(x.title||'System Notification',x.body||'',classify((x.title||'')+' '+(x.body||''),x.type||'Legacy'),x.type||'Legacy'));
+      localStorage.setItem('nsewa-ceo-unified-notice-migration-v1','1');
+    }
+  }catch(e){console.warn('Legacy CEO notification migration could not complete:',e);}
   // Keep CEO-only diagnostics invisible unless the existing CEO gate is verified.
   function watchCeoHub(){
     const hub=$('ceo-layout-hub'); if(!hub||hub.dataset.nsewaMonitorWatch)return;

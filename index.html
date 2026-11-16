@@ -7338,5 +7338,349 @@ window.nsewaCeoExportAuditTrail=function(){if(!rows.length){alert('Export गर
   });
 })();
 </script>
+<!-- ========================================================================= -->
+<!-- MERO-SEWA V15.0 WORLD-CLASS | ULTRA-DYNAMIC PUBLIC STOREFRONT ENGINE      -->
+<!-- ========================================================================= -->
+<style>
+  @keyframes nsewaSlideLeft {
+    from { transform: translateX(100%); opacity: 0.4; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes nsewaFadeScale {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .nsewa-prod-card {
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    overflow: hidden;
+  }
+  .nsewa-prod-card:hover {
+    transform: translateY(-4px);
+    border-color: #10b981 !important;
+    box-shadow: 0 14px 28px rgba(16, 185, 129, 0.22);
+  }
+  .nsewa-side-drawer {
+    animation: nsewaSlideLeft 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .nsewa-modal-pop {
+    animation: nsewaFadeScale 0.2s ease-out;
+  }
+</style>
+
+<script>
+(function() {
+  var pubProducts = [];
+  var pubCart = [];
+  var wishlistIds = JSON.parse(localStorage.getItem('nsewa_wishlist') || '[]');
+  var activePubCat = 'ALL';
+  var activeSort = 'NEWEST';
+  var appliedCoupon = null;
+
+  function getSbV15() {
+    if (window.supabaseClient && typeof window.supabaseClient.from === 'function') return window.supabaseClient;
+    if (window._supabase && typeof window._supabase.from === 'function') return window._supabase;
+    if (window.sb && typeof window.sb.from === 'function') return window.sb;
+    for (var k in window) {
+      try {
+        if (window[k] && typeof window[k] === 'object' && typeof window[k].from === 'function') return window[k];
+      } catch (e) {}
+    }
+    return null;
+  }
+
+  function showV15Toast(msg, isErr) {
+    var el = document.createElement('div');
+    el.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999999;padding:11px 16px;border-radius:11px;font-size:12px;font-weight:700;box-shadow:0 12px 30px rgba(0,0,0,0.55);' +
+      (isErr ? 'background:#7f1d1d;color:#fef2f2;border:1px solid #ef4444;' : 'background:#065f46;color:#ecfdf5;border:1px solid #10b981;');
+    el.textContent = (isErr ? '⚠ ' : '✓ ') + msg;
+    document.body.appendChild(el);
+    setTimeout(function() { el.remove(); }, 2800);
+  }
+
+  window.nsewaToggleWishlist = function(prodId) {
+    var idx = wishlistIds.indexOf(prodId);
+    if (idx === -1) { wishlistIds.push(prodId); showV15Toast('मनपर्ने सूची (Wishlist) मा सुरक्षित भयो'); }
+    else { wishlistIds.splice(idx, 1); showV15Toast('Wishlist बाट हटाइयो'); }
+    localStorage.setItem('nsewa_wishlist', JSON.stringify(wishlistIds));
+    loadPublicStorefront();
+  };
+
+  window.nsewaPubAddToCart = function(prodId) {
+    var p = pubProducts.find(function(x) { return x.id === prodId; });
+    if (!p || p.stock_qty <= 0) return;
+    var unitPrice = Math.round(p.price * (1 - (p.discount_percent || 0) / 100));
+    var item = pubCart.find(function(c) { return c.id === prodId; });
+    if (item) {
+      if (item.qty < p.stock_qty) item.qty += 1;
+      else { showV15Toast('स्टकमा यति मात्र उपलब्ध छ', true); return; }
+    } else {
+      pubCart.push({ id: p.id, title: p.title, price: unitPrice, qty: 1, max: p.stock_qty, img: p.image_url || '' });
+    }
+    updateCartCounter();
+    showV15Toast(p.title + ' कार्टमा थपियो');
+  };
+
+  window.nsewaPubCartQty = function(idx, delta) {
+    var item = pubCart[idx];
+    if (!item) return;
+    var next = item.qty + delta;
+    if (next <= 0) pubCart.splice(idx, 1);
+    else if (next <= item.max) item.qty = next;
+    else { showV15Toast('अधिकतम स्टक यति मात्र छ', true); return; }
+    updateCartCounter();
+    openPubCheckoutModal();
+  };
+
+  function updateCartCounter() {
+    var count = pubCart.reduce(function(a, b) { return a + b.qty; }, 0);
+    var btn = document.getElementById('nsewa-pub-cart-btn');
+    if (btn) btn.innerHTML = '🛒 कार्ट <span style="background:#fff;color:#0284c7;padding:1px 7px;border-radius:999px;font-weight:800;margin-left:4px;">' + count + '</span>';
+  }
+
+  // सामानको विस्तृत विवरण देखाउने Quick-View Modal
+  window.nsewaOpenProductQuickView = function(prodId) {
+    var p = pubProducts.find(function(x) { return x.id === prodId; });
+    if (!p) return;
+    var old = document.getElementById('nsewa-pub-qv');
+    if (old) old.remove();
+
+    var hasDisc = (p.discount_percent || 0) > 0;
+    var finalPrice = Math.round(p.price * (1 - (p.discount_percent || 0) / 100));
+    var out = p.stock_qty <= 0;
+    var img = p.image_url
+      ? '<img src="' + p.image_url + '" style="width:100%;height:210px;object-fit:cover;border-radius:10px;margin-bottom:12px;" />'
+      : '<div style="width:100%;height:180px;border-radius:10px;background:#1e293b;display:flex;align-items:center;justify-content:center;color:#94a3b8;margin-bottom:12px;">📦 Mero-Sewa Product</div>';
+
+    var qv = document.createElement('div');
+    qv.id = 'nsewa-pub-qv';
+    qv.style.cssText = 'position:fixed;inset:0;background:rgba(2,6,23,0.86);z-index:999998;display:flex;align-items:center;justify-content:center;padding:16px;';
+    qv.innerHTML =
+      '<div class="nsewa-modal-pop" style="width:100%;max-width:420px;background:#0f172a;border:1px solid #38bdf8;border-radius:16px;padding:18px;color:#f8fafc;box-shadow:0 24px 60px rgba(0,0,0,0.75);">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">' +
+      '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;background:rgba(56,189,248,0.2);color:#38bdf8;">' + p.category + '</span>' +
+      '<button type="button" onclick="document.getElementById(\'nsewa-pub-qv\').remove()" style="background:none;border:none;color:#94a3b8;font-size:18px;cursor:pointer;">✕</button></div>' +
+      img +
+      '<h3 style="margin:0 0 6px;font-size:18px;color:#fff;">' + p.title + '</h3>' +
+      '<div style="font-size:18px;font-weight:800;color:#34d399;margin-bottom:6px;">रू. ' + finalPrice + (hasDisc ? ' <span style="font-size:12px;text-decoration:line-through;color:#94a3b8;">रू. ' + p.price + '</span>' : '') + '</div>' +
+      '<p style="font-size:12px;color:#cbd5e1;line-height:1.5;margin:0 0 12px;">' + (p.description || 'नेपालभरि सुरक्षित डेलिभरी र गुणस्तरको ग्यारेन्टी सहितको प्रमाणित सामान।') + '</p>' +
+      '<div style="font-size:11px;color:#94a3b8;margin-bottom:12px;">उपलब्ध स्टक: <strong>' + p.stock_qty + ' थान</strong> · भुक्तानी: Cash on Delivery</div>' +
+      '<button type="button" ' + (out ? 'disabled' : 'onclick="window.nsewaPubAddToCart(\'' + p.id + '\');document.getElementById(\'nsewa-pub-qv\').remove();window.openPubCheckoutModal();"') +
+      ' style="width:100%;padding:11px;border:none;border-radius:9px;background:' + (out ? '#334155' : '#10b981') + ';color:#fff;font-weight:800;font-size:13px;cursor:pointer;">' +
+      (out ? 'स्टक सकियो' : '⚡ अहिले नै किन्नुहोस् (Buy Now)') + '</button></div>';
+    document.body.appendChild(qv);
+  };
+    window.nsewaApplyPubCoupon = async function() {
+    var code = (document.getElementById('pub-coupon-input')?.value || '').trim().toUpperCase();
+    if (!code) return;
+    var sb = getSbV15();
+    if (!sb) return;
+    var res = await sb.from('nsewa_store_coupons').select('*').eq('code', code).eq('is_active', true).single();
+    if (res.error || !res.data) {
+      appliedCoupon = null;
+      showV15Toast('कुपन कोड मिलेन वा म्याद सकियो', true);
+    } else {
+      appliedCoupon = res.data;
+      showV15Toast('कुपन ' + code + ' लागू भयो (' + res.data.discount_value + '% छुट)');
+    }
+    openPubCheckoutModal();
+  };
+
+  // दायाँबाट खुल्ने Sliding Side-Cart Drawer
+  window.openPubCheckoutModal = function() {
+    var old = document.getElementById('nsewa-pub-checkout-modal');
+    if (old) old.remove();
+
+    var subTotal = pubCart.reduce(function(s, i) { return s + (i.price * i.qty); }, 0);
+    var discAmt = appliedCoupon ? Math.round(subTotal * (appliedCoupon.discount_value / 100)) : 0;
+    var grandTotal = Math.max(0, subTotal - discAmt);
+
+    var itemsHtml = pubCart.length ? pubCart.map(function(i, idx) {
+      return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #1e293b;gap:8px;">' +
+        '<div style="flex:1;"><strong style="font-size:12px;color:#fff;">' + i.title + '</strong><div style="font-size:11px;color:#94a3b8;">रू. ' + i.price + ' प्रति थान</div></div>' +
+        '<div style="display:flex;align-items:center;gap:5px;">' +
+        '<button type="button" onclick="window.nsewaPubCartQty(' + idx + ',-1)" style="width:22px;height:22px;border:1px solid #475569;border-radius:5px;background:#1e293b;color:#fff;cursor:pointer;">-</button>' +
+        '<span style="font-size:12px;font-weight:700;min-width:16px;text-align:center;">' + i.qty + '</span>' +
+        '<button type="button" onclick="window.nsewaPubCartQty(' + idx + ',1)" style="width:22px;height:22px;border:1px solid #475569;border-radius:5px;background:#1e293b;color:#fff;cursor:pointer;">+</button>' +
+        '<strong style="font-size:12px;color:#34d399;min-width:58px;text-align:right;">रू. ' + (i.price * i.qty) + '</strong></div></div>';
+    }).join('') : '<div style="padding:24px;text-align:center;color:#94a3b8;font-size:12px;">तपाईंको कार्ट खाली छ। पसलबाट सामान छान्नुहोस्।</div>';
+
+    var drawer = document.createElement('div');
+    drawer.id = 'nsewa-pub-checkout-modal';
+    drawer.style.cssText = 'position:fixed;inset:0;background:rgba(2,6,23,0.75);z-index:999999;display:flex;justify-content:flex-end;';
+    drawer.innerHTML =
+      '<div class="nsewa-side-drawer" style="width:100%;max-width:410px;height:100%;background:#0f172a;border-left:1px solid #10b981;padding:18px;color:#f8fafc;display:flex;flex-direction:column;justify-content:space-between;overflow-y:auto;box-sizing:border-box;">' +
+      '<div><div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:10px;border-bottom:1px solid #1e293b;">' +
+      '<strong style="font-size:15px;color:#34d399;">🛒 तपाईंको सपिङ कार्ट र Checkout</strong>' +
+      '<button type="button" onclick="document.getElementById(\'nsewa-pub-checkout-modal\').remove()" style="background:none;border:none;color:#94a3b8;font-size:18px;cursor:pointer;">✕</button></div>' +
+      '<div style="max-height:190px;overflow-y:auto;margin:8px 0;">' + itemsHtml + '</div>' +
+      '<div style="display:flex;gap:6px;margin-bottom:10px;">' +
+      '<input id="pub-coupon-input" type="text" placeholder="कुपन कोड (MERO10)" value="' + (appliedCoupon ? appliedCoupon.code : '') + '" style="flex:1;padding:7px 10px;border-radius:8px;border:1px solid #475569;background:#1e293b;color:#fff;font-size:12px;" />' +
+      '<button type="button" onclick="window.nsewaApplyPubCoupon()" style="padding:7px 12px;border:none;border-radius:8px;background:#7c3aed;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">Apply</button></div>' +
+      '<div style="padding:9px 11px;border-radius:9px;background:#1e293b;margin-bottom:10px;font-size:12px;">' +
+      '<div style="display:flex;justify-content:space-between;"><span>उप-जम्मा (Subtotal):</span><span>रू. ' + subTotal + '</span></div>' +
+      (discAmt > 0 ? '<div style="display:flex;justify-content:space-between;color:#34d399;"><span>कुपन छुट:</span><span>- रू. ' + discAmt + '</span></div>' : '') +
+      '<div style="display:flex;justify-content:space-between;font-size:14px;font-weight:800;color:#fbbf24;margin-top:4px;padding-top:4px;border-top:1px solid #334155;"><span>कुल भुक्तानी:</span><span>रू. ' + grandTotal + '</span></div></div>' +
+      '<div style="display:grid;gap:7px;font-size:12px;">' +
+      '<input id="pub-ord-name" type="text" placeholder="तपाईंको पूरा नाम *" style="padding:8px 10px;border-radius:8px;border:1px solid #475569;background:#1e293b;color:#fff;" />' +
+      '<input id="pub-ord-phone" type="tel" placeholder="मोबाइल नम्बर (98XXXXXXXX) *" style="padding:8px 10px;border-radius:8px;border:1px solid #475569;background:#1e293b;color:#fff;" />' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;">' +
+      '<input id="pub-ord-dist" type="text" placeholder="जिल्ला (७७ जिल्ला)" value="Kailali" style="padding:8px 10px;border-radius:8px;border:1px solid #475569;background:#1e293b;color:#fff;" />' +
+      '<select id="pub-ord-pay" style="padding:8px 10px;border-radius:8px;border:1px solid #475569;background:#1e293b;color:#fff;"><option value="COD">Cash on Delivery</option><option value="ESEWA_STANDBY">eSewa / Khalti</option></select></div>' +
+      '<input id="pub-ord-addr" type="text" placeholder="पूरा ठेगाना (टोल, नगरपालिका/वडा) *" style="padding:8px 10px;border-radius:8px;border:1px solid #475569;background:#1e293b;color:#fff;" /></div></div>' +
+      '<button type="button" id="pub-ord-submit" style="margin-top:12px;width:100%;padding:12px;border:none;border-radius:10px;background:linear-gradient(90deg,#10b981,#059669);color:#fff;font-weight:800;font-size:13px;cursor:pointer;">✓ अर्डर पुष्टि गर्नुहोस् (रू. ' + grandTotal + ')</button></div>';
+
+    document.body.appendChild(drawer);
+
+    document.getElementById('pub-ord-submit').addEventListener('click', async function() {
+      if (!pubCart.length) { showV15Toast('कार्ट खाली छ', true); return; }
+      var name = document.getElementById('pub-ord-name').value.trim();
+      var phone = document.getElementById('pub-ord-phone').value.trim();
+      var addr = document.getElementById('pub-ord-addr').value.trim();
+      if (name.length < 2 || phone.length < 7 || addr.length < 2) { showV15Toast('कृपया नाम, फोन र ठेगाना भर्नुहोस्', true); return; }
+
+      var btn = this;
+      btn.disabled = true;
+      btn.textContent = 'अर्डर पठाइँदैछ...';
+      var sb = getSbV15();
+      var res = await sb.rpc('nsewa_public_place_order', {
+        p_customer_name: name, p_customer_phone: phone,
+        p_district: document.getElementById('pub-ord-dist').value.trim(),
+        p_address: addr, p_items: pubCart, p_total_amount: grandTotal,
+        p_payment_method: document.getElementById('pub-ord-pay').value
+      });
+
+      if (res.error) { showV15Toast('Error: ' + res.error.message, true); btn.disabled = false; btn.textContent = '✓ अर्डर पुष्टि गर्नुहोस्'; }
+      else {
+        pubCart = []; appliedCoupon = null; updateCartCounter(); drawer.remove();
+        alert('🎉 बधाई छ! अर्डर सफल भयो।\nOrder Code: ' + res.data + '\n(अर्डर ट्र्याक गर्न यो कोड सुरक्षित राख्नुहोस्)');
+        loadPublicStorefront();
+      }
+    });
+  };
+
+  // Live Order Progress Tracker Modal
+  window.nsewaTrackPublicOrder = async function() {
+    var code = prompt('तपाईंको Order Code लेख्नुहोस् (जस्तै: ORD-A1B2C3):');
+    if (!code || code.trim().length < 4) return;
+    var sb = getSbV15();
+    if (!sb) return;
+    var res = await sb.from('nsewa_store_orders').select('*').eq('order_code', code.trim().toUpperCase()).single();
+    if (res.error || !res.data) { showV15Toast('यो Order Code भेटिएन', true); return; }
+    var o = res.data;
+    var steps = ['PENDING', 'CONFIRMED', 'PACKED', 'SHIPPED', 'DELIVERED'];
+    var curIdx = Math.max(0, steps.indexOf(o.order_status));
+    var pct = o.order_status === 'CANCELLED' ? 0 : Math.round(((curIdx + 1) / steps.length) * 100);
+
+    var m = document.createElement('div');
+    m.id = 'nsewa-track-modal';
+    m.style.cssText = 'position:fixed;inset:0;background:rgba(2,6,23,0.85);z-index:999999;display:flex;align-items:center;justify-content:center;padding:16px;';
+    m.innerHTML =
+      '<div class="nsewa-modal-pop" style="width:100%;max-width:400px;background:#0f172a;border:1px solid #38bdf8;border-radius:14px;padding:18px;color:#f8fafc;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><strong style="color:#38bdf8;">📦 Live Order Tracker</strong>' +
+      '<button type="button" onclick="document.getElementById(\'nsewa-track-modal\').remove()" style="background:none;border:none;color:#94a3b8;font-size:18px;cursor:pointer;">✕</button></div>' +
+      '<div style="font-size:13px;margin-bottom:8px;">Order Code: <strong>' + o.order_code + '</strong> · अवस्था: <strong style="color:#34d399;">' + o.order_status + '</strong></div>' +
+      '<div style="width:100%;height:8px;background:#1e293b;border-radius:999px;overflow:hidden;margin-bottom:10px;"><div style="width:' + pct + '%;height:100%;background:linear-gradient(90deg,#38bdf8,#10b981);"></div></div>' +
+      '<div style="font-size:12px;color:#cbd5e1;">ग्राहक: ' + o.customer_name + '<br>ठेगाना: ' + o.delivery_district + ', ' + o.delivery_address + '<br>कुल रकम: <strong>रू. ' + o.total_amount + '</strong></div></div>';
+    document.body.appendChild(m);
+  };
+
+  window.nsewaSetPubCat = function(cat) { activePubCat = cat; loadPublicStorefront(); };
+  window.nsewaSetPubSort = function(s) { activeSort = s; loadPublicStorefront(); };
+  async function loadPublicStorefront() {
+    var grid = document.getElementById('nsewa-pub-shop-grid');
+    var catBar = document.getElementById('nsewa-pub-cat-bar');
+    var sb = getSbV15();
+    if (!grid || !sb) return;
+
+    var res = await sb.from('nsewa_store_products').select('*').eq('is_active', true).eq('approval_status', 'APPROVED').order('created_at', { ascending: false });
+    pubProducts = res.data || [];
+
+    if (catBar) {
+      var cats = ['ALL', 'WISHLIST'].concat(Array.from(new Set(pubProducts.map(function(p) { return p.category || 'General'; }))));
+      catBar.innerHTML = cats.map(function(c) {
+        var active = activePubCat === c;
+        var label = c === 'ALL' ? 'सबै सामान' : (c === 'WISHLIST' ? '❤️ मनपर्ने (' + wishlistIds.length + ')' : c);
+        return '<button type="button" onclick="window.nsewaSetPubCat(\'' + c + '\')" style="padding:5px 11px;border-radius:999px;font-size:11px;font-weight:700;cursor:pointer;border:1px solid ' + (active ? '#10b981' : '#334155') + ';background:' + (active ? 'rgba(16,185,129,0.2)' : '#0f172a') + ';color:' + (active ? '#34d399' : '#cbd5e1') + ';">' + label + '</button>';
+      }).join('');
+    }
+
+    var q = (document.getElementById('nsewa-pub-search')?.value || '').toLowerCase().trim();
+    var filtered = pubProducts.filter(function(p) {
+      var matchCat = activePubCat === 'ALL' || (activePubCat === 'WISHLIST' ? wishlistIds.indexOf(p.id) !== -1 : (p.category || 'General') === activePubCat);
+      var matchQ = !q || (p.title || '').toLowerCase().indexOf(q) !== -1 || (p.category || '').toLowerCase().indexOf(q) !== -1;
+      return matchCat && matchQ;
+    });
+
+    if (activeSort === 'LOW') filtered.sort(function(a, b) { return a.price - b.price; });
+    else if (activeSort === 'HIGH') filtered.sort(function(a, b) { return b.price - a.price; });
+    else if (activeSort === 'SALE') filtered = filtered.filter(function(p) { return (p.discount_percent || 0) > 0; });
+
+    if (!filtered.length) {
+      grid.innerHTML = '<div style="grid-column:1/-1;padding:24px;text-align:center;color:#94a3b8;">हाल यो छनोटमा सामान उपलब्ध छैन।</div>';
+      return;
+    }
+
+    grid.innerHTML = filtered.map(function(p) {
+      var hasDisc = (p.discount_percent || 0) > 0;
+      var finalPrice = Math.round(p.price * (1 - (p.discount_percent || 0) / 100));
+      var out = p.stock_qty <= 0;
+      var wished = wishlistIds.indexOf(p.id) !== -1;
+      var imgHtml = p.image_url
+        ? '<img onclick="window.nsewaOpenProductQuickView(\'' + p.id + '\')" src="' + p.image_url + '" style="width:100%;height:150px;object-fit:cover;border-radius:9px;margin-bottom:8px;cursor:pointer;" />'
+        : '<div onclick="window.nsewaOpenProductQuickView(\'' + p.id + '\')" style="width:100%;height:150px;border-radius:9px;background:#1e293b;display:flex;align-items:center;justify-content:center;color:#64748b;font-size:12px;margin-bottom:8px;cursor:pointer;">📦 Mero-Sewa</div>';
+
+      return '<div class="nsewa-prod-card" style="padding:12px;border-radius:14px;background:linear-gradient(180deg,#0f172a 0%,#0b1120 100%);border:1px solid rgba(148,163,184,0.25);display:flex;flex-direction:column;justify-content:space-between;">' +
+        '<button type="button" onclick="window.nsewaToggleWishlist(\'' + p.id + '\')" style="position:absolute;top:18px;right:18px;width:28px;height:28px;border-radius:50%;border:none;background:rgba(15,23,42,0.8);color:' + (wished ? '#f43f5e' : '#94a3b8') + ';cursor:pointer;font-size:14px;">' + (wished ? '♥' : '♡') + '</button>' +
+        '<div>' + imgHtml +
+        '<div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:10px;padding:2px 7px;border-radius:6px;background:rgba(56,189,248,0.18);color:#38bdf8;">' + p.category + '</span>' +
+        (hasDisc ? '<span style="font-size:10px;font-weight:800;color:#fbbf24;">-' + p.discount_percent + '% OFF</span>' : '') + '</div>' +
+        '<h4 onclick="window.nsewaOpenProductQuickView(\'' + p.id + '\')" style="margin:6px 0 4px;font-size:14px;color:#fff;cursor:pointer;">' + p.title + '</h4>' +
+        '<div style="font-size:15px;font-weight:800;color:#34d399;">रू. ' + finalPrice + (hasDisc ? ' <span style="font-size:11px;text-decoration:line-through;color:#94a3b8;">रू. ' + p.price + '</span>' : '') + '</div>' +
+        '<div style="font-size:11px;color:' + (out ? '#f87171' : '#94a3b8') + ';margin-top:2px;">' + (out ? 'स्टक सकियो' : 'उपलब्ध स्टक: ' + p.stock_qty + ' थान') + '</div></div>' +
+        '<div style="display:flex;gap:6px;margin-top:10px;">' +
+        '<button type="button" onclick="window.nsewaOpenProductQuickView(\'' + p.id + '\')" style="padding:8px 10px;border:1px solid #334155;border-radius:8px;background:#1e293b;color:#e2e8f0;font-size:11px;cursor:pointer;">👁</button>' +
+        '<button type="button" ' + (out ? 'disabled' : 'onclick="window.nsewaPubAddToCart(\'' + p.id + '\')"') +
+        ' style="flex:1;padding:8px;border:none;border-radius:8px;background:' + (out ? '#334155' : '#10b981') + ';color:#fff;font-size:12px;font-weight:700;cursor:' + (out ? 'not-allowed' : 'pointer') + ';">' +
+        (out ? 'स्टक सकियो' : '🛒 कार्टमा हाल्नुहोस्') + '</button></div></div>';
+    }).join('');
+  }
+
+  function mountPublicStorefront() {
+    if (document.getElementById('nsewa-live-public-shop')) return;
+    var headings = Array.from(document.querySelectorAll('h1, h2, h3'));
+    var storeHeading = headings.find(function(el) {
+      var t = el.textContent || '';
+      return (t.indexOf('स्टोर') !== -1 || t.indexOf('Store') !== -1 || t.indexOf('सामान') !== -1) && !el.closest('#nsewa-enterprise-store');
+    });
+    if (!storeHeading) return;
+
+    var wrap = document.createElement('div');
+    wrap.id = 'nsewa-live-public-shop';
+    wrap.style.cssText = 'margin:16px 0;padding:18px;border-radius:16px;background:rgba(15,23,42,0.94);border:1px solid rgba(16,185,129,0.4);color:#f8fafc;box-shadow:0 14px 36px rgba(0,0,0,0.45);';
+    wrap.innerHTML =
+      '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px;">' +
+      '<div><strong style="font-size:17px;color:#34d399;">🛍️ Mero-Sewa Live Marketplace (प्रत्यक्ष खरिद)</strong>' +
+      '<div style="font-size:11px;color:#94a3b8;">७७ जिल्ला डेलिभरी · कुपन छुट र Cash on Delivery उपलब्ध</div></div>' +
+      '<div style="display:flex;gap:7px;flex-wrap:wrap;">' +
+      '<input id="nsewa-pub-search" type="text" placeholder="सामान खोज्नुहोस्..." style="padding:7px 11px;border:1px solid #475569;border-radius:8px;font-size:12px;background:#0f172a;color:#fff;" />' +
+      '<select onchange="window.nsewaSetPubSort(this.value)" style="padding:7px 9px;border:1px solid #475569;border-radius:8px;font-size:12px;background:#0f172a;color:#e2e8f0;">' +
+      '<option value="NEWEST">नयाँ सामान</option><option value="LOW">सस्तो पहिले</option><option value="HIGH">महँगो पहिले</option><option value="SALE">छुट अफर (Sale)</option></select>' +
+      '<button type="button" onclick="window.nsewaTrackPublicOrder()" style="padding:7px 11px;border:1px solid #475569;border-radius:8px;background:#1e293b;color:#e2e8f0;font-size:12px;font-weight:600;cursor:pointer;">📦 ट्र्याक</button>' +
+      '<button type="button" id="nsewa-pub-cart-btn" onclick="window.openPubCheckoutModal()" style="padding:7px 13px;border:none;border-radius:8px;background:#0284c7;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">🛒 कार्ट <span style="background:#fff;color:#0284c7;padding:1px 7px;border-radius:999px;font-weight:800;margin-left:4px;">0</span></button></div></div>' +
+      '<div id="nsewa-pub-cat-bar" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;"></div>' +
+      '<div id="nsewa-pub-shop-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));gap:12px;"></div>';
+
+    storeHeading.parentElement.insertBefore(wrap, storeHeading.nextSibling);
+    document.getElementById('nsewa-pub-search').addEventListener('input', loadPublicStorefront);
+    loadPublicStorefront();
+  }
+
+  window.addEventListener('load', function() {
+    setTimeout(mountPublicStorefront, 600);
+    setInterval(mountPublicStorefront, 2000);
+  });
+})();
+</script>
 </body>
 </html>

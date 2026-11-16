@@ -7682,5 +7682,147 @@ window.nsewaCeoExportAuditTrail=function(){if(!rows.length){alert('Export गर
   });
 })();
 </script>
+<!-- ========================================================================= -->
+<!-- MERO-SEWA V17.0 FINAL | ANTI-LOGOUT, SESSION SHIELD & SUB-PANEL MEMORY    -->
+<!-- ========================================================================= -->
+<script>
+(function() {
+  var STATE_KEY = 'nsewa_v17_dash_state';
+
+  function getSbFinal() {
+    if (window.supabaseClient && window.supabaseClient.auth) return window.supabaseClient;
+    if (window._supabase && window._supabase.auth) return window._supabase;
+    if (window.sb && window.sb.auth) return window.sb;
+    if (window.supabase && window.supabase.auth) return window.supabase;
+    for (var k in window) {
+      try {
+        if (window[k] && typeof window[k] === 'object' && window[k].auth && typeof window[k].auth.getSession === 'function') {
+          return window[k];
+        }
+      } catch (e) {}
+    }
+    return null;
+  }
+
+  function hasStoredAuthToken() {
+    try {
+      return Object.keys(localStorage).some(function(k) {
+        return k.indexOf('sb-') === 0 && k.indexOf('-auth-token') !== -1 && localStorage.getItem(k);
+      });
+    } catch (e) { return false; }
+  }
+
+  function saveState(patch) {
+    try {
+      var cur = JSON.parse(localStorage.getItem(STATE_KEY) || '{}');
+      Object.assign(cur, patch, { ts: Date.now() });
+      localStorage.setItem(STATE_KEY, JSON.stringify(cur));
+    } catch (e) {}
+  }
+
+  function getSavedState() {
+    try {
+      return JSON.parse(localStorage.getItem(STATE_KEY) || '{}');
+    } catch (e) { return {}; }
+  }
+
+  // १. रिफ्रेस हुँदा सेसन जोगाउने र भित्री ड्यासबोर्ड प्यानल पुनः खोल्ने
+  async function syncAndRestoreSession(forceRefresh) {
+    var sb = getSbFinal();
+    if (!sb || !sb.auth) return;
+
+    try {
+      var res = await sb.auth.getSession();
+      var session = res && res.data ? res.data.session : null;
+
+      if ((!session || forceRefresh) && hasStoredAuthToken()) {
+        var ref = await sb.auth.refreshSession();
+        if (ref && ref.data && ref.data.session) session = ref.data.session;
+      }
+
+      if (session && session.user) {
+        window.currentUser = session.user;
+        window.nsewaCurrentUser = session.user;
+        document.documentElement.dataset.nsewaAuthReady = '1';
+
+        var st = getSavedState();
+        if (st.inDashboard) {
+          restoreActivePanel(st.subPanel || 'MAIN');
+        }
+      }
+    } catch (e) {}
+  }
+
+  // २. प्रयोगकर्ता कुन ड्यासबोर्ड / प्यानलमा छन् भनी ट्र्याक गर्ने
+  function bindNavigationMemory() {
+    document.addEventListener('click', function(e) {
+      var btn = e.target.closest('button, a, [role="button"]');
+      if (!btn) return;
+      var txt = (btn.textContent || '').trim();
+
+      if (/logout|लगआउट|sign\s*out/i.test(txt)) {
+        localStorage.removeItem(STATE_KEY);
+        return;
+      }
+
+      if (txt.indexOf('STORE & MARKETPLACE') !== -1 || txt.indexOf('Store & Marketplace') !== -1) {
+        saveState({ inDashboard: true, subPanel: 'STORE' });
+      } else if (txt.indexOf('WORKER & SELLER') !== -1 || txt.indexOf('Worker & Seller') !== -1) {
+        saveState({ inDashboard: true, subPanel: 'WORKER' });
+      } else if (txt.indexOf('PAYMENT') !== -1 || txt.indexOf('Payment Operations') !== -1) {
+        saveState({ inDashboard: true, subPanel: 'PAYMENT' });
+      } else if (txt.indexOf('CEO Dashboard') !== -1 || txt.indexOf('CEO Panel') !== -1) {
+        saveState({ inDashboard: true, subPanel: 'MAIN' });
+      }
+    }, true);
+  }
+
+  // ३. रिफ्रेस पछि ठ्याक्कै अघिल्लो प्यानल पुनः खोल्ने
+  function restoreActivePanel(subPanel) {
+    var tries = 0;
+    var timer = setInterval(function() {
+      tries++;
+
+      // यदि मुख्य CEO Dashboard लुकेको छ भने खोल्ने
+      var openCeoBtn = Array.from(document.querySelectorAll('button, a')).find(function(b) {
+        var t = (b.textContent || '').trim();
+        return (t === 'CEO Dashboard' || t.indexOf('CEO Panel') !== -1) && b.offsetParent !== null;
+      });
+      if (openCeoBtn) openCeoBtn.click();
+
+      // यदि भित्री प्यानल (Store / Worker / Payment) खुलेको थियो भने त्यो पनि खोल्ने
+      if (subPanel === 'STORE' && !document.getElementById('nsewa-enterprise-store')) {
+        var stBtn = Array.from(document.querySelectorAll('button, a')).find(function(b) {
+          return (b.textContent || '').indexOf('Store & Marketplace') !== -1 && b.offsetParent !== null;
+        });
+        if (stBtn) stBtn.click();
+      } else if (subPanel === 'WORKER' && !document.getElementById('nsewa-enterprise-ws')) {
+        var wsBtn = Array.from(document.querySelectorAll('button, a')).find(function(b) {
+          return (b.textContent || '').indexOf('Worker & Seller') !== -1 && b.offsetParent !== null;
+        });
+        if (wsBtn) wsBtn.click();
+      }
+
+      if (tries >= 12) clearInterval(timer);
+    }, 300);
+  }
+
+  // पेज लोड हुने बित्तिकै तुरुन्तै सेसन सुरक्षित गर्ने
+  if (hasStoredAuthToken()) {
+    document.documentElement.dataset.nsewaAuthReady = '1';
+  }
+
+  bindNavigationMemory();
+  syncAndRestoreSession(false);
+
+  window.addEventListener('DOMContentLoaded', function() { syncAndRestoreSession(false); });
+  window.addEventListener('load', function() {
+    setTimeout(function() { syncAndRestoreSession(false); }, 250);
+    setTimeout(function() { syncAndRestoreSession(false); }, 1000);
+    // हरेक १० मिनेटमा सेसन स्वतः ताजा राख्ने (Keep-Alive)
+    setInterval(function() { syncAndRestoreSession(true); }, 600000);
+  });
+})();
+</script>  
 </body>
 </html>

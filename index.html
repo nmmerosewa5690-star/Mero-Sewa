@@ -6400,7 +6400,7 @@ window.nsewaCeoExportAuditTrail=function(){if(!rows.length){alert('Export गर
 </script>  
 <script>
 // ============================================================================
-// MERO-SEWA V7.3 MASTER | COMPLETE PAYMENT + WORKER/SELLER 6-FOLDER SYSTEM
+// MERO-SEWA V7.5 ENTERPRISE | ALL NEPAL (7 PROVINCES) + FULL EDITABLE FOLDERS
 // ============================================================================
 (function() {
   if (typeof window.nsewaV70Jump !== 'function') {
@@ -6411,122 +6411,89 @@ window.nsewaCeoExportAuditTrail=function(){if(!rows.length){alert('Export गर
   }
 
   function getSb() {
-    return window.supabaseClient || window._supabase || window.sb;
+    if (window.supabaseClient && typeof window.supabaseClient.from === 'function') return window.supabaseClient;
+    if (window._supabase && typeof window._supabase.from === 'function') return window._supabase;
+    if (window.sb && typeof window.sb.from === 'function') return window.sb;
+    if (window.supabase && typeof window.supabase.from === 'function') return window.supabase;
+    for (var k in window) {
+      try {
+        if (window[k] && typeof window[k] === 'object' && typeof window[k].from === 'function' && typeof window[k].rpc === 'function') {
+          window.supabaseClient = window[k];
+          return window[k];
+        }
+      } catch (e) {}
+    }
+    return null;
   }
 
-  var DISTRICTS_77 = [
-    'Kailali','Kanchanpur','Doti','Dadeldhura','Baitadi','Achham','Bajhang','Bajura','Darchula',
-    'Kathmandu','Lalitpur','Bhaktapur','Kaski','Chitwan','Jhapa','Morang','Sunsari','Rupandehi',
-    'Banke','Bardiya','Surkhet','Dang','Kabhrepalanchok','Makwanpur','Parsa','Bara','Dhanusha',
-    'Taplejung','Panchthar','Ilam','Sankhuwasabha','Terhathum','Bhojpur','Dhankuta','Solukhumbu',
-    'Khotang','Okhaldhunga','Udayapur','Saptari','Siraha','Dolakha','Sindhupalchok','Rasuwa',
-    'Dhading','Nuwakot','Ramechhap','Sindhuli','Mahottari','Sarlahi','Rautahat','Gorkha','Manang',
-    'Mustang','Lamjung','Tanahun','Syangja','Nawalpur','Gulmi','Palpa','Arghakhanchi','Kapilvastu',
-    'Parbat','Myagdi','Baglung','Nawalparasi West','Rukum East','Rolpa','Pyuthan','Salyan','Dolpa',
-    'Mugu','Humla','Jumla','Kalikot','Dailekh','Jajarkot','Rukum West'
+  var NEPAL_PROVINCES = [
+    { name: '१. कोशी प्रदेश (१४ जिल्ला)', districts: 'ताप्लेजुङ, पाँचथर, इलाम, झापा, मोरङ, सुनसरी, धनकुटा, तेह्रथुम, संखुवासभा, भोजपुर, सोलुखुम्बु, ओखलढुंगा, खोटाङ, उदयपुर' },
+    { name: '२. मधेश प्रदेश (८ जिल्ला)', districts: 'सप्तरी, सिरहा, धनुषा, महोत्तरी, सर्लाही, रौतहट, बारा, पर्सा' },
+    { name: '३. बागमती प्रदेश (१३ जिल्ला)', districts: 'काठमाडौँ, ललितपुर, भक्तपुर, काभ्रेपलाञ्चोक, सिन्धुपाल्चोक, दोलखा, रामेछाप, सिन्धुली, मकवानपुर, चितवन, धादिङ, नुवाकोट, रसुवा' },
+    { name: '४. गण्डकी प्रदेश (११ जिल्ला)', districts: 'गोरखा, लमजुङ, तनहुँ, कास्की, मनाङ, मुस्ताङ, पर्वत, स्याङ्जा, म्याग्दी, बागलुङ, नवलपुर' },
+    { name: '५. लुम्बिनी प्रदेश (१२ जिल्ला)', districts: 'रुपन्देही, कपिलवस्तु, नवलपरासी पश्चिम, पाल्पा, गुल्मी, अर्घाखाँची, दाङ, बाँके, बर्दिया, प्यूठान, रोल्पा, रुकुम पूर्व' },
+    { name: '६. कर्णाली प्रदेश (१० जिल्ला)', districts: 'सुर्खेत, दैलेख, जाजरकोट, सल्यान, रुकुम पश्चिम, कालिकोट, जुम्ला, मुगु, हुम्ला, डोल्पा' },
+    { name: '७. सुदूरपश्चिम प्रदेश (९ जिल्ला)', districts: 'कैलाली (दोधारा, धनगढी, टीकापुर), कञ्चनपुर, डोटी, डडेल्धुरा, बैतडी, अछाम, बझाङ, बाजुरा, दार्चुला' }
   ];
 
-  // १. Payment Operations (माथिल्ला + तल्ला सबै कार्ड) र Checkout Standby Bridge
-  async function initPaymentMasterBridge() {
-    var sb = getSb();
-    if (!sb || typeof sb.rpc !== 'function') return;
+  var DEFAULT_SKILLS = [
+    'इलेक्ट्रिसियन (House & Industrial Wiring)', 'प्लम्बर तथा सेनिटरी फिटिङ', 'AC, फ्रिज तथा वासिङ मेसिन मर्मत',
+    'CCTV, नेटवर्किङ तथा सोलार जडान', 'कम्प्युटर, ल्यापटप तथा मोबाइल मर्मत', 'घर निर्माण, पेन्टिङ तथा टायल/मार्बल',
+    'फर्निचर, काष्ठकला तथा आल्मुनियम/ग्रिल', 'सवारी साधन (बाइक/गाडी) मर्मत', 'कृषि प्राविधिक, पम्प तथा ट्याक्टर मर्मत',
+    'सफाइ, सरसफाइ तथा होम केयर सेवा', 'इलेक्ट्रोनिक्स तथा मोबाइल पसल', 'हार्डवेयर, रंगरोगन तथा निर्माण सामग्री पसल',
+    'किराना, खाद्यान्न तथा दैनिक उपभोग्य पसल', 'कपडा, फेन्सी तथा जुत्ता चप्पल पसल', 'कृषि मल, बीउ तथा औजार पसल',
+    'मेडिकल, फार्मेसी तथा स्वास्थ्य सामग्री पसल', 'अटो पार्ट्स तथा वर्कशप पसल', 'स्टेशनरी, पुस्तक तथा प्रिन्टिङ पसल'
+  ];
+
+  var DISTRICTS_77 = [
+    'Kathmandu','Lalitpur','Bhaktapur','Kailali','Kanchanpur','Doti','Dadeldhura','Baitadi','Achham','Bajhang','Bajura','Darchula',
+    'Kaski','Chitwan','Jhapa','Morang','Sunsari','Rupandehi','Banke','Bardiya','Surkhet','Dang','Kabhrepalanchok','Makwanpur','Parsa','Bara','Dhanusha',
+    'Taplejung','Panchthar','Ilam','Sankhuwasabha','Terhathum','Bhojpur','Dhankuta','Solukhumbu','Khotang','Okhaldhunga','Udayapur','Saptari','Siraha',
+    'Dolakha','Sindhupalchok','Rasuwa','Dhading','Nuwakot','Ramechhap','Sindhuli','Mahottari','Sarlahi','Rautahat','Gorkha','Manang','Mustang',
+    'Lamjung','Tanahun','Syangja','Nawalpur','Gulmi','Palpa','Arghakhanchi','Kapilvastu','Parbat','Myagdi','Baglung','Nawalparasi West',
+    'Rukum East','Rolpa','Pyuthan','Salyan','Dolpa','Mugu','Humla','Jumla','Kalikot','Dailekh','Jajarkot','Rukum West'
+  ];
+
+  function getCustomSkills() {
     try {
-      var res = await sb.rpc('nsewa_payment_ops_overview');
-      var ov = res.data;
-      if (ov && ov.stats) {
-        var s = ov.stats;
-        var map = {
-          'कुल प्रयास': s.payment_count || 0,
-          'Verified': s.payments_today || 0,
-          'Pending': s.payment_review || 0,
-          'Failed / Expired': 0,
-          'Manual Review': s.payment_review || 0,
-          'Verified रकम': 'रू. ' + (s.paid_today || 0),
-          'Refunded': 0,
-          'आजका Payment': s.payments_today || 0,
-          'आज Verified रकम': 'रू. ' + (s.paid_today || 0),
-          'Pending Approval': ov.approval_pending || 0,
-          'Open Risk': ov.risk_open || 0,
-          'Webhook Errors': ov.webhook_errors || 0,
-          'Refund खुला': s.refund_open || 0,
-          'Dispute खुला': s.disputes_open || 0,
-          'Deadline नजिक/बितेको': s.disputes_due || 0,
-          'Settlement review': s.settlement_review || 0,
-          'Unmatched rows': s.unmatched_settlement_rows || 0,
-          'Stock reserved': s.inventory_reserved || 0,
-          'Expired stock hold': s.inventory_expired_due || 0,
-          'Payment review': s.payment_review || 0,
-          'Pending 30m+': s.pending_older_30m || 0
-        };
-        document.querySelectorAll('div, span, p, strong, td').forEach(function(el) {
-          var txt = el.textContent.trim();
-          Object.keys(map).forEach(function(label) {
-            if (txt.indexOf(label) === 0 && txt.indexOf('—') !== -1) {
-              el.innerHTML = el.innerHTML.replace('—', '<strong>' + map[label] + '</strong>');
-            }
-          });
-        });
-      }
-
-      var gwRes = await sb.rpc('nsewa_payment_ops_module_data', { p_section: 'gateways' });
-      var gws = (gwRes.data && gwRes.data.rows) ? gwRes.data.rows : [];
-      if (gws.filter(function(g) { return g.is_enabled && g.integration_status === 'READY'; }).length === 0) {
-        document.querySelectorAll('*').forEach(function(el) {
-          if (el.childNodes.length === 1) {
-            if (el.textContent.indexOf('Payment Gateway उपलब्धता सुरक्षित server बाट जाँच हुँदैछ') !== -1) {
-              el.textContent = 'सूचना: eSewa, Khalti र Fonepay को डाटाबेस बेस तयार छ। कम्पनी दर्ता र Merchant ID जडानपछि अनलाइन भुक्तानी सुरु हुनेछ।';
-            }
-            if (el.textContent.indexOf('Payment Admin Edge Function र SQL migration deploy भएपछि') !== -1) {
-              el.textContent = 'डाटाबेस बेस (Supabase SQL) तयार छ — हाल Standby Mode मा छ (० कारोबार)।';
-            }
-          }
-        });
-      }
-    } catch (e) {}
+      var saved = JSON.parse(localStorage.getItem('nsewa_custom_skills') || '[]');
+      return Array.isArray(saved) && saved.length ? saved : DEFAULT_SKILLS.slice();
+    } catch (e) { return DEFAULT_SKILLS.slice(); }
   }
 
-  // २. नयाँ Worker/Seller दर्ता फारमलाई Supabase nsewa_ws_registry सँग जोड्ने
-  function bindRegistrationToSupabase() {
-    var btns = Array.from(document.querySelectorAll('button'));
-    var submitBtn = btns.find(function(b) { return b.textContent.trim().indexOf('विवरण सबमिट गर्नुहोस्') !== -1; });
-    if (!submitBtn || submitBtn.dataset.wsBound) return;
-    submitBtn.dataset.wsBound = '1';
+  window.nsewaAddSkillCategory = function() {
+    var val = prompt('नयाँ सीप वा पसल श्रेणीको नाम लेख्नुहोस्:');
+    if (!val || val.trim().length < 2) return;
+    var list = getCustomSkills();
+    if (list.indexOf(val.trim()) === -1) list.push(val.trim());
+    localStorage.setItem('nsewa_custom_skills', JSON.stringify(list));
+    refreshWsCenter();
+  };
 
-    submitBtn.addEventListener('click', async function() {
-      var sb = getSb();
-      if (!sb) return;
-      var uRes = await sb.auth.getUser();
-      var user = uRes.data && uRes.data.user;
-      if (!user) return;
-
-      var formBox = submitBtn.closest('div, form');
-      if (!formBox) return;
-      var inputs = Array.from(formBox.querySelectorAll('input, select'));
-      var fullName = (inputs[0] && inputs[0].value) ? inputs[0].value.trim() : '';
-      var districtSel = formBox.querySelector('select');
-      var district = districtSel ? districtSel.value : 'Kailali';
-      var roleText = formBox.textContent.indexOf('बिक्रेता') !== -1 ? 'SELLER' : 'WORKER';
-
-      if (fullName.length >= 2) {
-        await sb.from('nsewa_ws_registry').upsert({
-          user_id: user.id,
-          account_type: roleText,
-          full_name: fullName,
-          district: district,
-          verification_status: 'PENDING'
-        });
-      }
-    });
-  }
-  // ३. Worker & Seller 6-Folder Pro Control Center
+  window.nsewaRemoveSkillCategory = function(idx) {
+    if (!confirm('यो श्रेणी सूचीबाट हटाउने हो?')) return;
+    var list = getCustomSkills();
+    list.splice(idx, 1);
+    localStorage.setItem('nsewa_custom_skills', JSON.stringify(list));
+    refreshWsCenter();
+  };
   var FOLDERS = [
     { id: 'PENDING', no: '01', title: 'Verification Queue', desc: 'नयाँ दर्ता, नागरिकता, फोटो र PAN जाँच' },
     { id: 'WORKER', no: '02', title: 'Verified Workers', desc: 'प्रमाणित प्राविधिक र सीप निर्देशिका' },
     { id: 'SELLER', no: '03', title: 'Verified Sellers', desc: 'प्रमाणित पसल र PAN व्यापार सूची' },
     { id: 'RESTRICTED', no: '04', title: 'Suspend & Ban Control', desc: 'अस्थायी रोक, अस्वीकृत, प्रतिबन्ध र फुकुवा' },
-    { id: 'AREAS', no: '05', title: 'Districts & Skills', desc: 'सुदूरपश्चिम सहित ७७ जिल्ला र सेवा श्रेणी' },
-    { id: 'AUDIT', no: '06', title: 'CEO Decision Audit', desc: 'सबै निर्णयहरूको स्थायी इतिहास' }
+    { id: 'AREAS', no: '05', title: 'All Nepal & Skills (Edit)', desc: '७ प्रदेश (७७ जिल्ला) र सीप श्रेणी व्यवस्थापन' },
+    { id: 'AUDIT', no: '06', title: 'CEO Decision Audit', desc: 'सबै निर्णय र Edit इतिहास' }
   ];
+
+  var FOLDER_TITLES = {
+    PENDING: '01 · Verification Queue (नयाँ दर्ता र कागजात जाँच)',
+    WORKER: '02 · Verified Workers (प्रमाणित प्राविधिक सूची)',
+    SELLER: '03 · Verified Sellers (प्रमाणित विक्रेता र पसल)',
+    RESTRICTED: '04 · Suspend & Ban Control (अस्थायी रोक, अस्वीकृत र प्रतिबन्ध)',
+    AREAS: '05 · All Nepal (७ प्रदेश / ७७ जिल्ला) र सीप श्रेणी व्यवस्थापन (Editable)',
+    AUDIT: '06 · CEO Decision Audit (CEO निर्णय र सम्पादन इतिहास)'
+  };
 
   var activeTab = 'PENDING';
   var wsData = [];
@@ -6550,11 +6517,44 @@ window.nsewaCeoExportAuditTrail=function(){if(!rows.length){alert('Export गर
     else { alert('सफलतापूर्वक ' + status + ' अपडेट भयो!'); refreshWsCenter(); }
   };
 
+  // कुनै पनि Worker/Seller को विवरण Edit गर्ने Modal खोल्ने
+  window.nsewaOpenEditModal = function(userId) {
+    var rec = wsData.find(function(x) { return x.user_id === userId; });
+    if (!rec) return;
+    var newName = prompt('पुरा नाम (Full Name):', rec.full_name || '');
+    if (newName === null) return;
+    var newType = prompt('प्रकार (WORKER वा SELLER):', rec.account_type || 'WORKER');
+    if (newType === null) return;
+    var newDist = prompt('जिल्ला (जस्तै: Kathmandu, Kailali, Kaski):', rec.district || 'Kathmandu');
+    if (newDist === null) return;
+    var newMuni = prompt('नगरपालिका / गाउँपालिका / ठेगाना:', rec.municipality || '');
+    if (newMuni === null) return;
+    var newSkill = prompt('सीप वा पसलको नाम/प्रकार:', rec.skill_or_shop || '');
+    if (newSkill === null) return;
+    var newPhone = prompt('फोन नम्बर:', rec.phone || '');
+    if (newPhone === null) return;
+    var newPan = prompt('नागरिकता वा PAN नम्बर:', rec.pan_or_citizenship_no || '');
+    if (newPan === null) return;
+    var newStatus = prompt('अवस्था (PENDING, APPROVED, REJECTED, SUSPENDED, BANNED):', rec.verification_status || 'PENDING');
+    if (newStatus === null) return;
+
+    var sb = getSb();
+    if (!sb) return;
+    sb.rpc('nsewa_ws_upsert_record', {
+      p_user_id: rec.user_id, p_account_type: newType, p_full_name: newName, p_phone: newPhone,
+      p_district: newDist, p_municipality: newMuni, p_skill_or_shop: newSkill,
+      p_pan_or_cit: newPan, p_status: newStatus, p_note: 'CEO Edited Profile'
+    }).then(function(res) {
+      if (res.error) alert('Edit Error: ' + res.error.message);
+      else { alert('विवरण सफलतापूर्वक Edit/Update भयो!'); refreshWsCenter(); }
+    });
+  };
+
   window.nsewaExportWsCsv = function() {
     if (!currentFiltered.length) { alert('Export गर्न हाल कुनै डेटा छैन।'); return; }
-    var lines = ['Type,Full Name,District,Skill/Shop,Phone,PAN/Citizenship,Status,Reason'];
+    var lines = ['Type,Full Name,District,Municipality,Skill/Shop,Phone,PAN/Citizenship,Status,Reason'];
     currentFiltered.forEach(function(r) {
-      lines.push([r.account_type, r.full_name, r.district, r.skill_or_shop, r.phone, r.pan_or_citizenship_no, r.verification_status, r.status_reason]
+      lines.push([r.account_type, r.full_name, r.district, r.municipality, r.skill_or_shop, r.phone, r.pan_or_citizenship_no, r.verification_status, r.status_reason]
         .map(function(v) { return '"' + String(v || '').replace(/"/g, '""') + '"'; }).join(','));
     });
     var blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
@@ -6563,26 +6563,29 @@ window.nsewaCeoExportAuditTrail=function(){if(!rows.length){alert('Export गर
     a.download = 'mero-sewa-' + activeTab.toLowerCase() + '.csv';
     a.click();
   };
-  var FOLDER_TITLES = {
-    PENDING: '01 · Verification Queue (नयाँ दर्ता र कागजात जाँच)',
-    WORKER: '02 · Verified Workers (प्रमाणित प्राविधिक सूची)',
-    SELLER: '03 · Verified Sellers (प्रमाणित विक्रेता र पसल)',
-    RESTRICTED: '04 · Suspend & Ban Control (अस्थायी रोक, अस्वीकृत र प्रतिबन्ध)',
-    AREAS: '05 · Districts & Skills (७७ जिल्ला र सेवा श्रेणी व्यवस्थापन)',
-    AUDIT: '06 · CEO Decision Audit (CEO ले गरेका निर्णयहरूको स्थायी इतिहास)'
-  };
 
   async function refreshWsCenter() {
     var listBox = document.getElementById('nsewa-ws-list-box');
     if (!listBox) return;
-
-    var headerHtml = '<div style="padding:10px 14px;background:rgba(56,189,248,0.14);border-bottom:1px solid rgba(56,189,248,0.3);font-weight:700;color:#38bdf8;font-size:13px;">📂 ' + (FOLDER_TITLES[activeTab] || activeTab) + '</div>';
+    var headerHtml = '<div style="padding:10px 14px;background:rgba(56,189,248,0.14);border-bottom:1px solid rgba(56,189,248,0.3);font-weight:700;color:#38bdf8;font-size:13px;display:flex;justify-content:space-between;align-items:center;"><span>📂 ' + (FOLDER_TITLES[activeTab] || activeTab) + '</span>' +
+      (activeTab === 'AREAS' ? '<button type="button" onclick="window.nsewaAddSkillCategory()" style="padding:4px 10px;border:none;border-radius:6px;background:#16a34a;color:#fff;font-size:11px;cursor:pointer;">+ नयाँ सीप/पसल श्रेणी थप्नुहोस्</button>' : '') + '</div>';
 
     if (activeTab === 'AREAS') {
+      var skills = getCustomSkills();
+      var provHtml = NEPAL_PROVINCES.map(function(p) {
+        return '<div style="padding:10px;border-radius:8px;background:rgba(30,41,59,0.85);border:1px solid rgba(148,163,184,0.22);"><strong style="color:#38bdf8;font-size:12px;">' + p.name + '</strong><div style="font-size:11px;color:#cbd5e1;margin-top:4px;line-height:1.45;">' + p.districts + '</div></div>';
+      }).join('');
+      var skillsHtml = skills.map(function(s, i) {
+        return '<span style="display:inline-flex;align-items:center;gap:6px;padding:4px 9px;border-radius:999px;background:rgba(14,165,233,0.18);border:1px solid rgba(56,189,248,0.35);color:#e0f2fe;font-size:11px;">' + s +
+          '<button type="button" onclick="window.nsewaRemoveSkillCategory(' + i + ')" style="background:none;border:none;color:#f87171;font-weight:bold;cursor:pointer;padding:0 2px;">×</button></span>';
+      }).join(' ');
+
       listBox.innerHTML = headerHtml +
-        '<div style="padding:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;">' +
-        '<div style="padding:12px;border-radius:8px;background:rgba(30,41,59,0.8);border:1px solid rgba(148,163,184,0.25);"><strong style="color:#38bdf8;">प्राथमिक क्षेत्र (सुदूरपश्चिम प्रदेश)</strong><p style="margin:6px 0 0;font-size:12px;color:#cbd5e1;line-height:1.5;">कैलाली (दोधारा, धनगढी, टीकापुर, अत्तरिया), कञ्चनपुर, डोटी, डडेल्धुरा, बैतडी, अछाम, बझाङ, बाजुरा, दार्चुला</p></div>' +
-        '<div style="padding:12px;border-radius:8px;background:rgba(30,41,59,0.8);border:1px solid rgba(148,163,184,0.25);"><strong style="color:#38bdf8;">प्रमाणित सीप र पसल श्रेणीहरू</strong><p style="margin:6px 0 0;font-size:12px;color:#cbd5e1;line-height:1.5;">इलेक्ट्रिसियन, प्लम्बर, AC/फ्रिज, CCTV/नेटवर्किङ, घर निर्माण, कृषि प्राविधिक, हार्डवेयर पसल</p></div></div>';
+        '<div style="padding:14px;">' +
+        '<div style="font-size:12px;font-weight:700;color:#e2e8f0;margin-bottom:8px;">🇳🇵 सम्पूर्ण नेपाल सेवा क्षेत्र (७ प्रदेश · ७७ जिल्ला)</div>' +
+        '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:8px;margin-bottom:14px;">' + provHtml + '</div>' +
+        '<div style="font-size:12px;font-weight:700;color:#e2e8f0;margin-bottom:8px;">🛠️ प्रमाणित सीप तथा पसल श्रेणीहरू (' + skills.length + ' श्रेणी — × थिचेर हटाउन वा माथिबाट थप्न मिल्छ)</div>' +
+        '<div style="display:flex;flex-wrap:wrap;gap:6px;">' + skillsHtml + '</div></div>';
       return;
     }
 
@@ -6596,24 +6599,17 @@ window.nsewaCeoExportAuditTrail=function(){if(!rows.length){alert('Export गर
 
     if (activeTab === 'AUDIT') {
       var aRes = await sb.from('nsewa_payment_audit_log').select('*').eq('object_type', 'WORKER_SELLER').order('created_at', { ascending: false }).limit(50);
-      if (aRes.error) {
-        listBox.innerHTML = headerHtml + '<div style="padding:14px;color:#f87171;">Error: ' + aRes.error.message + '</div>';
-        return;
-      }
       var aRows = aRes.data || [];
       listBox.innerHTML = headerHtml + (aRows.length ? aRows.map(function(r) {
         return '<div style="padding:11px 14px;border-bottom:1px solid rgba(148,163,184,0.2);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;">' +
           '<div><strong style="color:#38bdf8;">' + r.action + '</strong> — <span style="color:#e2e8f0;">' + (r.note || '') + '</span></div>' +
           '<span style="font-size:11px;color:#94a3b8;">' + new Date(r.created_at).toLocaleString() + '</span></div>';
-      }).join('') : '<div style="padding:22px;text-align:center;color:#94a3b8;">हालसम्म कुनै निर्णय इतिहास (Audit Log) रेकर्ड भएको छैन।</div>');
+      }).join('') : '<div style="padding:22px;text-align:center;color:#94a3b8;">हालसम्म कुनै निर्णय इतिहास रेकर्ड भएको छैन।</div>');
       return;
     }
 
     var res = await sb.from('nsewa_ws_registry').select('*').order('created_at', { ascending: false });
-    if (res.error) {
-      listBox.innerHTML = headerHtml + '<div style="padding:14px;color:#f87171;">Database Error: ' + res.error.message + '</div>';
-      return;
-    }
+    if (res.error) { listBox.innerHTML = headerHtml + '<div style="padding:14px;color:#f87171;">Error: ' + res.error.message + '</div>'; return; }
     wsData = res.data || [];
     renderWsRows();
   }
@@ -6642,17 +6638,18 @@ window.nsewaCeoExportAuditTrail=function(){if(!rows.length){alert('Export गर
     currentFiltered = rows;
 
     if (!rows.length) {
-      listBox.innerHTML = headerHtml + '<div style="padding:24px;text-align:center;color:#94a3b8;">यो फोल्डरमा हाल कुनै दर्ता रेकर्ड छैन। नयाँ Worker वा Seller ले फारम भरेपछि यहाँ तुरुन्तै देखिनेछ।</div>';
+      listBox.innerHTML = headerHtml + '<div style="padding:24px;text-align:center;color:#94a3b8;">यो फोल्डरमा हाल कुनै दर्ता रेकर्ड छैन।</div>';
       return;
     }
 
     listBox.innerHTML = headerHtml + rows.map(function(r) {
-      var docBtn = r.doc_front_path ? ' • <a href="javascript:void(0)" onclick="window.nsewaViewDoc(\'' + r.doc_front_path + '\')" style="color:#38bdf8;font-weight:700;">📄 कागजात हेर्नुहोस्</a>' : '';
+      var docBtn = r.doc_front_path ? ' • <a href="javascript:void(0)" onclick="window.nsewaViewDoc(\'' + r.doc_front_path + '\')" style="color:#38bdf8;font-weight:700;">📄 कागजात</a>' : '';
       return '<div style="padding:12px 14px;border-bottom:1px solid rgba(148,163,184,0.2);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">' +
         '<div><strong style="color:#fff;font-size:14px;">[' + r.account_type + '] ' + r.full_name + '</strong> <span style="font-size:11px;padding:2px 8px;border-radius:999px;background:rgba(56,189,248,0.2);color:#7dd3fc;">' + r.verification_status + '</span>' +
-        '<div style="font-size:12px;color:#cbd5e1;margin-top:4px;">जिल्ला: <strong>' + (r.district || '—') + '</strong> • सीप/पसल: <strong>' + (r.skill_or_shop || '—') + '</strong> • फोन: ' + (r.phone || '—') + docBtn + '</div>' +
+        '<div style="font-size:12px;color:#cbd5e1;margin-top:4px;">जिल्ला: <strong>' + (r.district || '—') + '</strong> (' + (r.municipality || '—') + ') • सीप/पसल: <strong>' + (r.skill_or_shop || '—') + '</strong> • फोन: ' + (r.phone || '—') + docBtn + '</div>' +
         (r.status_reason ? '<div style="font-size:11px;color:#fbbf24;margin-top:2px;">कैफियत: ' + r.status_reason + '</div>' : '') + '</div>' +
         '<div style="display:flex;gap:5px;flex-wrap:wrap;">' +
+        '<button type="button" onclick="window.nsewaOpenEditModal(\'' + r.user_id + '\')" style="padding:5px 10px;border:none;border-radius:6px;background:#0284c7;color:#fff;font-size:11px;font-weight:600;cursor:pointer;">✎ Edit</button>' +
         '<button type="button" onclick="window.nsewaWsAction(\'' + r.user_id + '\',\'APPROVED\')" style="padding:5px 10px;border:none;border-radius:6px;background:#16a34a;color:#fff;font-size:11px;font-weight:600;cursor:pointer;">✓ Approve</button>' +
         '<button type="button" onclick="window.nsewaWsAction(\'' + r.user_id + '\',\'REJECTED\')" style="padding:5px 10px;border:none;border-radius:6px;background:#64748b;color:#fff;font-size:11px;font-weight:600;cursor:pointer;">✕ Reject</button>' +
         '<button type="button" onclick="window.nsewaWsAction(\'' + r.user_id + '\',\'SUSPENDED\')" style="padding:5px 10px;border:none;border-radius:6px;background:#d97706;color:#fff;font-size:11px;font-weight:600;cursor:pointer;">⏸ Suspend</button>' +
@@ -6661,9 +6658,9 @@ window.nsewaCeoExportAuditTrail=function(){if(!rows.length){alert('Export गर
   }
 
   function initEnterpriseWsCenter() {
+    document.querySelectorAll('#nsewa-ws-folder-grid').forEach(function(oldEl) { oldEl.remove(); });
     if (document.getElementById('nsewa-enterprise-ws')) return;
 
-    // माथिल्लो सानो कार्ड छोडेर सिधै भित्री "दर्ता समीक्षा, स्वीकृति, अस्वीकृति" विवरण भएको ठूलो प्यानल मात्र खोज्ने
     var allP = Array.from(document.querySelectorAll('p, div'));
     var innerDesc = allP.find(function(el) {
       return el.childNodes.length === 1 && el.textContent.trim().indexOf('दर्ता समीक्षा, स्वीकृति, अस्वीकृति, अस्थायी रोक र स्थायी प्रतिबन्ध') !== -1;
@@ -6672,9 +6669,9 @@ window.nsewaCeoExportAuditTrail=function(){if(!rows.length){alert('Export गर
 
     var root = document.createElement('div');
     root.id = 'nsewa-enterprise-ws';
-    root.style.cssText = 'width:100%;box-sizing:border-box;margin:12px 0;padding:12px;border-radius:10px;background:rgba(15,23,42,0.8);border:1px solid rgba(56,189,248,0.35);color:#f8fafc;';
+    root.style.cssText = 'width:100%;box-sizing:border-box;margin:12px 0;padding:12px;border-radius:10px;background:rgba(15,23,42,0.82);border:1px solid rgba(56,189,248,0.35);color:#f8fafc;';
 
-    var distOpts = '<option value="">सबै जिल्ला (७७)</option>' + DISTRICTS_77.map(function(d) {
+    var distOpts = '<option value="">सम्पूर्ण नेपाल (७७ जिल्ला)</option>' + DISTRICTS_77.map(function(d) {
       return '<option value="' + d + '">' + d + '</option>';
     }).join('');
 
@@ -6691,7 +6688,7 @@ window.nsewaCeoExportAuditTrail=function(){if(!rows.length){alert('Export गर
 
     root.innerHTML =
       '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">' +
-      '<span style="font-size:12px;font-weight:700;color:#e2e8f0;">📂 WORKER & SELLER FOLDERS (०६ / ०६)</span>' +
+      '<span style="font-size:12px;font-weight:700;color:#e2e8f0;">📂 WORKER & SELLER FOLDERS (०६ / ०६ · ALL NEPAL)</span>' +
       '<div style="display:flex;gap:6px;flex-wrap:wrap;">' +
       '<select id="nsewa-ws-dist-select" style="padding:5px 8px;border:1px solid #475569;border-radius:6px;font-size:11px;background:#0f172a;color:#f8fafc;">' + distOpts + '</select>' +
       '<input id="nsewa-ws-filter-input" type="text" placeholder="नाम, सीप वा फोन..." style="padding:5px 9px;border:1px solid #475569;border-radius:6px;font-size:11px;width:150px;background:#0f172a;color:#f8fafc;" />' +
@@ -6721,14 +6718,8 @@ window.nsewaCeoExportAuditTrail=function(){if(!rows.length){alert('Export गर
     refreshWsCenter();
   }
 
-  function bootAll() {
-    initPaymentMasterBridge();
-    bindRegistrationToSupabase();
-    initEnterpriseWsCenter();
-  }
-
   window.addEventListener('load', function() {
-    setTimeout(bootAll, 300);
+    setTimeout(initEnterpriseWsCenter, 300);
     setInterval(function() {
       if (!document.getElementById('nsewa-enterprise-ws')) initEnterpriseWsCenter();
     }, 1000);

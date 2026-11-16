@@ -6397,5 +6397,30 @@ window.nsewaCeoExportAuditTrail=function(){if(!rows.length){alert('Export गर
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
  window.nsewaPaymentWorkspaceExport=downloadPanelCsv;
 })();
+  <script>
+// Mero-Sewa Direct RPC Bridge (Edge Function नहुँदा पनि Payment Dashboard चलाउन)
+(function() {
+  window.addEventListener('load', async () => {
+    const sb = window.supabaseClient || window._supabase || window.sb;
+    if (!sb || typeof sb.rpc !== 'function') return;
+
+    window.nsewaPaymentDirectCheck = async function() {
+      try {
+        const { data: overview, error } = await sb.rpc('nsewa_payment_ops_overview');
+        if (!error && overview) {
+          console.log('✅ Payment Base Ready:', overview);
+        }
+        const { data: gateways } = await sb.rpc('nsewa_payment_ops_module_data', { p_section: 'gateways' });
+        if (gateways) {
+          console.log('✅ Gateways Base Ready (eSewa/Khalti/Fonepay):', gateways);
+        }
+      } catch (e) {
+        console.warn('Payment RPC check:', e.message);
+      }
+    };
+    window.nsewaPaymentDirectCheck();
+  });
+})();
 </script>
+
 </body></html>

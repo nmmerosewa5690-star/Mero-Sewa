@@ -6563,46 +6563,67 @@ window.nsewaCeoExportAuditTrail=function(){if(!rows.length){alert('Export गर
     a.download = 'mero-sewa-' + activeTab.toLowerCase() + '.csv';
     a.click();
   };
+  var FOLDER_TITLES = {
+    PENDING: '01 · Verification Queue (नयाँ दर्ता र कागजात जाँच)',
+    WORKER: '02 · Verified Workers (प्रमाणित प्राविधिक सूची)',
+    SELLER: '03 · Verified Sellers (प्रमाणित विक्रेता र पसल)',
+    RESTRICTED: '04 · Suspend & Ban Control (अस्थायी रोक, अस्वीकृत र प्रतिबन्ध)',
+    AREAS: '05 · Districts & Skills (७७ जिल्ला र सेवा श्रेणी व्यवस्थापन)',
+    AUDIT: '06 · CEO Decision Audit (CEO ले गरेका निर्णयहरूको स्थायी इतिहास)'
+  };
 
   async function refreshWsCenter() {
-    var sb = getSb();
     var listBox = document.getElementById('nsewa-ws-list-box');
-    if (!sb || !listBox) return;
-    listBox.innerHTML = '<div style="padding:22px;text-align:center;color:#64748b;">डेटा सिंक हुँदैछ...</div>';
+    if (!listBox) return;
 
-    if (activeTab === 'AUDIT') {
-      var aRes = await sb.from('nsewa_payment_audit_log').select('*').eq('object_type', 'WORKER_SELLER').order('created_at', { ascending: false }).limit(50);
-      var aRows = aRes.data || [];
-      listBox.innerHTML = aRows.length ? aRows.map(function(r) {
-        return '<div style="padding:11px 15px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;">' +
-          '<div><strong style="color:#0f172a;">' + r.action + '</strong> — <span style="color:#475569;">' + (r.note || '') + '</span></div>' +
-          '<span style="font-size:11px;color:#64748b;">' + new Date(r.created_at).toLocaleString() + '</span></div>';
-      }).join('') : '<div style="padding:22px;text-align:center;color:#64748b;">हालसम्म कुनै निर्णय इतिहास छैन।</div>';
+    var headerHtml = '<div style="padding:10px 14px;background:rgba(56,189,248,0.14);border-bottom:1px solid rgba(56,189,248,0.3);font-weight:700;color:#38bdf8;font-size:13px;">📂 ' + (FOLDER_TITLES[activeTab] || activeTab) + '</div>';
+
+    if (activeTab === 'AREAS') {
+      listBox.innerHTML = headerHtml +
+        '<div style="padding:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;">' +
+        '<div style="padding:12px;border-radius:8px;background:rgba(30,41,59,0.8);border:1px solid rgba(148,163,184,0.25);"><strong style="color:#38bdf8;">प्राथमिक क्षेत्र (सुदूरपश्चिम प्रदेश)</strong><p style="margin:6px 0 0;font-size:12px;color:#cbd5e1;line-height:1.5;">कैलाली (दोधारा, धनगढी, टीकापुर, अत्तरिया), कञ्चनपुर, डोटी, डडेल्धुरा, बैतडी, अछाम, बझाङ, बाजुरा, दार्चुला</p></div>' +
+        '<div style="padding:12px;border-radius:8px;background:rgba(30,41,59,0.8);border:1px solid rgba(148,163,184,0.25);"><strong style="color:#38bdf8;">प्रमाणित सीप र पसल श्रेणीहरू</strong><p style="margin:6px 0 0;font-size:12px;color:#cbd5e1;line-height:1.5;">इलेक्ट्रिसियन, प्लम्बर, AC/फ्रिज, CCTV/नेटवर्किङ, घर निर्माण, कृषि प्राविधिक, हार्डवेयर पसल</p></div></div>';
       return;
     }
 
-    if (activeTab === 'AREAS') {
-      listBox.innerHTML = '<div style="padding:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;">' +
-        '<div style="padding:12px;border-radius:10px;background:#f8fafc;border:1px solid #e2e8f0;"><strong style="color:#0369a1;">प्राथमिक क्षेत्र (सुदूरपश्चिम)</strong><p style="margin:6px 0 0;font-size:12px;color:#475569;">कैलाली (दोधारा, धनगढी, टीकापुर), कञ्चनपुर, डोटी, डडेल्धुरा, बैतडी, अछाम, बझाङ, बाजुरा, दार्चुला</p></div>' +
-        '<div style="padding:12px;border-radius:10px;background:#f8fafc;border:1px solid #e2e8f0;"><strong style="color:#0369a1;">प्रमाणित सीप र पसल श्रेणी</strong><p style="margin:6px 0 0;font-size:12px;color:#475569;">इलेक्ट्रिसियन, प्लम्बर, AC/फ्रिज, CCTV/नेटवर्किङ, घर निर्माण, कृषि प्राविधिक, हार्डवेयर पसल</p></div></div>';
+    var sb = getSb();
+    if (!sb) {
+      listBox.innerHTML = headerHtml + '<div style="padding:20px;text-align:center;color:#94a3b8;">Supabase जडान जाँच हुँदैछ — कृपया १ सेकेन्डपछि ↻ Sync थिच्नुहोस्।</div>';
+      return;
+    }
+
+    listBox.innerHTML = headerHtml + '<div style="padding:20px;text-align:center;color:#94a3b8;">डेटा लोड हुँदैछ...</div>';
+
+    if (activeTab === 'AUDIT') {
+      var aRes = await sb.from('nsewa_payment_audit_log').select('*').eq('object_type', 'WORKER_SELLER').order('created_at', { ascending: false }).limit(50);
+      if (aRes.error) {
+        listBox.innerHTML = headerHtml + '<div style="padding:14px;color:#f87171;">Error: ' + aRes.error.message + '</div>';
+        return;
+      }
+      var aRows = aRes.data || [];
+      listBox.innerHTML = headerHtml + (aRows.length ? aRows.map(function(r) {
+        return '<div style="padding:11px 14px;border-bottom:1px solid rgba(148,163,184,0.2);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;">' +
+          '<div><strong style="color:#38bdf8;">' + r.action + '</strong> — <span style="color:#e2e8f0;">' + (r.note || '') + '</span></div>' +
+          '<span style="font-size:11px;color:#94a3b8;">' + new Date(r.created_at).toLocaleString() + '</span></div>';
+      }).join('') : '<div style="padding:22px;text-align:center;color:#94a3b8;">हालसम्म कुनै निर्णय इतिहास (Audit Log) रेकर्ड भएको छैन।</div>');
       return;
     }
 
     var res = await sb.from('nsewa_ws_registry').select('*').order('created_at', { ascending: false });
-    if (res.error) { listBox.innerHTML = '<div style="padding:14px;color:#dc2626;">Error: ' + res.error.message + '</div>'; return; }
+    if (res.error) {
+      listBox.innerHTML = headerHtml + '<div style="padding:14px;color:#f87171;">Database Error: ' + res.error.message + '</div>';
+      return;
+    }
     wsData = res.data || [];
-    document.getElementById('kpi-ws-pending').textContent = wsData.filter(function(x) { return x.verification_status === 'PENDING'; }).length;
-    document.getElementById('kpi-ws-workers').textContent = wsData.filter(function(x) { return x.account_type === 'WORKER' && x.verification_status === 'APPROVED'; }).length;
-    document.getElementById('kpi-ws-sellers').textContent = wsData.filter(function(x) { return x.account_type === 'SELLER' && x.verification_status === 'APPROVED'; }).length;
-    document.getElementById('kpi-ws-restricted').textContent = wsData.filter(function(x) { return ['REJECTED','SUSPENDED','BANNED'].indexOf(x.verification_status) !== -1; }).length;
     renderWsRows();
   }
 
   function renderWsRows() {
     var listBox = document.getElementById('nsewa-ws-list-box');
+    if (!listBox) return;
+    var headerHtml = '<div style="padding:10px 14px;background:rgba(56,189,248,0.14);border-bottom:1px solid rgba(56,189,248,0.3);font-weight:700;color:#38bdf8;font-size:13px;">📂 ' + (FOLDER_TITLES[activeTab] || activeTab) + '</div>';
     var q = (document.getElementById('nsewa-ws-filter-input')?.value || '').toLowerCase().trim();
     var dist = (document.getElementById('nsewa-ws-dist-select')?.value || '').toLowerCase();
-    if (!listBox) return;
 
     var rows = wsData.filter(function(r) {
       if (activeTab === 'PENDING') return r.verification_status === 'PENDING';
@@ -6621,27 +6642,24 @@ window.nsewaCeoExportAuditTrail=function(){if(!rows.length){alert('Export गर
     currentFiltered = rows;
 
     if (!rows.length) {
-      listBox.innerHTML = '<div style="padding:26px;text-align:center;color:#64748b;">यो फोल्डर (' + activeTab + ') मा हाल कुनै रेकर्ड छैन।</div>';
+      listBox.innerHTML = headerHtml + '<div style="padding:24px;text-align:center;color:#94a3b8;">यो फोल्डरमा हाल कुनै दर्ता रेकर्ड छैन। नयाँ Worker वा Seller ले फारम भरेपछि यहाँ तुरुन्तै देखिनेछ।</div>';
       return;
     }
 
-    listBox.innerHTML = rows.map(function(r) {
-      var badgeBg = r.verification_status === 'APPROVED' ? '#dcfce7;color:#166534' : (r.verification_status === 'PENDING' ? '#fef3c7;color:#92400e' : '#fee2e2;color:#991b1b');
-      var docBtn = r.doc_front_path ? ' • <a href="javascript:void(0)" onclick="window.nsewaViewDoc(\'' + r.doc_front_path + '\')" style="color:#0284c7;font-weight:700;">📄 कागजात हेर्नुहोस्</a>' : '';
-      return '<div style="padding:14px 16px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">' +
-        '<div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">' +
-        '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;background:#e0f2fe;color:#0369a1;">' + r.account_type + '</span>' +
-        '<strong style="font-size:15px;color:#0f172a;">' + r.full_name + '</strong>' +
-        '<span style="font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;background:' + badgeBg + ';">' + r.verification_status + '</span></div>' +
-        '<div style="font-size:12px;color:#475569;margin-top:4px;">जिल्ला: <strong>' + (r.district || '—') + '</strong> • सीप/पसल: <strong>' + (r.skill_or_shop || '—') + '</strong> • फोन: ' + (r.phone || '—') + docBtn + '</div>' +
-        (r.status_reason ? '<div style="font-size:11px;color:#b45309;margin-top:3px;">कैफियत: ' + r.status_reason + '</div>' : '') + '</div>' +
+    listBox.innerHTML = headerHtml + rows.map(function(r) {
+      var docBtn = r.doc_front_path ? ' • <a href="javascript:void(0)" onclick="window.nsewaViewDoc(\'' + r.doc_front_path + '\')" style="color:#38bdf8;font-weight:700;">📄 कागजात हेर्नुहोस्</a>' : '';
+      return '<div style="padding:12px 14px;border-bottom:1px solid rgba(148,163,184,0.2);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">' +
+        '<div><strong style="color:#fff;font-size:14px;">[' + r.account_type + '] ' + r.full_name + '</strong> <span style="font-size:11px;padding:2px 8px;border-radius:999px;background:rgba(56,189,248,0.2);color:#7dd3fc;">' + r.verification_status + '</span>' +
+        '<div style="font-size:12px;color:#cbd5e1;margin-top:4px;">जिल्ला: <strong>' + (r.district || '—') + '</strong> • सीप/पसल: <strong>' + (r.skill_or_shop || '—') + '</strong> • फोन: ' + (r.phone || '—') + docBtn + '</div>' +
+        (r.status_reason ? '<div style="font-size:11px;color:#fbbf24;margin-top:2px;">कैफियत: ' + r.status_reason + '</div>' : '') + '</div>' +
         '<div style="display:flex;gap:5px;flex-wrap:wrap;">' +
-        '<button type="button" onclick="window.nsewaWsAction(\'' + r.user_id + '\',\'APPROVED\')" style="padding:5px 10px;border:none;border-radius:6px;background:#16a34a;color:#fff;font-size:12px;font-weight:600;cursor:pointer;">✓ Approve</button>' +
-        '<button type="button" onclick="window.nsewaWsAction(\'' + r.user_id + '\',\'REJECTED\')" style="padding:5px 10px;border:none;border-radius:6px;background:#64748b;color:#fff;font-size:12px;font-weight:600;cursor:pointer;">✕ Reject</button>' +
-        '<button type="button" onclick="window.nsewaWsAction(\'' + r.user_id + '\',\'SUSPENDED\')" style="padding:5px 10px;border:none;border-radius:6px;background:#d97706;color:#fff;font-size:12px;font-weight:600;cursor:pointer;">⏸ Suspend</button>' +
-        '<button type="button" onclick="window.nsewaWsAction(\'' + r.user_id + '\',\'BANNED\')" style="padding:5px 10px;border:none;border-radius:6px;background:#dc2626;color:#fff;font-size:12px;font-weight:600;cursor:pointer;">⛔ Ban</button></div></div>';
+        '<button type="button" onclick="window.nsewaWsAction(\'' + r.user_id + '\',\'APPROVED\')" style="padding:5px 10px;border:none;border-radius:6px;background:#16a34a;color:#fff;font-size:11px;font-weight:600;cursor:pointer;">✓ Approve</button>' +
+        '<button type="button" onclick="window.nsewaWsAction(\'' + r.user_id + '\',\'REJECTED\')" style="padding:5px 10px;border:none;border-radius:6px;background:#64748b;color:#fff;font-size:11px;font-weight:600;cursor:pointer;">✕ Reject</button>' +
+        '<button type="button" onclick="window.nsewaWsAction(\'' + r.user_id + '\',\'SUSPENDED\')" style="padding:5px 10px;border:none;border-radius:6px;background:#d97706;color:#fff;font-size:11px;font-weight:600;cursor:pointer;">⏸ Suspend</button>' +
+        '<button type="button" onclick="window.nsewaWsAction(\'' + r.user_id + '\',\'BANNED\')" style="padding:5px 10px;border:none;border-radius:6px;background:#dc2626;color:#fff;font-size:11px;font-weight:600;cursor:pointer;">⛔ Ban</button></div></div>';
     }).join('');
   }
+
   function initEnterpriseWsCenter() {
     if (document.getElementById('nsewa-enterprise-ws')) return;
 

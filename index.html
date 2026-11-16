@@ -6642,62 +6642,78 @@ window.nsewaCeoExportAuditTrail=function(){if(!rows.length){alert('Export गर
         '<button type="button" onclick="window.nsewaWsAction(\'' + r.user_id + '\',\'BANNED\')" style="padding:5px 10px;border:none;border-radius:6px;background:#dc2626;color:#fff;font-size:12px;font-weight:600;cursor:pointer;">⛔ Ban</button></div></div>';
     }).join('');
   }
-
   function initEnterpriseWsCenter() {
-    var headings = Array.from(document.querySelectorAll('h1, h2, h3, h4, div, span'));
-    var target = headings.find(function(el) { return el.childNodes.length === 1 && el.textContent.trim().indexOf('WORKER & SELLER CONTROL') !== -1; });
-    if (!target || document.getElementById('nsewa-enterprise-ws')) return;
+    if (document.getElementById('nsewa-enterprise-ws')) return;
+
+    // माथिल्लो सानो कार्ड छोडेर सिधै भित्री "दर्ता समीक्षा, स्वीकृति, अस्वीकृति" विवरण भएको ठूलो प्यानल मात्र खोज्ने
+    var allP = Array.from(document.querySelectorAll('p, div'));
+    var innerDesc = allP.find(function(el) {
+      return el.childNodes.length === 1 && el.textContent.trim().indexOf('दर्ता समीक्षा, स्वीकृति, अस्वीकृति, अस्थायी रोक र स्थायी प्रतिबन्ध') !== -1;
+    });
+    if (!innerDesc) return;
 
     var root = document.createElement('div');
     root.id = 'nsewa-enterprise-ws';
-    root.style.cssText = 'margin:18px 0;padding:20px;border-radius:16px;background:#ffffff;border:1px solid #cbd5e1;box-shadow:0 6px 20px rgba(15,23,42,0.06);';
-    var distOpts = '<option value="">सबै जिल्ला (७७)</option>' + DISTRICTS_77.map(function(d) { return '<option value="' + d + '">' + d + '</option>'; }).join('');
+    root.style.cssText = 'width:100%;box-sizing:border-box;margin:12px 0;padding:12px;border-radius:10px;background:rgba(15,23,42,0.8);border:1px solid rgba(56,189,248,0.35);color:#f8fafc;';
+
+    var distOpts = '<option value="">सबै जिल्ला (७७)</option>' + DISTRICTS_77.map(function(d) {
+      return '<option value="' + d + '">' + d + '</option>';
+    }).join('');
+
     var tabsHtml = FOLDERS.map(function(f, idx) {
-      return '<button type="button" data-ws-folder-tab="' + f.id + '" style="text-align:left;padding:11px;border-radius:10px;border:2px solid ' + (idx===0?'#0284c7':'#e2e8f0') + ';background:' + (idx===0?'#f0f9ff':'#ffffff') + ';cursor:pointer;">' +
-        '<div style="font-size:11px;font-weight:800;color:#0284c7;">FOLDER ' + f.no + '</div>' +
-        '<div style="font-size:14px;font-weight:700;color:#0f172a;margin:2px 0;">' + f.title + '</div>' +
-        '<div style="font-size:11px;color:#475569;">' + f.desc + '</div></button>';
+      var activeStyle = idx === 0
+        ? 'border:1.5px solid #38bdf8;background:rgba(14,165,233,0.18);'
+        : 'border:1px solid rgba(148,163,184,0.28);background:rgba(30,41,59,0.7);';
+      return '<button type="button" data-ws-folder-tab="' + f.id + '" style="text-align:left;padding:9px 11px;border-radius:8px;color:#f8fafc;cursor:pointer;line-height:1.25;' + activeStyle + '">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+        '<span style="font-size:11px;font-weight:700;color:#38bdf8;">' + f.no + ' · ' + f.title + '</span>' +
+        '<span style="font-size:10px;color:#94a3b8;">खोल्नुहोस् ›</span></div>' +
+        '<div style="font-size:11px;color:#cbd5e1;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + f.desc + '</div></button>';
     }).join('');
 
     root.innerHTML =
-      '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px;">' +
-      '<div><span style="font-size:11px;font-weight:800;color:#0284c7;">MERO-SEWA V7.3 MASTER · LIVE OPERATIONS</span>' +
-      '<h3 style="margin:2px 0 0;font-size:18px;color:#0f172a;">Worker & Seller 6-Folder Control Center</h3></div>' +
-      '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
-      '<select id="nsewa-ws-dist-select" style="padding:7px 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:12px;background:#fff;">' + distOpts + '</select>' +
-      '<input id="nsewa-ws-filter-input" type="text" placeholder="नाम, सीप वा फोन खोज्नुहोस्..." style="padding:7px 11px;border:1px solid #cbd5e1;border-radius:8px;font-size:12px;min-width:170px;" />' +
-      '<button type="button" onclick="window.nsewaExportWsCsv()" style="padding:7px 12px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#0f172a;font-size:12px;font-weight:600;cursor:pointer;">⬇ CSV</button>' +
-      '<button type="button" id="nsewa-ws-btn-sync" style="padding:7px 13px;border-radius:8px;border:none;background:#0f172a;color:#fff;font-size:12px;font-weight:600;cursor:pointer;">↻ Sync</button></div></div>' +
-      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:10px;margin-bottom:14px;">' +
-      '<div style="padding:11px;border-radius:10px;background:#fffbeb;border:1px solid #fde68a;"><div style="font-size:11px;color:#92400e;font-weight:600;">जाँच बाँकी</div><div id="kpi-ws-pending" style="font-size:19px;font-weight:800;color:#b45309;">0</div></div>' +
-      '<div style="padding:11px;border-radius:10px;background:#f0fdf4;border:1px solid #bbf7d0;"><div style="font-size:11px;color:#166534;font-weight:600;">स्वीकृत Worker</div><div id="kpi-ws-workers" style="font-size:19px;font-weight:800;color:#15803d;">0</div></div>' +
-      '<div style="padding:11px;border-radius:10px;background:#eff6ff;border:1px solid #bfdbfe;"><div style="font-size:11px;color:#1e40af;font-weight:600;">स्वीकृत Seller</div><div id="kpi-ws-sellers" style="font-size:19px;font-weight:800;color:#1d4ed8;">0</div></div>' +
-      '<div style="padding:11px;border-radius:10px;background:#fef2f2;border:1px solid #fecaca;"><div style="font-size:11px;color:#991b1b;font-weight:600;">रोक / प्रतिबन्ध</div><div id="kpi-ws-restricted" style="font-size:19px;font-weight:800;color:#dc2626;">0</div></div></div>' +
-      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));gap:9px;margin-bottom:14px;">' + tabsHtml + '</div>' +
-      '<div id="nsewa-ws-list-box" style="border:1px solid #e2e8f0;border-radius:12px;background:#fff;min-height:90px;overflow:hidden;"></div>';
+      '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">' +
+      '<span style="font-size:12px;font-weight:700;color:#e2e8f0;">📂 WORKER & SELLER FOLDERS (०६ / ०६)</span>' +
+      '<div style="display:flex;gap:6px;flex-wrap:wrap;">' +
+      '<select id="nsewa-ws-dist-select" style="padding:5px 8px;border:1px solid #475569;border-radius:6px;font-size:11px;background:#0f172a;color:#f8fafc;">' + distOpts + '</select>' +
+      '<input id="nsewa-ws-filter-input" type="text" placeholder="नाम, सीप वा फोन..." style="padding:5px 9px;border:1px solid #475569;border-radius:6px;font-size:11px;width:150px;background:#0f172a;color:#f8fafc;" />' +
+      '<button type="button" onclick="window.nsewaExportWsCsv()" style="padding:5px 9px;border-radius:6px;border:1px solid #475569;background:#1e293b;color:#f8fafc;font-size:11px;cursor:pointer;">⬇ CSV</button>' +
+      '<button type="button" id="nsewa-ws-btn-sync" style="padding:5px 10px;border-radius:6px;border:none;background:#0284c7;color:#fff;font-size:11px;cursor:pointer;">↻ Sync</button></div></div>' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin-bottom:10px;">' + tabsHtml + '</div>' +
+      '<div id="nsewa-ws-list-box" style="border:1px solid rgba(148,163,184,0.22);border-radius:8px;background:rgba(15,23,42,0.55);color:#e2e8f0;font-size:12px;overflow:hidden;"></div>';
 
-    target.parentNode.insertBefore(root, target.nextSibling);
+    innerDesc.parentNode.insertBefore(root, innerDesc.nextSibling);
+
     root.querySelectorAll('button[data-ws-folder-tab]').forEach(function(btn) {
       btn.addEventListener('click', function() {
-        root.querySelectorAll('button[data-ws-folder-tab]').forEach(function(b) { b.style.borderColor = '#e2e8f0'; b.style.background = '#ffffff'; });
-        btn.style.borderColor = '#0284c7';
-        btn.style.background = '#f0f9ff';
+        root.querySelectorAll('button[data-ws-folder-tab]').forEach(function(b) {
+          b.style.border = '1px solid rgba(148,163,184,0.28)';
+          b.style.background = 'rgba(30,41,59,0.7)';
+        });
+        btn.style.border = '1.5px solid #38bdf8';
+        btn.style.background = 'rgba(14,165,233,0.18)';
         activeTab = btn.dataset.wsFolderTab;
         refreshWsCenter();
       });
     });
+
     document.getElementById('nsewa-ws-filter-input').addEventListener('input', renderWsRows);
     document.getElementById('nsewa-ws-dist-select').addEventListener('change', renderWsRows);
     document.getElementById('nsewa-ws-btn-sync').addEventListener('click', refreshWsCenter);
     refreshWsCenter();
   }
 
+  function bootAll() {
+    initPaymentMasterBridge();
+    bindRegistrationToSupabase();
+    initEnterpriseWsCenter();
+  }
+
   window.addEventListener('load', function() {
-    setTimeout(function() {
-      initPaymentMasterBridge();
-      bindRegistrationToSupabase();
-      initEnterpriseWsCenter();
-    }, 500);
+    setTimeout(bootAll, 300);
+    setInterval(function() {
+      if (!document.getElementById('nsewa-enterprise-ws')) initEnterpriseWsCenter();
+    }, 1000);
   });
 })();
 </script>

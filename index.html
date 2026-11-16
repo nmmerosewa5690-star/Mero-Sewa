@@ -7991,5 +7991,510 @@ window.nsewaCeoExportAuditTrail=function(){if(!rows.length){alert('Export गर
   setInterval(syncV24OfferBanner, 10000);
 })();
 </script>
+<!-- ========================================================================= -->
+<!-- MERO-SEWA V27.1 FINAL | SUPER-BAZAR & CEO EXECUTIVE SUITE (PART 1/3)      -->
+<!-- ========================================================================= -->
+<style>
+  @keyframes nsewaV27Pop { from { opacity:0; transform:translateY(-8px) scale(0.97); } to { opacity:1; transform:translateY(0) scale(1); } }
+  @keyframes nsewaV27Glow { 0%,100% { box-shadow:0 0 12px rgba(16,185,129,0.25); } 50% { box-shadow:0 0 22px rgba(56,189,248,0.45); } }
+  .nsewa-v27-cat-rail { display:flex; gap:10px; overflow-x:auto; padding:10px 4px 14px; border-bottom:1px solid rgba(148,163,184,0.18); margin-bottom:12px; scrollbar-width:thin; }
+  .nsewa-v27-cat-card {
+    min-width:86px; flex-shrink:0; display:flex; flex-direction:column; align-items:center; gap:6px;
+    padding:9px 6px; border-radius:14px; cursor:pointer; text-align:center;
+    background:linear-gradient(180deg,rgba(30,41,59,0.88) 0%,rgba(15,23,42,0.95) 100%);
+    border:1px solid rgba(148,163,184,0.22); transition:all 0.2s ease;
+  }
+  .nsewa-v27-cat-card:hover, .nsewa-v27-cat-card.active {
+    transform:translateY(-3px); border-color:#10b981;
+    background:linear-gradient(180deg,rgba(16,185,129,0.25) 0%,rgba(15,23,42,0.98) 100%);
+    box-shadow:0 8px 20px rgba(16,185,129,0.28);
+  }
+  .nsewa-v27-svg-orb { width:44px; height:44px; border-radius:14px; display:flex; align-items:center; justify-content:center; color:#fff; box-shadow:0 4px 12px rgba(0,0,0,0.3); }
+  .nsewa-v27-flash {
+    display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;
+    padding:12px 16px; border-radius:13px; margin-bottom:12px;
+    background:linear-gradient(95deg,#064e3b 0%,#0f766e 48%,#1e3a8a 100%);
+    border:1px solid rgba(52,211,153,0.5); color:#fff; animation:nsewaV27Glow 3s infinite;
+  }
+  .nsewa-v27-menu-wrap { position:relative; display:inline-flex; align-items:center; }
+  .nsewa-v27-menu-btn {
+    display:inline-flex; align-items:center; gap:7px; padding:8px 14px; border-radius:10px;
+    border:1px solid rgba(52,211,153,0.55); background:linear-gradient(135deg,#065f46 0%,#0f766e 100%);
+    color:#ecfdf5; font-size:12px; font-weight:800; cursor:pointer; box-shadow:0 4px 14px rgba(16,185,129,0.28);
+  }
+  .nsewa-v27-menu-dd {
+    position:absolute; right:0; top:44px; width:285px; z-index:999999;
+    background:linear-gradient(180deg,#0f172a 0%,#070b14 100%);
+    border:1px solid rgba(56,189,248,0.45); border-radius:16px; padding:10px;
+    box-shadow:0 24px 60px rgba(0,0,0,0.85); display:none; animation:nsewaV27Pop 0.18s ease-out;
+  }
+  .nsewa-v27-menu-dd.open { display:block; }
+  .nsewa-v27-mgroup { font-size:10px; font-weight:800; color:#64748b; padding:6px 8px 3px; text-transform:uppercase; }
+  .nsewa-v27-mitem {
+    display:flex; align-items:center; justify-content:space-between; width:100%;
+    padding:8px 10px; border:none; border-radius:9px; background:transparent;
+    color:#f1f5f9; font-size:12px; font-weight:600; cursor:pointer; text-align:left; transition:0.15s;
+  }
+  .nsewa-v27-mitem:hover { background:rgba(16,185,129,0.18); color:#34d399; transform:translateX(2px); }
+  .nsewa-v27-mtag { font-size:9px; font-weight:800; padding:2px 6px; border-radius:999px; background:rgba(56,189,248,0.18); color:#38bdf8; }
+</style>
+
+<script>
+(function() {
+  var TOKEN_BACKUP = 'nsewa_ceo_token_backup_v27';
+  var CFG_KEY = 'nsewa_v27_super_config';
+  window.__nsewaManualLogout = false;
+
+  var V27_CATS = [
+    { key: 'ALL', label: 'सबै सामान', grad: '#10b981,#059669', svg: '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>' },
+    { key: 'Electronics', label: 'इलेक्ट्रोनिक्स', grad: '#0284c7,#38bdf8', svg: '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg>' },
+    { key: 'Hardware', label: 'हार्डवेयर', grad: '#d97706,#f59e0b', svg: '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>' },
+    { key: 'Grocery', label: 'किराना पसल', grad: '#16a34a,#4ade80', svg: '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>' },
+    { key: 'Agriculture', label: 'कृषि औजार', grad: '#65a30d,#a3e635', svg: '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22V12M12 12C12 7 7 4 3 4c0 5 3 8 9 8zm0 0c0-5 5-8 9-8 0 5-3 8-9 8z"/></svg>' },
+    { key: 'Mobile', label: 'मोबाइल/ग्याजेट', grad: '#7c3aed,#a855f7', svg: '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>' },
+    { key: 'Home', label: 'घरायसी सामान', grad: '#0d9488,#2dd4bf', svg: '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>' },
+    { key: 'Fashion', label: 'फेसन/कपडा', grad: '#db2777,#f472b6', svg: '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.38 3.46L16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></svg>' },
+    { key: 'Construction', label: 'निर्माण सामग्री', grad: '#ea580c,#fb923c', svg: '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M2 12h20M12 6v6M7 12v6M17 12v6"/></svg>' },
+    { key: 'Auto', label: 'अटो पार्ट्स', grad: '#dc2626,#f87171', svg: '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M12 3v6M12 15v6M3 12h6M15 12h6"/></svg>' },
+    { key: 'Health', label: 'स्वास्थ्य/मेडिकल', grad: '#0891b2,#22d3ee', svg: '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/><rect x="3" y="3" width="18" height="18" rx="4"/></svg>' },
+    { key: 'Stationery', label: 'स्टेशनरी', grad: '#4f46e5,#818cf8', svg: '<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>' }
+  ];
+
+  window.nsewaGetSuperCfg = function() {
+    var def = {
+      whatsapp: '9779800000000',
+      phone: '9800000000',
+      tasEnabled: true,
+      ludoEnabled: true,
+      holidayMode: false,
+      holidayMsg: 'चाडपर्व बिदा / मर्मतका कारण स्टोर छिट्टै पुनः खुल्नेछ!',
+      freeDeliveryMin: 2000,
+      giftPrize: 'विशेष स्मार्ट घडी / रु. १,००० सपिङ भाउचर (व्यक्तिगत ग्राहक मात्र)'
+    };
+    try { return Object.assign(def, JSON.parse(localStorage.getItem(CFG_KEY) || '{}')); } catch (e) { return def; }
+  };
+
+  window.nsewaGetSbV27 = function() {
+    var list = [window.supabaseClient, window._supabase, window.sb, window.supabase];
+    for (var i = 0; i < list.length; i++) {
+      if (list[i] && typeof list[i].from === 'function') return list[i];
+    }
+    for (var k in window) {
+      try { if (window[k] && typeof window[k] === 'object' && typeof window[k].from === 'function') return window[k]; } catch (e) {}
+    }
+    return null;
+  };
+
+  window.nsewaToastV27 = function(msg, err) {
+    var d = document.createElement('div');
+    d.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999999;padding:11px 16px;border-radius:11px;font-size:12px;font-weight:700;box-shadow:0 12px 30px rgba(0,0,0,0.6);' +
+      (err ? 'background:#7f1d1d;color:#fef2f2;border:1px solid #ef4444;' : 'background:#065f46;color:#ecfdf5;border:1px solid #10b981;');
+    d.textContent = (err ? '⚠ ' : '✓ ') + msg;
+    document.body.appendChild(d);
+    setTimeout(function() { d.remove(); }, 3000);
+  };
+
+  document.addEventListener('click', function(e) {
+    var el = e.target.closest('button, a, [role="button"]');
+    if (el && /logout|लगआउट|sign\s*out/i.test((el.textContent || '').trim())) {
+      window.__nsewaManualLogout = true;
+      localStorage.removeItem(TOKEN_BACKUP);
+    }
+  }, true);
+
+  window.nsewaV27Cats = V27_CATS;
+  window.nsewaV27TokenKey = TOKEN_BACKUP;
+  window.nsewaV27CfgKey = CFG_KEY;
+})();
+</script>
+ <!-- ========================================================================= -->
+<!-- MERO-SEWA V27.1 FINAL | MENU ACTIONS, RFQ, REORDER, GIFTS (PART 2/3)      -->
+<!-- ========================================================================= -->
+<script>
+(function() {
+  window.nsewaV27OrderAction = async function(act) {
+    var code = document.getElementById('v27-oa-code')?.value || '';
+    var phone = document.getElementById('v27-oa-phone')?.value || '';
+    var sb = window.nsewaGetSbV27();
+    if (!sb) return;
+    var res = await sb.rpc('nsewa_customer_order_action', { p_order_code: code, p_phone: phone, p_action: act });
+    if (res.error) window.nsewaToastV27(res.error.message, true);
+    else { window.nsewaToastV27(res.data); document.getElementById('nsewa-v27-modal')?.remove(); }
+  };
+
+  window.nsewaV27SubmitRfq = async function() {
+    var name = document.getElementById('v27-rfq-name')?.value.trim() || '';
+    var phone = document.getElementById('v27-rfq-phone')?.value.trim() || '';
+    var dist = document.getElementById('v27-rfq-dist')?.value.trim() || 'Kailali';
+    var items = document.getElementById('v27-rfq-items')?.value.trim() || '';
+    var qty = parseInt(document.getElementById('v27-rfq-qty')?.value || '10', 10);
+    if (name.length < 2 || phone.length < 7 || items.length < 3) { window.nsewaToastV27('कृपया नाम, फोन र सामान विवरण भर्नुहोस्', true); return; }
+    var sb = window.nsewaGetSbV27();
+    if (!sb) return;
+    var res = await sb.from('nsewa_bulk_rfq').insert({
+      buyer_name: name, buyer_phone: phone, district: dist, item_details: items, estimated_qty: qty, status: 'OPEN'
+    });
+    if (res.error) window.nsewaToastV27(res.error.message, true);
+    else { window.nsewaToastV27('तपाईंको थोक कोटेसन (RFQ) CEO समक्ष पठाइयो!'); document.getElementById('nsewa-v27-modal')?.remove(); }
+  };
+
+  window.nsewaV27FindReorder = async function() {
+    var phone = (document.getElementById('v27-re-phone')?.value || '').trim();
+    var box = document.getElementById('v27-re-list');
+    var sb = window.nsewaGetSbV27();
+    if (!sb || !box || phone.length < 7) { window.nsewaToastV27('सही मोबाइल नम्बर लेख्नुहोस्', true); return; }
+    var res = await sb.from('nsewa_store_orders').select('*').eq('customer_phone', phone).order('created_at', { ascending: false }).limit(5);
+    var orders = res.data || [];
+    if (!orders.length) { box.innerHTML = '<div style="padding:12px;color:#94a3b8;font-size:12px;">यो नम्बरबाट अघिल्लो अर्डर भेटिएन।</div>'; return; }
+    box.innerHTML = orders.map(function(o) {
+      return '<div style="padding:9px;border-bottom:1px solid #1e293b;display:flex;justify-content:space-between;align-items:center;font-size:12px;">' +
+        '<div><strong style="color:#38bdf8;">' + o.order_code + '</strong> · रू. ' + o.total_amount + '<div style="font-size:10px;color:#94a3b8;">' + o.delivery_district + ' · ' + o.order_status + '</div></div>' +
+        '<button type="button" onclick="window.nsewaV27RepeatOrder(\'' + o.id + '\')" style="padding:5px 10px;border:none;border-radius:7px;background:#10b981;color:#fff;font-size:11px;font-weight:700;cursor:pointer;">⚡ Reorder</button></div>';
+    }).join('');
+  };
+
+  window.nsewaV27RepeatOrder = async function(ordId) {
+    var sb = window.nsewaGetSbV27();
+    if (!sb) return;
+    var res = await sb.from('nsewa_store_orders').select('*').eq('id', ordId).single();
+    if (res.error || !res.data) return;
+    var o = res.data;
+    var r2 = await sb.rpc('nsewa_public_place_order', {
+      p_customer_name: o.customer_name, p_customer_phone: o.customer_phone,
+      p_district: o.delivery_district, p_address: o.delivery_address,
+      p_items: o.items || [], p_total_amount: o.total_amount, p_payment_method: o.payment_method || 'COD'
+    });
+    if (r2.error) window.nsewaToastV27(r2.error.message, true);
+    else { alert('🎉 पुनः अर्डर सफल भयो!\nनयाँ Order Code: ' + r2.data); document.getElementById('nsewa-v27-modal')?.remove(); }
+  };
+
+  window.nsewaOpenBazarFeature = async function(feat) {
+    document.getElementById('nsewa-v27-dd')?.classList.remove('open');
+    var cfg = window.nsewaGetSuperCfg();
+    var sb = window.nsewaGetSbV27();
+
+    if (feat === 'TRACK') { if (window.nsewaTrackPublicOrder) window.nsewaTrackPublicOrder(); return; }
+    if (feat === 'CART') { if (window.openPubCheckoutModal) window.openPubCheckoutModal(); return; }
+
+    document.getElementById('nsewa-v27-modal')?.remove();
+    var modal = document.createElement('div');
+    modal.id = 'nsewa-v27-modal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(2,6,23,0.88);z-index:999999;display:flex;align-items:center;justify-content:center;padding:16px;';
+
+    var html = '';
+    if (feat === 'COUPON') {
+      var cRes = sb ? await sb.from('nsewa_store_coupons').select('*').eq('is_active', true) : { data: [] };
+      var list = cRes.data || [];
+      html = '<h3 style="margin:0 0 10px;color:#fbbf24;">🎟️ सक्रिय कुपन कोडहरू</h3>' +
+        (list.length ? list.map(function(c) {
+          return '<div style="padding:10px;border-radius:9px;background:#1e293b;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">' +
+            '<div><strong style="color:#34d399;">' + c.code + '</strong> (' + c.discount_value + '% छुट)<div style="font-size:11px;color:#94a3b8;">' + c.title + '</div></div>' +
+            '<button type="button" onclick="navigator.clipboard && navigator.clipboard.writeText(\'' + c.code + '\');this.textContent=\'कपी भयो\'" style="padding:5px 10px;border:none;border-radius:7px;background:#10b981;color:#fff;font-size:11px;cursor:pointer;">Copy</button></div>';
+        }).join('') : '<p style="font-size:12px;color:#94a3b8;">हाल सक्रिय कुपन कोड छैन।</p>');
+    } else if (feat === 'ORDER_ACTION') {
+      html = '<h3 style="margin:0 0 8px;color:#38bdf8;">✅ Confirm / ❌ Cancel Order</h3>' +
+        '<p style="font-size:11px;color:#94a3b8;margin-bottom:10px;">आफ्नो Order Code र फोन नम्बर हालेर अर्डर पुष्टि वा रद्द गर्नुहोस्:</p>' +
+        '<input id="v27-oa-code" type="text" placeholder="Order Code (ORD-XXXXXX)" style="width:100%;box-sizing:border-box;padding:8px;border-radius:8px;border:1px solid #475569;background:#1e293b;color:#fff;margin-bottom:8px;" />' +
+        '<input id="v27-oa-phone" type="tel" placeholder="मोबाइल नम्बर (98XXXXXXXX)" style="width:100%;box-sizing:border-box;padding:8px;border-radius:8px;border:1px solid #475569;background:#1e293b;color:#fff;margin-bottom:10px;" />' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
+        '<button type="button" onclick="window.nsewaV27OrderAction(\'CONFIRMED\')" style="padding:9px;border:none;border-radius:8px;background:#10b981;color:#fff;font-weight:700;cursor:pointer;">✓ Confirm</button>' +
+        '<button type="button" onclick="window.nsewaV27OrderAction(\'CANCELLED\')" style="padding:9px;border:none;border-radius:8px;background:#dc2626;color:#fff;font-weight:700;cursor:pointer;">✕ Cancel</button></div>';
+    } else if (feat === 'RFQ') {
+      html = '<h3 style="margin:0 0 6px;color:#f59e0b;">📋 थोक कोटेसन माग्नुहोस् (Alibaba Bulk RFQ)</h3>' +
+        '<p style="font-size:11px;color:#94a3b8;margin-bottom:8px;">पसल, घर निर्माण वा कृषिका लागि ठूलो परिमाणमा विशेष होलसेल दर माग्नुहोस्:</p>' +
+        '<input id="v27-rfq-name" type="text" placeholder="तपाईंको नाम / संस्थाको नाम *" style="width:100%;box-sizing:border-box;padding:8px;border-radius:8px;border:1px solid #475569;background:#1e293b;color:#fff;margin-bottom:7px;" />' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:7px;">' +
+        '<input id="v27-rfq-phone" type="tel" placeholder="फोन नम्बर *" style="padding:8px;border-radius:8px;border:1px solid #475569;background:#1e293b;color:#fff;" />' +
+        '<input id="v27-rfq-dist" type="text" placeholder="जिल्ला (जस्तै: कैलाली)" value="Kailali" style="padding:8px;border-radius:8px;border:1px solid #475569;background:#1e293b;color:#fff;" /></div>' +
+        '<input id="v27-rfq-qty" type="number" placeholder="अनुमानित परिमाण (जस्तै: 50)" style="width:100%;box-sizing:border-box;padding:8px;border-radius:8px;border:1px solid #475569;background:#1e293b;color:#fff;margin-bottom:7px;" />' +
+        '<textarea id="v27-rfq-items" rows="2" placeholder="चाहिएको सामानको सूची लेख्नुहोस् *" style="width:100%;box-sizing:border-box;padding:8px;border-radius:8px;border:1px solid #475569;background:#1e293b;color:#fff;margin-bottom:8px;"></textarea>' +
+        '<button type="button" onclick="window.nsewaV27SubmitRfq()" style="width:100%;padding:10px;border:none;border-radius:8px;background:#d97706;color:#fff;font-weight:800;cursor:pointer;">📨 कोटेसन अनुरोध पठाउनुहोस्</button>';
+    } else if (feat === 'REORDER') {
+      html = '<h3 style="margin:0 0 8px;color:#34d399;">⚡ १-क्लिक पुनः अर्डर (Amazon Buy Again)</h3>' +
+        '<div style="display:flex;gap:6px;margin-bottom:10px;">' +
+        '<input id="v27-re-phone" type="tel" placeholder="अर्डर गर्दाको फोन नम्बर..." style="flex:1;padding:8px;border-radius:8px;border:1px solid #475569;background:#1e293b;color:#fff;font-size:12px;" />' +
+        '<button type="button" onclick="window.nsewaV27FindReorder()" style="padding:8px 12px;border:none;border-radius:8px;background:#0284c7;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">खोज्नुहोस्</button></div>' +
+        '<div id="v27-re-list" style="max-height:200px;overflow-y:auto;"></div>';
+    } else if (feat === 'GIFTS') {
+      var gRes = sb ? await sb.from('nsewa_buyer_rewards').select('*').eq('account_scope', 'PERSONAL').order('total_spent', { ascending: false }).limit(5) : { data: [] };
+      var winners = gRes.data || [];
+      html = '<h3 style="margin:0 0 6px;color:#f472b6;">🎁 Top Buyer उपहार (व्यक्तिगत ग्राहक मात्र)</h3>' +
+        '<div style="padding:8px 10px;border-radius:8px;background:rgba(244,114,182,0.15);border:1px solid rgba(244,114,182,0.35);font-size:11px;margin-bottom:10px;">पुरस्कार: <strong>' + cfg.giftPrize + '</strong><br><span style="color:#cbd5e1;">(पसल/विक्रेता होइन, केवल व्यक्तिगत ग्राहक मात्र सहभागी)</span></div>' +
+        (winners.length ? winners.map(function(w, idx) {
+          var masked = (w.phone || '').slice(0, 3) + '****' + (w.phone || '').slice(-3);
+          return '<div style="padding:8px;border-bottom:1px solid #1e293b;display:flex;justify-content:space-between;font-size:12px;">' +
+            '<span>#' + (idx + 1) + ' <strong>' + w.customer_name + '</strong> (' + masked + ')</span><strong style="color:#34d399;">रू. ' + w.total_spent + '</strong></div>';
+        }).join('') : '<p style="font-size:12px;color:#94a3b8;">पहिलो अर्डर गर्ने व्यक्तिगत ग्राहक शीर्ष स्थानमा देखिनुहुनेछ!</p>');
+    } else if (feat === 'GAMES') {
+      html = '<h3 style="margin:0 0 6px;color:#c084fc;">🃏 Online तास (Kitty) & 🎲 Ludo Club</h3>' +
+        '<p style="font-size:11px;color:#94a3b8;margin-bottom:10px;">१८+ मैत्रीपूर्ण मनोरञ्जन जोन (CEO निगरानीमा सुरक्षित):</p>' +
+        '<div style="display:grid;gap:8px;">' +
+        (cfg.tasEnabled ? '<div style="padding:10px;border-radius:9px;background:#1e293b;display:flex;justify-content:space-between;align-items:center;"><div><strong>🃏 Online तास / Kitty Room</strong><div style="font-size:11px;color:#94a3b8;">साथीभाइ बीच मैत्रीपूर्ण कोठा</div></div><button type="button" onclick="alert(\'🃏 Kitty Room Code: KTY-\' + Math.floor(1000+Math.random()*9000))" style="padding:6px 11px;border:none;border-radius:7px;background:#9333ea;color:#fff;font-size:11px;font-weight:700;cursor:pointer;">कोठा खोल्नुहोस्</button></div>' : '') +
+        (cfg.ludoEnabled ? '<div style="padding:10px;border-radius:9px;background:#1e293b;display:flex;justify-content:space-between;align-items:center;"><div><strong>🎲 Online Ludo Club</strong><div style="font-size:11px;color:#94a3b8;">४ खेलाडी मल्टिप्लेयर लुडो</div></div><button type="button" onclick="alert(\'🎲 Ludo Room Code: LDO-\' + Math.floor(1000+Math.random()*9000))" style="padding:6px 11px;border:none;border-radius:7px;background:#0284c7;color:#fff;font-size:11px;font-weight:700;cursor:pointer;">Ludo खेल्नुहोस्</button></div>' : '') +
+        '</div>';
+    } else if (feat === 'SUPPORT') {
+      html = '<h3 style="margin:0 0 8px;color:#34d399;">📞 सल्लाह, सुझाव र २४/७ सहयोग</h3>' +
+        '<div style="display:grid;gap:8px;">' +
+        '<a href="https://wa.me' + cfg.whatsapp + '?text=' + encodeURIComponent('नमस्ते Mero-Sewa, मलाई बजार सम्बन्धी सहयोग चाहिएको छ।') + '" target="_blank" style="text-align:center;padding:10px;border-radius:9px;background:#16a34a;color:#fff;font-weight:700;text-decoration:none;font-size:13px;">💬 WhatsApp मा प्रत्यक्ष कुरा गर्नुहोस्</a>' +
+        '<a href="tel:' + cfg.phone + '" style="text-align:center;padding:10px;border-radius:9px;background:#0284c7;color:#fff;font-weight:700;text-decoration:none;font-size:13px;">📞 सिधै फोन कल गर्नुहोस् (' + cfg.phone + ')</a></div>';
+    }
+
+    modal.innerHTML = '<div style="width:100%;max-width:420px;background:#0f172a;border:1px solid #38bdf8;border-radius:16px;padding:18px;color:#f8fafc;position:relative;">' +
+      '<button type="button" onclick="document.getElementById(\'nsewa-v27-modal\').remove()" style="position:absolute;top:12px;right:14px;background:none;border:none;color:#94a3b8;font-size:18px;cursor:pointer;">✕</button>' + html + '</div>';
+    document.body.appendChild(modal);
+  };
+})();
+</script>
+<!-- ========================================================================= -->
+<!-- MERO-SEWA V27.1 FINAL | CLEAN BAZAR & CEO EXECUTIVE SUITE (PART 3/3)      -->
+<!-- ========================================================================= -->
+<script>
+(function() {
+  window.nsewaApplyPriceRange = function() {
+    var minV = Number(document.getElementById('nsewa-min-price')?.value || 0);
+    var maxV = Number(document.getElementById('nsewa-max-price')?.value || 0);
+    document.querySelectorAll('#nsewa-pub-shop-grid .nsewa-prod-card').forEach(function(card) {
+      var m = (card.textContent || '').match(/रू\.\s*([0-9,]+)/);
+      var price = (m && m) ? Number(m.replace(/,/g, '')) : 0;
+      card.style.display = ((!minV || price >= minV) && (!maxV || price <= maxV)) ? 'flex' : 'none';
+    });
+  };
+
+  async function syncV27Offer() {
+    var banner = document.getElementById('nsewa-v27-offer-slot');
+    var sb = window.nsewaGetSbV27();
+    if (!banner || !sb) return;
+    try {
+      var res = await sb.from('nsewa_store_coupons').select('*').eq('is_active', true).order('created_at', { ascending: false }).limit(1);
+      var rows = Array.isArray(res.data) ? res.data : (res.data ? [res.data] : []);
+      var c = rows.length ? rows : null;
+      if (c && c.code && c.discount_value) {
+        banner.style.display = 'flex';
+        banner.innerHTML =
+          '<div><span style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:999px;background:#fbbf24;color:#0f172a;margin-right:6px;">⚡ LIVE MEGA OFFER</span>' +
+          '<strong style="font-size:13px;">' + (c.title || 'विशेष छुट') + ' — ' + c.discount_value + '% OFF!</strong>' +
+          '<div style="font-size:11px;color:#d1fae5;margin-top:2px;">Checkout मा कुपन कोड <strong>' + c.code + '</strong> प्रयोग गर्नुहोस् · रू. २,०००+ मा निःशुल्क डेलिभरी</div></div>' +
+          '<button type="button" onclick="navigator.clipboard && navigator.clipboard.writeText(\'' + c.code + '\');this.textContent=\'✓ कपी: ' + c.code + '\'" style="padding:7px 13px;border:none;border-radius:8px;background:#fbbf24;color:#0f172a;font-size:11px;font-weight:800;cursor:pointer;">कोड कपी: ' + c.code + '</button>';
+      } else { banner.style.display = 'none'; }
+    } catch (e) { banner.style.display = 'none'; }
+  }
+
+  window.nsewaOpenCeoSuperControl = async function() {
+    var cfg = window.nsewaGetSuperCfg();
+    var sb = window.nsewaGetSbV27();
+    document.getElementById('nsewa-v27-ceo-modal')?.remove();
+
+    var rfqRes = sb ? await sb.from('nsewa_bulk_rfq').select('*').order('created_at', { ascending: false }).limit(5) : { data: [] };
+    var vipRes = sb ? await sb.from('nsewa_buyer_rewards').select('*').eq('account_scope', 'PERSONAL').order('total_spent', { ascending: false }).limit(5) : { data: [] };
+    var rfqs = rfqRes.data || [];
+    var vips = vipRes.data || [];
+
+    var m = document.createElement('div');
+    m.id = 'nsewa-v27-ceo-modal';
+    m.style.cssText = 'position:fixed;inset:0;background:rgba(2,6,23,0.9);z-index:999999;display:flex;align-items:center;justify-content:center;padding:14px;';
+    m.innerHTML =
+      '<div style="width:100%;max-width:560px;max-height:90vh;overflow-y:auto;background:#0f172a;border:1px solid #38bdf8;border-radius:16px;padding:18px;color:#f8fafc;">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">' +
+      '<strong style="font-size:15px;color:#38bdf8;">👑 CEO EXECUTIVE BAZAR & REWARD CONTROL</strong>' +
+      '<button type="button" onclick="document.getElementById(\'nsewa-v27-ceo-modal\').remove()" style="background:none;border:none;color:#94a3b8;font-size:18px;cursor:pointer;">✕</button></div>' +
+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;margin-bottom:10px;">' +
+      '<div><label style="font-size:10px;color:#94a3b8;">WhatsApp नम्बर (977 सहित)</label><input id="ceo-cfg-wa" value="' + cfg.whatsapp + '" style="width:100%;box-sizing:border-box;padding:7px;border-radius:7px;border:1px solid #475569;background:#1e293b;color:#fff;" /></div>' +
+      '<div><label style="font-size:10px;color:#94a3b8;">सहायता फोन नम्बर</label><input id="ceo-cfg-ph" value="' + cfg.phone + '" style="width:100%;box-sizing:border-box;padding:7px;border-radius:7px;border:1px solid #475569;background:#1e293b;color:#fff;" /></div></div>' +
+      '<div style="margin-bottom:10px;"><label style="font-size:10px;color:#94a3b8;">Top Buyer उपहार विवरण (व्यक्तिगत ग्राहक मात्र)</label><input id="ceo-cfg-gift" value="' + cfg.giftPrize + '" style="width:100%;box-sizing:border-box;padding:7px;border-radius:7px;border:1px solid #475569;background:#1e293b;color:#fff;" /></div>' +
+      '<div style="display:flex;gap:12px;flex-wrap:wrap;font-size:12px;margin-bottom:12px;">' +
+      '<label><input type="checkbox" id="ceo-cfg-tas" ' + (cfg.tasEnabled ? 'checked' : '') + ' /> 🃏 तास/Kitty खुला</label>' +
+      '<label><input type="checkbox" id="ceo-cfg-ludo" ' + (cfg.ludoEnabled ? 'checked' : '') + ' /> 🎲 Ludo खुला</label>' +
+      '<label style="color:#fbbf24;"><input type="checkbox" id="ceo-cfg-hol" ' + (cfg.holidayMode ? 'checked' : '') + ' /> ⏸ स्टोर बिदा/मर्मत मोड</label></div>' +
+      '<button type="button" id="ceo-cfg-save" style="width:100%;padding:9px;border:none;border-radius:8px;background:#10b981;color:#fff;font-weight:800;cursor:pointer;margin-bottom:14px;">💾 सेटिङ सुरक्षित गर्नुहोस्</button>' +
+
+      '<div style="font-size:12px;font-weight:700;color:#f472b6;margin-bottom:6px;">🎁 VIP Personal Buyer Leaderboard (व्यक्तिगत ग्राहक मात्र)</div>' +
+      '<div style="background:#1e293b;border-radius:9px;padding:8px;margin-bottom:12px;font-size:11px;">' +
+      (vips.length ? vips.map(function(v) {
+        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #334155;">' +
+          '<span><strong>' + v.customer_name + '</strong> (' + v.phone + ') — रू. ' + v.total_spent + '</span>' +
+          '<button type="button" onclick="window.nsewaAwardVipGift(\'' + v.phone + '\')" style="padding:3px 8px;border:none;border-radius:5px;background:#ec4899;color:#fff;font-size:10px;cursor:pointer;">🎁 उपहार दिनुहोस्</button></div>';
+      }).join('') : 'हालसम्म व्यक्तिगत खरिद रेकर्ड छैन।') + '</div>' +
+
+      '<div style="font-size:12px;font-weight:700;color:#fbbf24;margin-bottom:6px;">📋 Alibaba थोक कोटेसन अनुरोध (Bulk RFQ: ' + rfqs.length + ')</div>' +
+      '<div style="background:#1e293b;border-radius:9px;padding:8px;font-size:11px;">' +
+      (rfqs.length ? rfqs.map(function(r) {
+        return '<div style="padding:5px 0;border-bottom:1px solid #334155;"><strong>' + r.buyer_name + '</strong> (' + r.buyer_phone + ' · ' + r.district + ') — परिमाण: ' + r.estimated_qty + '<div style="color:#cbd5e1;">' + r.item_details + '</div></div>';
+      }).join('') : 'हाल नयाँ थोक कोटेसन अनुरोध छैन।') + '</div></div>';
+
+    document.body.appendChild(m);
+    document.getElementById('ceo-cfg-save').addEventListener('click', function() {
+      localStorage.setItem(window.nsewaV27CfgKey, JSON.stringify({
+        whatsapp: document.getElementById('ceo-cfg-wa').value.trim(),
+        phone: document.getElementById('ceo-cfg-ph').value.trim(),
+        giftPrize: document.getElementById('ceo-cfg-gift').value.trim(),
+        tasEnabled: document.getElementById('ceo-cfg-tas').checked,
+        ludoEnabled: document.getElementById('ceo-cfg-ludo').checked,
+        holidayMode: document.getElementById('ceo-cfg-hol').checked
+      }));
+      window.nsewaToastV27('CEO बजार सेटिङ अपडेट भयो!');
+      m.remove();
+    });
+  };
+
+  window.nsewaAwardVipGift = async function(phone) {
+    var sb = window.nsewaGetSbV27();
+    var cfg = window.nsewaGetSuperCfg();
+    if (!sb) return;
+    await sb.from('nsewa_buyer_rewards').update({ gift_title: cfg.giftPrize, gift_status: 'AWARDED', updated_at: new Date().toISOString() }).eq('phone', phone);
+    window.nsewaToastV27('विजेता ग्राहकलाई उपहार घोषणा गरियो!');
+  };
+
+  function runV27Master() {
+    var shop = document.getElementById('nsewa-live-public-shop');
+    if (shop) {
+      var bazarSec = document.getElementById('store') || document.getElementById('bazar') ||
+                     document.querySelector('[data-section="store"], [data-tab-panel="store"], [data-page="store"]');
+      if (!bazarSec) {
+        var h = Array.from(document.querySelectorAll('h1, h2, h3')).find(function(el) {
+          var t = (el.textContent || '').trim();
+          return (t.indexOf('बजार') !== -1 || t.indexOf('Store') !== -1) &&
+                 t.indexOf('हाम्रा लागि सबै सेवा') === -1 && t.indexOf('Mero-Sewa Live Marketplace') === -1 &&
+                 !el.closest('#nsewa-enterprise-store') && !el.closest('nav, header');
+        });
+        if (h) bazarSec = h.closest('section, div[id], .container, main') || h.parentElement;
+      }
+
+      if (!bazarSec || bazarSec.textContent.indexOf('हाम्रा लागि सबै सेवा') !== -1) {
+        shop.style.display = 'none';
+      } else {
+        shop.style.cssText = 'display:block;width:100%;max-width:1240px;margin:10px auto 26px auto;padding:18px;border-radius:18px;background:linear-gradient(180deg,#0f172a 0%,#070b14 100%);border:1px solid rgba(16,185,129,0.45);color:#f8fafc;box-shadow:0 16px 40px rgba(0,0,0,0.5);box-sizing:border-box;';
+        if (!bazarSec.contains(shop)) bazarSec.insertBefore(shop, bazarSec.firstChild);
+
+        Array.from(bazarSec.children).forEach(function(ch) {
+          if (ch !== shop && !ch.contains(shop) && !ch.closest('#nsewa-enterprise-store')) ch.style.display = 'none';
+        });
+
+        var cfg = window.nsewaGetSuperCfg();
+        var holEl = document.getElementById('nsewa-v27-holiday-banner');
+        if (cfg.holidayMode) {
+          if (!holEl) {
+            holEl = document.createElement('div');
+            holEl.id = 'nsewa-v27-holiday-banner';
+            holEl.style.cssText = 'padding:12px;border-radius:10px;background:#7f1d1d;border:1px solid #ef4444;color:#fef2f2;font-size:13px;font-weight:700;text-align:center;margin-bottom:12px;';
+            holEl.textContent = '⏸ ' + cfg.holidayMsg;
+            shop.insertBefore(holEl, shop.firstChild);
+          }
+        } else if (holEl) {
+          holEl.remove();
+        }
+
+        if (!shop.dataset.v27Ready) {
+          shop.dataset.v27Ready = '1';
+
+          var headerRight = document.getElementById('nsewa-pub-cart-btn')?.parentElement;
+          if (headerRight) {
+            var mWrap = document.createElement('div');
+            mWrap.className = 'nsewa-v27-menu-wrap';
+            mWrap.innerHTML =
+              '<button type="button" id="nsewa-v27-mbtn" class="nsewa-v27-menu-btn">☰ मेनु <span>▼</span></button>' +
+              '<div id="nsewa-v27-dd" class="nsewa-v27-menu-dd">' +
+                '<div class="nsewa-v27-mgroup">किनमेल र अर्डर</div>' +
+                '<button type="button" class="nsewa-v27-mitem" onclick="window.nsewaOpenBazarFeature(\'TRACK\')"><span>📦 अर्डर ट्र्याक (Track)</span><span class="nsewa-v27-mtag">LIVE</span></button>' +
+                '<button type="button" class="nsewa-v27-mitem" onclick="window.nsewaOpenBazarFeature(\'CART\')"><span>🛒 मेरो कार्ट (Cart)</span><span class="nsewa-v27-mtag">FREE 2K+</span></button>' +
+                '<button type="button" class="nsewa-v27-mitem" onclick="window.nsewaOpenBazarFeature(\'ORDER_ACTION\')"><span>✅ Confirm / ❌ Cancel Order</span></button>' +
+                '<button type="button" class="nsewa-v27-mitem" onclick="window.nsewaOpenBazarFeature(\'REORDER\')"><span>⚡ १-क्लिक पुनः अर्डर (Buy Again)</span></button>' +
+                '<button type="button" class="nsewa-v27-mitem" onclick="window.nsewaOpenBazarFeature(\'COUPON\')"><span>🎟️ कुपन कोड (Coupons)</span></button>' +
+                '<button type="button" class="nsewa-v27-mitem" onclick="window.nsewaOpenBazarFeature(\'RFQ\')"><span>📋 थोक कोटेसन (Bulk RFQ)</span><span class="nsewa-v27-mtag" style="color:#fbbf24;">B2B</span></button>' +
+                '<div class="nsewa-v27-mgroup" style="border-top:1px solid #1e293b;margin-top:4px;">उपहार र मनोरञ्जन (CEO निगरानी)</div>' +
+                '<button type="button" class="nsewa-v27-mitem" onclick="window.nsewaOpenBazarFeature(\'GIFTS\')"><span>🎁 Top Buyer उपहार</span><span class="nsewa-v27-mtag" style="color:#f472b6;">व्यक्तिगत मात्र</span></button>' +
+                ((cfg.tasEnabled || cfg.ludoEnabled) ? '<button type="button" class="nsewa-v27-mitem" onclick="window.nsewaOpenBazarFeature(\'GAMES\')"><span>🃏 Online तास (Kitty) & 🎲 Ludo</span></button>' : '') +
+                '<div class="nsewa-v27-mgroup" style="border-top:1px solid #1e293b;margin-top:4px;">सहायता र जानकारी</div>' +
+                '<button type="button" class="nsewa-v27-mitem" onclick="alert(\'🚚 डेलिभरी शुल्क:\\n• कैलाली/कञ्चनपुर: रू. ५०\\n• सुदूरपश्चिम: रू. १००\\n• देशभर (७७ जिल्ला): रू. १५०\\n• रू. २,०००+ मा निःशुल्क!\')"><span>🚚 डेलिभरी शुल्क (७७ जिल्ला)</span></button>' +
+                '<button type="button" class="nsewa-v27-mitem" onclick="window.nsewaOpenBazarFeature(\'SUPPORT\')"><span>💬 WhatsApp & 📞 Call सहयोग</span></button>' +
+              '</div>';
+            headerRight.appendChild(mWrap);
+            document.getElementById('nsewa-v27-mbtn').addEventListener('click', function(e) { e.stopPropagation(); document.getElementById('nsewa-v27-dd').classList.toggle('open'); });
+            document.addEventListener('click', function() { document.getElementById('nsewa-v27-dd')?.classList.remove('open'); });
+          }
+
+          var priceBar = document.createElement('div');
+          priceBar.style.cssText = 'display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;padding:8px 10px;border-radius:10px;background:rgba(30,41,59,0.65);border:1px solid rgba(148,163,184,0.2);font-size:12px;';
+          priceBar.innerHTML =
+            '<span style="color:#94a3b8;font-weight:700;">💰 मूल्य (रू.):</span>' +
+            '<input id="nsewa-min-price" type="number" placeholder="न्यूनतम मूल्य (जस्तै 500)" style="width:165px;padding:6px 9px;border-radius:7px;border:1px solid #475569;background:#0f172a;color:#fff;font-size:11px;" />' +
+            '<span style="color:#64748b;">—</span>' +
+            '<input id="nsewa-max-price" type="number" placeholder="अधिकतम मूल्य (जस्तै 50000)" style="width:175px;padding:6px 9px;border-radius:7px;border:1px solid #475569;background:#0f172a;color:#fff;font-size:11px;" />' +
+            '<button type="button" onclick="window.nsewaApplyPriceRange()" style="padding:6px 12px;border:none;border-radius:7px;background:#0284c7;color:#fff;font-size:11px;font-weight:700;cursor:pointer;">फिल्टर</button>' +
+            '<button type="button" onclick="document.getElementById(\'nsewa-min-price\').value=\'\';document.getElementById(\'nsewa-max-price\').value=\'\';window.nsewaApplyPriceRange();" style="padding:6px 9px;border:1px solid #475569;border-radius:7px;background:transparent;color:#94a3b8;font-size:11px;cursor:pointer;">रिसेट</button>';
+
+          var offerSlot = document.createElement('div');
+          offerSlot.id = 'nsewa-v27-offer-slot';
+          offerSlot.className = 'nsewa-v27-flash';
+          offerSlot.style.display = 'none';
+
+          var catRail = document.createElement('div');
+          catRail.className = 'nsewa-v27-cat-rail';
+          catRail.innerHTML = (window.nsewaV27Cats || []).map(function(c, i) {
+            return '<div class="nsewa-v27-cat-card ' + (i === 0 ? 'active' : '') + '" data-v27-cat="' + c.key + '">' +
+              '<div class="nsewa-v27-svg-orb" style="background:linear-gradient(135deg,' + c.grad + ');">' + c.svg + '</div>' +
+              '<span style="font-size:11px;font-weight:700;color:#f1f5f9;">' + c.label + '</span></div>';
+          }).join('');
+
+          var gridEl = document.getElementById('nsewa-pub-shop-grid');
+          if (gridEl) {
+            shop.insertBefore(priceBar, gridEl);
+            shop.insertBefore(offerSlot, gridEl);
+            shop.insertBefore(catRail, gridEl);
+          }
+
+          catRail.querySelectorAll('.nsewa-v27-cat-card').forEach(function(card) {
+            card.addEventListener('click', function() {
+              catRail.querySelectorAll('.nsewa-v27-cat-card').forEach(function(x) { x.classList.remove('active'); });
+              card.classList.add('active');
+              if (typeof window.nsewaSetPubCat === 'function') window.nsewaSetPubCat(card.dataset.v27Cat);
+            });
+          });
+
+          syncV27Offer();
+        }
+      }
+    }
+
+    var ceoStore = document.getElementById('nsewa-enterprise-store');
+    if (ceoStore && !document.getElementById('nsewa-v27-ceo-btn')) {
+      var syncBtn = document.getElementById('nsewa-store-sync');
+      if (syncBtn && syncBtn.parentElement) {
+        var b = document.createElement('button');
+        b.id = 'nsewa-v27-ceo-btn';
+        b.type = 'button';
+        b.onclick = window.nsewaOpenCeoSuperControl;
+        b.style.cssText = 'padding:5px 11px;border:none;border-radius:6px;background:linear-gradient(90deg,#7c3aed,#ec4899);color:#fff;font-size:11px;font-weight:800;cursor:pointer;';
+        b.textContent = '👑 CEO बजार/उपहार/RFQ';
+        syncBtn.parentElement.appendChild(b);
+      }
+    }
+
+    var sbKey = Object.keys(localStorage).find(function(k) { return k.indexOf('sb-') === 0 && k.indexOf('-auth-token') !== -1; });
+    if (sbKey && localStorage.getItem(sbKey)) {
+      localStorage.setItem(window.nsewaV27TokenKey, JSON.stringify({ key: sbKey, val: localStorage.getItem(sbKey) }));
+    } else if (!window.__nsewaManualLogout && localStorage.getItem(window.nsewaV27TokenKey)) {
+      try {
+        var s = JSON.parse(localStorage.getItem(window.nsewaV27TokenKey));
+        if (s && s.key && s.val) localStorage.setItem(s.key, s.val);
+      } catch (e) {}
+    }
+    for (var k in window) {
+      try {
+        var obj = window[k];
+        if (obj && typeof obj === 'object' && obj.auth && typeof obj.auth.signOut === 'function' && !obj.auth.__lockedV27) {
+          obj.auth.__lockedV27 = true;
+          var realSO = obj.auth.signOut.bind(obj.auth);
+          obj.auth.signOut = function(opts) { return window.__nsewaManualLogout ? realSO(opts) : Promise.resolve({ error: null }); };
+        }
+      } catch (e) {}
+    }
+  }
+
+  runV27Master();
+  setInterval(runV27Master, 350);
+  setInterval(syncV27Offer, 10000);
+})();
+</script> 
 </body>
 </html>

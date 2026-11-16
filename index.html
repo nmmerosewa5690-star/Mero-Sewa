@@ -6398,259 +6398,308 @@ window.nsewaCeoExportAuditTrail=function(){if(!rows.length){alert('Export गर
  window.nsewaPaymentWorkspaceExport=downloadPanelCsv;
 })();
 </script>  
-  <script>
-// Mero-Sewa Direct RPC Bridge (Edge Function नहुँदा पनि Payment Dashboard चलाउन)
+<script>
+// ============================================================================
+// MERO-SEWA V7.3 MASTER | COMPLETE PAYMENT + WORKER/SELLER 6-FOLDER SYSTEM
+// ============================================================================
 (function() {
-  window.addEventListener('load', async () => {
-    const sb = window.supabaseClient || window._supabase || window.sb;
-    if (!sb || typeof sb.rpc !== 'function') return;
-
-    window.nsewaPaymentDirectCheck = async function() {
-      try {
-        const { data: overview, error } = await sb.rpc('nsewa_payment_ops_overview');
-        if (!error && overview) {
-          console.log('✅ Payment Base Ready:', overview);
-        }
-        const { data: gateways } = await sb.rpc('nsewa_payment_ops_module_data', { p_section: 'gateways' });
-        if (gateways) {
-          console.log('✅ Gateways Base Ready (eSewa/Khalti/Fonepay):', gateways);
-        }
-      } catch (e) {
-        console.warn('Payment RPC check:', e.message);
-      }
-    };
-    window.nsewaPaymentDirectCheck();
-  });
-})();   
-</script> 
-  <script>
-// Mero-Sewa V7.1 Complete Base Fix & Direct RPC UI Bridge
-(function() {
-  // १. nsewaV70Jump Error समाधान
   if (typeof window.nsewaV70Jump !== 'function') {
-    window.nsewaV70Jump = function(targetId) {
-      const el = document.getElementById(targetId) || document.querySelector('[data-section="' + targetId + '"]');
+    window.nsewaV70Jump = function(id) {
+      var el = document.getElementById(id) || document.querySelector('[data-section="' + id + '"]');
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
   }
-
-  // २. Payment Operations र Checkout UI लाई सिधै Supabase RPC सँग जोड्ने
-  window.addEventListener('load', async () => {
-    const sb = window.supabaseClient || window._supabase || window.sb;
-    if (!sb || typeof sb.rpc !== 'function') return;
-
-    try {
-      // Overview डेटा तान्ने
-      const { data: overview } = await sb.rpc('nsewa_payment_ops_overview');
-      if (overview && overview.stats) {
-        const s = overview.stats;
-        // स्क्रिनमा भएका '—' लाई वास्तविक 0/डेटा ले भर्ने
-        const map = {
-          'आजका Payment': s.payments_today ?? 0,
-          'आज Verified रकम': 'रू. ' + (s.paid_today ?? 0),
-          'Pending Approval': overview.approval_pending ?? 0,
-          'Open Risk': overview.risk_open ?? 0,
-          'Webhook Errors': overview.webhook_errors ?? 0,
-          'Refund खुला': s.refund_open ?? 0,
-          'Dispute खुला': s.disputes_open ?? 0,
-          'Settlement review': s.settlement_review ?? 0,
-          'Unmatched rows': s.unmatched_settlement_rows ?? 0,
-          'Stock reserved': s.inventory_reserved ?? 0,
-          'Expired stock hold': s.inventory_expired_due ?? 0,
-          'Payment review': s.payment_review ?? 0,
-          'Pending 30m+': s.pending_older_30m ?? 0
-        };
-        document.querySelectorAll('div, span, p, strong, td').forEach(el => {
-          const txt = el.textContent.trim();
-          for (const [label, val] of Object.entries(map)) {
-            if (txt.startsWith(label) && txt.includes('—')) {
-              el.innerHTML = el.innerHTML.replace('—', '<strong>' + val + '</strong>');
-            }
-          }
-        });
-      }
-
-      // Gateway Health जाँच्ने (eSewa, Khalti, Fonepay)
-      const { data: gwRes } = await sb.rpc('nsewa_payment_ops_module_data', { p_section: 'gateways' });
-      const gateways = gwRes?.rows || [];
-      const activeGateways = gateways.filter(g => g.is_enabled && g.integration_status === 'READY');
-
-      if (activeGateways.length === 0) {
-        document.querySelectorAll('*').forEach(el => {
-          if (el.childNodes.length === 1) {
-            if (el.textContent.includes('Payment Gateway उपलब्धता सुरक्षित server बाट जाँच हुँदैछ')) {
-              el.textContent = 'सूचना: eSewa, Khalti र Fonepay को डाटाबेस बेस तयार छ। कम्पनी दर्ता र Merchant ID जडानपछि अनलाइन भुक्तानी सुरु हुनेछ।';
-            }
-            if (el.textContent.includes('Payment Admin Edge Function र SQL migration deploy भएपछि')) {
-              el.textContent = 'डाटाबेस बेस (Supabase SQL) तयार छ — हाल Standby Mode मा छ (० कारोबार)।';
-            }
-          }
-        });
-      }
-    } catch (err) {
-      console.info('Mero-Sewa Payment Standby:', err.message);
-    }
-  });
-})();
-</script>
-  <script>
-// ============================================================================
-// MERO-SEWA V7.1 | UNIQUE ENTERPRISE WORKER & SELLER 6-FOLDER CONTROL CENTER
-// ============================================================================
-(function() {
-  const FOLDERS = [
-    { id: 'PENDING', no: '01', icon: '🪪', title: 'Verification Queue', desc: 'नयाँ दर्ता, नागरिकता, फोटो र PAN जाँच' },
-    { id: 'WORKER', no: '02', icon: '🛠️', title: 'Verified Workers', desc: 'प्रमाणित प्राविधिक र सीप निर्देशिका' },
-    { id: 'SELLER', no: '03', icon: '🏪', title: 'Verified Sellers', desc: 'प्रमाणित पसल र PAN व्यापार सूची' },
-    { id: 'RESTRICTED', no: '04', icon: '⛔', title: 'Suspend & Ban Control', desc: 'अस्थायी रोक, प्रतिबन्ध र फुकुवा' },
-    { id: 'AREAS', no: '05', icon: '📍', title: 'Districts & Skills', desc: '७७ जिल्ला र सेवा श्रेणी व्यवस्थापन' },
-    { id: 'AUDIT', no: '06', icon: '📜', title: 'CEO Decision Audit', desc: 'सबै निर्णयहरूको स्थायी इतिहास' }
-  ];
-
-  let activeTab = 'PENDING';
-  let wsData = [];
 
   function getSb() {
     return window.supabaseClient || window._supabase || window.sb;
   }
 
-  // १. Private Bucket बाट कागजात (नागरिकता/PAN) सुरक्षित रूपमा खोल्ने
-  window.nsewaViewPrivateDoc = async function(path) {
-    const sb = getSb();
+  var DISTRICTS_77 = [
+    'Kailali','Kanchanpur','Doti','Dadeldhura','Baitadi','Achham','Bajhang','Bajura','Darchula',
+    'Kathmandu','Lalitpur','Bhaktapur','Kaski','Chitwan','Jhapa','Morang','Sunsari','Rupandehi',
+    'Banke','Bardiya','Surkhet','Dang','Kabhrepalanchok','Makwanpur','Parsa','Bara','Dhanusha',
+    'Taplejung','Panchthar','Ilam','Sankhuwasabha','Terhathum','Bhojpur','Dhankuta','Solukhumbu',
+    'Khotang','Okhaldhunga','Udayapur','Saptari','Siraha','Dolakha','Sindhupalchok','Rasuwa',
+    'Dhading','Nuwakot','Ramechhap','Sindhuli','Mahottari','Sarlahi','Rautahat','Gorkha','Manang',
+    'Mustang','Lamjung','Tanahun','Syangja','Nawalpur','Gulmi','Palpa','Arghakhanchi','Kapilvastu',
+    'Parbat','Myagdi','Baglung','Nawalparasi West','Rukum East','Rolpa','Pyuthan','Salyan','Dolpa',
+    'Mugu','Humla','Jumla','Kalikot','Dailekh','Jajarkot','Rukum West'
+  ];
+
+  // १. Payment Operations (माथिल्ला + तल्ला सबै कार्ड) र Checkout Standby Bridge
+  async function initPaymentMasterBridge() {
+    var sb = getSb();
+    if (!sb || typeof sb.rpc !== 'function') return;
+    try {
+      var res = await sb.rpc('nsewa_payment_ops_overview');
+      var ov = res.data;
+      if (ov && ov.stats) {
+        var s = ov.stats;
+        var map = {
+          'कुल प्रयास': s.payment_count || 0,
+          'Verified': s.payments_today || 0,
+          'Pending': s.payment_review || 0,
+          'Failed / Expired': 0,
+          'Manual Review': s.payment_review || 0,
+          'Verified रकम': 'रू. ' + (s.paid_today || 0),
+          'Refunded': 0,
+          'आजका Payment': s.payments_today || 0,
+          'आज Verified रकम': 'रू. ' + (s.paid_today || 0),
+          'Pending Approval': ov.approval_pending || 0,
+          'Open Risk': ov.risk_open || 0,
+          'Webhook Errors': ov.webhook_errors || 0,
+          'Refund खुला': s.refund_open || 0,
+          'Dispute खुला': s.disputes_open || 0,
+          'Deadline नजिक/बितेको': s.disputes_due || 0,
+          'Settlement review': s.settlement_review || 0,
+          'Unmatched rows': s.unmatched_settlement_rows || 0,
+          'Stock reserved': s.inventory_reserved || 0,
+          'Expired stock hold': s.inventory_expired_due || 0,
+          'Payment review': s.payment_review || 0,
+          'Pending 30m+': s.pending_older_30m || 0
+        };
+        document.querySelectorAll('div, span, p, strong, td').forEach(function(el) {
+          var txt = el.textContent.trim();
+          Object.keys(map).forEach(function(label) {
+            if (txt.indexOf(label) === 0 && txt.indexOf('—') !== -1) {
+              el.innerHTML = el.innerHTML.replace('—', '<strong>' + map[label] + '</strong>');
+            }
+          });
+        });
+      }
+
+      var gwRes = await sb.rpc('nsewa_payment_ops_module_data', { p_section: 'gateways' });
+      var gws = (gwRes.data && gwRes.data.rows) ? gwRes.data.rows : [];
+      if (gws.filter(function(g) { return g.is_enabled && g.integration_status === 'READY'; }).length === 0) {
+        document.querySelectorAll('*').forEach(function(el) {
+          if (el.childNodes.length === 1) {
+            if (el.textContent.indexOf('Payment Gateway उपलब्धता सुरक्षित server बाट जाँच हुँदैछ') !== -1) {
+              el.textContent = 'सूचना: eSewa, Khalti र Fonepay को डाटाबेस बेस तयार छ। कम्पनी दर्ता र Merchant ID जडानपछि अनलाइन भुक्तानी सुरु हुनेछ।';
+            }
+            if (el.textContent.indexOf('Payment Admin Edge Function र SQL migration deploy भएपछि') !== -1) {
+              el.textContent = 'डाटाबेस बेस (Supabase SQL) तयार छ — हाल Standby Mode मा छ (० कारोबार)।';
+            }
+          }
+        });
+      }
+    } catch (e) {}
+  }
+
+  // २. नयाँ Worker/Seller दर्ता फारमलाई Supabase nsewa_ws_registry सँग जोड्ने
+  function bindRegistrationToSupabase() {
+    var btns = Array.from(document.querySelectorAll('button'));
+    var submitBtn = btns.find(function(b) { return b.textContent.trim().indexOf('विवरण सबमिट गर्नुहोस्') !== -1; });
+    if (!submitBtn || submitBtn.dataset.wsBound) return;
+    submitBtn.dataset.wsBound = '1';
+
+    submitBtn.addEventListener('click', async function() {
+      var sb = getSb();
+      if (!sb) return;
+      var uRes = await sb.auth.getUser();
+      var user = uRes.data && uRes.data.user;
+      if (!user) return;
+
+      var formBox = submitBtn.closest('div, form');
+      if (!formBox) return;
+      var inputs = Array.from(formBox.querySelectorAll('input, select'));
+      var fullName = (inputs[0] && inputs[0].value) ? inputs[0].value.trim() : '';
+      var districtSel = formBox.querySelector('select');
+      var district = districtSel ? districtSel.value : 'Kailali';
+      var roleText = formBox.textContent.indexOf('बिक्रेता') !== -1 ? 'SELLER' : 'WORKER';
+
+      if (fullName.length >= 2) {
+        await sb.from('nsewa_ws_registry').upsert({
+          user_id: user.id,
+          account_type: roleText,
+          full_name: fullName,
+          district: district,
+          verification_status: 'PENDING'
+        });
+      }
+    });
+  }
+  // ३. Worker & Seller 6-Folder Pro Control Center
+  var FOLDERS = [
+    { id: 'PENDING', no: '01', title: 'Verification Queue', desc: 'नयाँ दर्ता, नागरिकता, फोटो र PAN जाँच' },
+    { id: 'WORKER', no: '02', title: 'Verified Workers', desc: 'प्रमाणित प्राविधिक र सीप निर्देशिका' },
+    { id: 'SELLER', no: '03', title: 'Verified Sellers', desc: 'प्रमाणित पसल र PAN व्यापार सूची' },
+    { id: 'RESTRICTED', no: '04', title: 'Suspend & Ban Control', desc: 'अस्थायी रोक, अस्वीकृत, प्रतिबन्ध र फुकुवा' },
+    { id: 'AREAS', no: '05', title: 'Districts & Skills', desc: 'सुदूरपश्चिम सहित ७७ जिल्ला र सेवा श्रेणी' },
+    { id: 'AUDIT', no: '06', title: 'CEO Decision Audit', desc: 'सबै निर्णयहरूको स्थायी इतिहास' }
+  ];
+
+  var activeTab = 'PENDING';
+  var wsData = [];
+  var currentFiltered = [];
+
+  window.nsewaViewDoc = async function(path) {
+    var sb = getSb();
     if (!sb || !path) { alert('कागजात अपलोड गरिएको छैन।'); return; }
-    const { data, error } = await sb.storage.from('nsewa-private-documents').createSignedUrl(path, 120);
-    if (error || !data?.signedUrl) alert('कागजात खोल्न सकिएन: ' + (error?.message || 'फाइल भेटिएन'));
-    else window.open(data.signedUrl, '_blank', 'noopener');
+    var res = await sb.storage.from('nsewa-private-documents').createSignedUrl(path, 180);
+    if (res.error || !res.data || !res.data.signedUrl) alert('कागजात खोल्न सकिएन: ' + (res.error ? res.error.message : 'फाइल भेटिएन'));
+    else window.open(res.data.signedUrl, '_blank', 'noopener');
   };
 
-  // २. CEO ले Approve / Reject / Suspend / Ban गर्ने
   window.nsewaWsAction = async function(userId, status) {
-    const sb = getSb();
+    var sb = getSb();
     if (!sb) return;
-    const reason = prompt(`[${status}] गर्नुको स्पष्ट कारण लेख्नुहोस् (कम्तीमा ३ अक्षर):`);
+    var reason = prompt('[' + status + '] गर्नुको स्पष्ट कारण लेख्नुहोस् (कम्तीमा ३ अक्षर):');
     if (!reason || reason.trim().length < 3) return;
-    const { error } = await sb.rpc('nsewa_ws_admin_action', {
-      p_user_id: userId, p_status: status, p_reason: reason.trim()
-    });
-    if (error) alert('Error: ' + error.message);
+    var res = await sb.rpc('nsewa_ws_admin_action', { p_user_id: userId, p_status: status, p_reason: reason.trim() });
+    if (res.error) alert('Error: ' + res.error.message);
     else { alert('सफलतापूर्वक ' + status + ' अपडेट भयो!'); refreshWsCenter(); }
   };
 
-  // ३. डेटा लोड र KPI काउन्टर अपडेट गर्ने
-  async function refreshWsCenter() {
-    const sb = getSb();
-    const listBox = document.getElementById('nsewa-ws-list-box');
-    if (!sb || !listBox) return;
+  window.nsewaExportWsCsv = function() {
+    if (!currentFiltered.length) { alert('Export गर्न हाल कुनै डेटा छैन।'); return; }
+    var lines = ['Type,Full Name,District,Skill/Shop,Phone,PAN/Citizenship,Status,Reason'];
+    currentFiltered.forEach(function(r) {
+      lines.push([r.account_type, r.full_name, r.district, r.skill_or_shop, r.phone, r.pan_or_citizenship_no, r.verification_status, r.status_reason]
+        .map(function(v) { return '"' + String(v || '').replace(/"/g, '""') + '"'; }).join(','));
+    });
+    var blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'mero-sewa-' + activeTab.toLowerCase() + '.csv';
+    a.click();
+  };
 
-    listBox.innerHTML = '<div style="padding:24px; text-align:center; color:#64748b;">डेटा लोड हुँदैछ...</div>';
+  async function refreshWsCenter() {
+    var sb = getSb();
+    var listBox = document.getElementById('nsewa-ws-list-box');
+    if (!sb || !listBox) return;
+    listBox.innerHTML = '<div style="padding:22px;text-align:center;color:#64748b;">डेटा सिंक हुँदैछ...</div>';
 
     if (activeTab === 'AUDIT') {
-      const { data, error } = await sb.from('nsewa_payment_audit_log')
-        .select('*').eq('object_type', 'WORKER_SELLER').order('created_at', { ascending: false }).limit(50);
-      if (error) { listBox.innerHTML = `<div style="padding:14px; color:#dc2626;">Error: ${error.message}</div>`; return; }
-      if (!data?.length) { listBox.innerHTML = '<div style="padding:24px; text-align:center; color:#64748b;">हालसम्म कुनै निर्णय इतिहास छैन।</div>'; return; }
-      listBox.innerHTML = data.map(r => `
-        <div style="padding:12px 14px; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">
-          <div><strong style="color:#0f172a;">${r.action}</strong> — <span style="color:#475569;">${r.note || ''}</span></div>
-          <div style="font-size:11px; color:#64748b;">${new Date(r.created_at).toLocaleString()}</div>
-        </div>
-      `).join('');
+      var aRes = await sb.from('nsewa_payment_audit_log').select('*').eq('object_type', 'WORKER_SELLER').order('created_at', { ascending: false }).limit(50);
+      var aRows = aRes.data || [];
+      listBox.innerHTML = aRows.length ? aRows.map(function(r) {
+        return '<div style="padding:11px 15px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;">' +
+          '<div><strong style="color:#0f172a;">' + r.action + '</strong> — <span style="color:#475569;">' + (r.note || '') + '</span></div>' +
+          '<span style="font-size:11px;color:#64748b;">' + new Date(r.created_at).toLocaleString() + '</span></div>';
+      }).join('') : '<div style="padding:22px;text-align:center;color:#64748b;">हालसम्म कुनै निर्णय इतिहास छैन।</div>';
       return;
     }
 
     if (activeTab === 'AREAS') {
-      listBox.innerHTML = `
-        <div style="padding:16px; display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:12px;">
-          <div style="padding:14px; border-radius:10px; background:#f8fafc; border:1px solid #e2e8f0;">
-            <strong style="color:#0369a1;">प्राथमिक क्षेत्र (सुदूरपश्चिम प्रदेश)</strong>
-            <p style="margin:6px 0 0; font-size:12px; color:#475569; line-height:1.5;">कैलाली (दोधारा, धनगढी, टीकापुर, अत्तरिया), कञ्चनपुर, डोटी, डडेल्धुरा, बैतडी, अछाम, बझाङ, बाजुरा, दार्चुला</p>
-          </div>
-          <div style="padding:14px; border-radius:10px; background:#f8fafc; border:1px solid #e2e8f0;">
-            <strong style="color:#0369a1;">प्रमाणित सीप र पसल श्रेणीहरू</strong>
-            <p style="margin:6px 0 0; font-size:12px; color:#475569; line-height:1.5;">इलेक्ट्रिसियन, प्लम्बर, AC/फ्रिज, CCTV/नेटवर्किङ, घर निर्माण, कृषि प्राविधिक, हार्डवेयर र इलेक्ट्रोनिक्स पसल</p>
-          </div>
-        </div>`;
+      listBox.innerHTML = '<div style="padding:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;">' +
+        '<div style="padding:12px;border-radius:10px;background:#f8fafc;border:1px solid #e2e8f0;"><strong style="color:#0369a1;">प्राथमिक क्षेत्र (सुदूरपश्चिम)</strong><p style="margin:6px 0 0;font-size:12px;color:#475569;">कैलाली (दोधारा, धनगढी, टीकापुर), कञ्चनपुर, डोटी, डडेल्धुरा, बैतडी, अछाम, बझाङ, बाजुरा, दार्चुला</p></div>' +
+        '<div style="padding:12px;border-radius:10px;background:#f8fafc;border:1px solid #e2e8f0;"><strong style="color:#0369a1;">प्रमाणित सीप र पसल श्रेणी</strong><p style="margin:6px 0 0;font-size:12px;color:#475569;">इलेक्ट्रिसियन, प्लम्बर, AC/फ्रिज, CCTV/नेटवर्किङ, घर निर्माण, कृषि प्राविधिक, हार्डवेयर पसल</p></div></div>';
       return;
     }
 
-    const { data, error } = await sb.from('nsewa_ws_registry').select('*').order('created_at', { ascending: false });
-    if (error) { listBox.innerHTML = `<div style="padding:14px; color:#dc2626;">SQL जाँच गर्नुहोस्: ${error.message}</div>`; return; }
-
-    wsData = data || [];
-    document.getElementById('kpi-ws-pending').textContent = wsData.filter(x => x.verification_status === 'PENDING').length;
-    document.getElementById('kpi-ws-workers').textContent = wsData.filter(x => x.account_type === 'WORKER' && x.verification_status === 'APPROVED').length;
-    document.getElementById('kpi-ws-sellers').textContent = wsData.filter(x => x.account_type === 'SELLER' && x.verification_status === 'APPROVED').length;
-    document.getElementById('kpi-ws-restricted').textContent = wsData.filter(x => ['REJECTED','SUSPENDED','BANNED'].includes(x.verification_status)).length;
-
+    var res = await sb.from('nsewa_ws_registry').select('*').order('created_at', { ascending: false });
+    if (res.error) { listBox.innerHTML = '<div style="padding:14px;color:#dc2626;">Error: ' + res.error.message + '</div>'; return; }
+    wsData = res.data || [];
+    document.getElementById('kpi-ws-pending').textContent = wsData.filter(function(x) { return x.verification_status === 'PENDING'; }).length;
+    document.getElementById('kpi-ws-workers').textContent = wsData.filter(function(x) { return x.account_type === 'WORKER' && x.verification_status === 'APPROVED'; }).length;
+    document.getElementById('kpi-ws-sellers').textContent = wsData.filter(function(x) { return x.account_type === 'SELLER' && x.verification_status === 'APPROVED'; }).length;
+    document.getElementById('kpi-ws-restricted').textContent = wsData.filter(function(x) { return ['REJECTED','SUSPENDED','BANNED'].indexOf(x.verification_status) !== -1; }).length;
     renderWsRows();
   }
 
   function renderWsRows() {
-    const listBox = document.getElementById('nsewa-ws-list-box');
-    const q = (document.getElementById('nsewa-ws-filter-input')?.value || '').toLowerCase().trim();
+    var listBox = document.getElementById('nsewa-ws-list-box');
+    var q = (document.getElementById('nsewa-ws-filter-input')?.value || '').toLowerCase().trim();
+    var dist = (document.getElementById('nsewa-ws-dist-select')?.value || '').toLowerCase();
     if (!listBox) return;
 
-    let rows = wsData.filter(r => {
+    var rows = wsData.filter(function(r) {
       if (activeTab === 'PENDING') return r.verification_status === 'PENDING';
       if (activeTab === 'WORKER') return r.account_type === 'WORKER' && r.verification_status === 'APPROVED';
       if (activeTab === 'SELLER') return r.account_type === 'SELLER' && r.verification_status === 'APPROVED';
-      if (activeTab === 'RESTRICTED') return ['REJECTED','SUSPENDED','BANNED'].includes(r.verification_status);
+      if (activeTab === 'RESTRICTED') return ['REJECTED','SUSPENDED','BANNED'].indexOf(r.verification_status) !== -1;
       return true;
     });
 
+    if (dist) rows = rows.filter(function(r) { return (r.district || '').toLowerCase() === dist; });
     if (q) {
-      rows = rows.filter(r =>
-        (r.full_name || '').toLowerCase().includes(q) ||
-        (r.district || '').toLowerCase().includes(q) ||
-        (r.skill_or_shop || '').toLowerCase().includes(q) ||
-        (r.phone || '').includes(q)
-      );
+      rows = rows.filter(function(r) {
+        return (r.full_name || '').toLowerCase().indexOf(q) !== -1 || (r.skill_or_shop || '').toLowerCase().indexOf(q) !== -1 || (r.phone || '').indexOf(q) !== -1;
+      });
     }
+    currentFiltered = rows;
 
     if (!rows.length) {
-      listBox.innerHTML = `<div style="padding:28px; text-align:center; color:#64748b;">यो फोल्डर (${activeTab}) मा हाल कुनै रेकर्ड छैन।</div>`;
+      listBox.innerHTML = '<div style="padding:26px;text-align:center;color:#64748b;">यो फोल्डर (' + activeTab + ') मा हाल कुनै रेकर्ड छैन।</div>';
       return;
     }
 
-    listBox.innerHTML = rows.map(r => `
-      <div style="padding:14px 16px; border-bottom:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
-        <div>
-          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-            <span style="font-size:11px; font-weight:700; padding:2px 8px; border-radius:6px; background:#e0f2fe; color:#0369a1;">${r.account_type}</span>
-            <strong style="font-size:15px; color:#0f172a;">${r.full_name}</strong>
-            <span style="font-size:11px; font-weight:600; padding:2px 9px; border-radius:999px; background:#f1f5f9; color:#334155;">${r.verification_status}</span>
-          </div>
-          <div style="font-size:12px; color:#475569; margin-top:5px;">
-            जिल्ला: <strong>${r.district || '—'}</strong> (${r.municipality || '—'}) • सीप/पसल: <strong>${r.skill_or_shop || '—'}</strong> • फोन: ${r.phone || '—'}
-          </div>
-          <div style="font-size:11px; color:#64748b; margin-top:3px;">
-            नागरिकता/PAN नं: <strong>${r.pan_or_citizenship_no || 'उल्लेख नभएको'}</strong>
-            ${r.doc_front_path ? ` • <a href="javascript:void(0)" onclick="window.nsewaViewPrivateDoc('${r.doc_front_path}')" style="color:#0284c7; font-weight:600;">📄 कागजात हेर्नुहोस्</a>` : ''}
-          </div>
-          ${r.status_reason ? `<div style="font-size:11px; color:#b45309; margin-top:3px;">कैफियत: ${r.status_reason}</div>` : ''}
-        </div>
-        <div style="display:flex; gap:6px; flex-wrap:wrap;">
-          <button type="button" onclick="window.nsewaWsAction('${r.user_id}','APPROVED')" style="padding:6px 11px; border-radius:7px; border:none; background:#16a34a; color:#fff; font-size:12px; font-weight:600; cursor:pointer;">✓ Approve</button>
-          <button type="button" onclick="window.nsewaWsAction('${r.user_id}','SUSPENDED')" style="padding:6px 11px; border-radius:7px; border:none; background:#d97706; color:#fff; font-size:12px; font-weight:600; cursor:pointer;">⏸ Suspend</button>
-          <button type="button" onclick="window.nsewaWsAction('${r.user_id}','BANNED')" style="padding:6px 11px; border-radius:7px; border:none; background:#dc2626; color:#fff; font-size:12px; font-weight:600; cursor:pointer;">⛔ Ban</button>
-        </div>
-      </div>
-    `).join('');
+    listBox.innerHTML = rows.map(function(r) {
+      var badgeBg = r.verification_status === 'APPROVED' ? '#dcfce7;color:#166534' : (r.verification_status === 'PENDING' ? '#fef3c7;color:#92400e' : '#fee2e2;color:#991b1b');
+      var docBtn = r.doc_front_path ? ' • <a href="javascript:void(0)" onclick="window.nsewaViewDoc(\'' + r.doc_front_path + '\')" style="color:#0284c7;font-weight:700;">📄 कागजात हेर्नुहोस्</a>' : '';
+      return '<div style="padding:14px 16px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">' +
+        '<div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">' +
+        '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px;background:#e0f2fe;color:#0369a1;">' + r.account_type + '</span>' +
+        '<strong style="font-size:15px;color:#0f172a;">' + r.full_name + '</strong>' +
+        '<span style="font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px;background:' + badgeBg + ';">' + r.verification_status + '</span></div>' +
+        '<div style="font-size:12px;color:#475569;margin-top:4px;">जिल्ला: <strong>' + (r.district || '—') + '</strong> • सीप/पसल: <strong>' + (r.skill_or_shop || '—') + '</strong> • फोन: ' + (r.phone || '—') + docBtn + '</div>' +
+        (r.status_reason ? '<div style="font-size:11px;color:#b45309;margin-top:3px;">कैफियत: ' + r.status_reason + '</div>' : '') + '</div>' +
+        '<div style="display:flex;gap:5px;flex-wrap:wrap;">' +
+        '<button type="button" onclick="window.nsewaWsAction(\'' + r.user_id + '\',\'APPROVED\')" style="padding:5px 10px;border:none;border-radius:6px;background:#16a34a;color:#fff;font-size:12px;font-weight:600;cursor:pointer;">✓ Approve</button>' +
+        '<button type="button" onclick="window.nsewaWsAction(\'' + r.user_id + '\',\'REJECTED\')" style="padding:5px 10px;border:none;border-radius:6px;background:#64748b;color:#fff;font-size:12px;font-weight:600;cursor:pointer;">✕ Reject</button>' +
+        '<button type="button" onclick="window.nsewaWsAction(\'' + r.user_id + '\',\'SUSPENDED\')" style="padding:5px 10px;border:none;border-radius:6px;background:#d97706;color:#fff;font-size:12px;font-weight:600;cursor:pointer;">⏸ Suspend</button>' +
+        '<button type="button" onclick="window.nsewaWsAction(\'' + r.user_id + '\',\'BANNED\')" style="padding:5px 10px;border:none;border-radius:6px;background:#dc2626;color:#fff;font-size:12px;font-weight:600;cursor:pointer;">⛔ Ban</button></div></div>';
+    }).join('');
   }
 
   function initEnterpriseWsCenter() {
-    const headings = Array.from(document.querySelectorAll('h1, h2, h3, h4, div, span'));
-    const target = headings.find(el => el.childNodes.length === 1 && el.textContent.trim().includes('WORKER & SELLER CONTROL'));
+    var headings = Array.from(document.querySelectorAll('h1, h2, h3, h4, div, span'));
+    var target = headings.find(function(el) { return el.childNodes.length === 1 && el.textContent.trim().indexOf('WORKER & SELLER CONTROL') !== -1; });
     if (!target || document.getElementById('nsewa-enterprise-ws')) return;
 
-    const root = document.createElement('div');
+    var root = document.createElement('div');
     root.id = 'nsewa-enterprise-ws';
-    root.style.cssText = 'margin:18px 0; padding:20px; border-radius:16px; background:linear-gradient(180deg,#ffffff 0%,#f8fafc 100%); border:1px solid #cbd5e1; box-shadow:0 6px 20px rgba(15,23,42,0.06);';
-    root.innerHTML = `
-      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:16px;">
-        <div>
-          <span style="font-size:11px; font-weight:800; color:#0284c7; letter-spacing:0.06em;">MERO-SEWA V7.1 | LIVE OPERATIONS</span>
-          <h3 style="margin:2px 0 0; font-size:18px; color:#0f172a;">Worker & Seller 6-Folder Control Center</h3>
-        </div>
+    root.style.cssText = 'margin:18px 0;padding:20px;border-radius:16px;background:#ffffff;border:1px solid #cbd5e1;box-shadow:0 6px 20px rgba(15,23,42,0.06);';
+    var distOpts = '<option value="">सबै जिल्ला (७७)</option>' + DISTRICTS_77.map(function(d) { return '<option value="' + d + '">' + d + '</option>'; }).join('');
+    var tabsHtml = FOLDERS.map(function(f, idx) {
+      return '<button type="button" data-ws-folder-tab="' + f.id + '" style="text-align:left;padding:11px;border-radius:10px;border:2px solid ' + (idx===0?'#0284c7':'#e2e8f0') + ';background:' + (idx===0?'#f0f9ff':'#ffffff') + ';cursor:pointer;">' +
+        '<div style="font-size:11px;font-weight:800;color:#0284c7;">FOLDER ' + f.no + '</div>' +
+        '<div style="font-size:14px;font-weight:700;color:#0f172a;margin:2px 0;">' + f.title + '</div>' +
+        '<div style="font-size:11px;color:#475569;">' + f.desc + '</div></button>';
+    }).join('');
+
+    root.innerHTML =
+      '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px;">' +
+      '<div><span style="font-size:11px;font-weight:800;color:#0284c7;">MERO-SEWA V7.3 MASTER · LIVE OPERATIONS</span>' +
+      '<h3 style="margin:2px 0 0;font-size:18px;color:#0f172a;">Worker & Seller 6-Folder Control Center</h3></div>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
+      '<select id="nsewa-ws-dist-select" style="padding:7px 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:12px;background:#fff;">' + distOpts + '</select>' +
+      '<input id="nsewa-ws-filter-input" type="text" placeholder="नाम, सीप वा फोन खोज्नुहोस्..." style="padding:7px 11px;border:1px solid #cbd5e1;border-radius:8px;font-size:12px;min-width:170px;" />' +
+      '<button type="button" onclick="window.nsewaExportWsCsv()" style="padding:7px 12px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#0f172a;font-size:12px;font-weight:600;cursor:pointer;">⬇ CSV</button>' +
+      '<button type="button" id="nsewa-ws-btn-sync" style="padding:7px 13px;border-radius:8px;border:none;background:#0f172a;color:#fff;font-size:12px;font-weight:600;cursor:pointer;">↻ Sync</button></div></div>' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:10px;margin-bottom:14px;">' +
+      '<div style="padding:11px;border-radius:10px;background:#fffbeb;border:1px solid #fde68a;"><div style="font-size:11px;color:#92400e;font-weight:600;">जाँच बाँकी</div><div id="kpi-ws-pending" style="font-size:19px;font-weight:800;color:#b45309;">0</div></div>' +
+      '<div style="padding:11px;border-radius:10px;background:#f0fdf4;border:1px solid #bbf7d0;"><div style="font-size:11px;color:#166534;font-weight:600;">स्वीकृत Worker</div><div id="kpi-ws-workers" style="font-size:19px;font-weight:800;color:#15803d;">0</div></div>' +
+      '<div style="padding:11px;border-radius:10px;background:#eff6ff;border:1px solid #bfdbfe;"><div style="font-size:11px;color:#1e40af;font-weight:600;">स्वीकृत Seller</div><div id="kpi-ws-sellers" style="font-size:19px;font-weight:800;color:#1d4ed8;">0</div></div>' +
+      '<div style="padding:11px;border-radius:10px;background:#fef2f2;border:1px solid #fecaca;"><div style="font-size:11px;color:#991b1b;font-weight:600;">रोक / प्रतिबन्ध</div><div id="kpi-ws-restricted" style="font-size:19px;font-weight:800;color:#dc2626;">0</div></div></div>' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));gap:9px;margin-bottom:14px;">' + tabsHtml + '</div>' +
+      '<div id="nsewa-ws-list-box" style="border:1px solid #e2e8f0;border-radius:12px;background:#fff;min-height:90px;overflow:hidden;"></div>';
+
+    target.parentNode.insertBefore(root, target.nextSibling);
+    root.querySelectorAll('button[data-ws-folder-tab]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        root.querySelectorAll('button[data-ws-folder-tab]').forEach(function(b) { b.style.borderColor = '#e2e8f0'; b.style.background = '#ffffff'; });
+        btn.style.borderColor = '#0284c7';
+        btn.style.background = '#f0f9ff';
+        activeTab = btn.dataset.wsFolderTab;
+        refreshWsCenter();
+      });
+    });
+    document.getElementById('nsewa-ws-filter-input').addEventListener('input', renderWsRows);
+    document.getElementById('nsewa-ws-dist-select').addEventListener('change', renderWsRows);
+    document.getElementById('nsewa-ws-btn-sync').addEventListener('click', refreshWsCenter);
+    refreshWsCenter();
+  }
+
+  window.addEventListener('load', function() {
+    setTimeout(function() {
+      initPaymentMasterBridge();
+      bindRegistrationToSupabase();
+      initEnterpriseWsCenter();
+    }, 500);
+  });
+})();
 </script>
-</body></html>
+</body>
+</html>

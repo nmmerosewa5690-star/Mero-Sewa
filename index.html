@@ -6717,12 +6717,333 @@ window.nsewaCeoExportAuditTrail=function(){if(!rows.length){alert('Export गर
     document.getElementById('nsewa-ws-btn-sync').addEventListener('click', refreshWsCenter);
     refreshWsCenter();
   }
+  // ==========================================================================
+  // 4. STORE & MARKETPLACE V7.7 ENTERPRISE (MODAL FORM + PHOTO UPLOAD + 7 TABS)
+  // ==========================================================================
+  var STORE_TABS = [
+    { id: 'PRODUCTS', no: '01', title: 'Products & Catalog', desc: 'सामान थप्नुहोस्, फोटो अपलोड, Edit र स्टक' },
+    { id: 'APPROVALS', no: '02', title: 'Seller Approvals', desc: 'विक्रेताले हालेका नयाँ सामान स्वीकृत/अस्वीकृत' },
+    { id: 'ORDERS', no: '03', title: 'Orders & Delivery', desc: 'ग्राहक अर्डर ट्र्याकिङ, डेलिभरी र प्रिन्ट बिल' },
+    { id: 'LOWSTOCK', no: '04', title: 'Low-Stock Alerts', desc: '५ भन्दा कम मौज्दात भएका सामान तुरुन्तै भर्नुहोस्' },
+    { id: 'COUPONS', no: '05', title: 'Growth & Coupons', desc: 'कुपन कोड, फ्ल्यास सेल र डिस्काउन्ट व्यवस्थापन' },
+    { id: 'SUPPORT', no: '06', title: 'Support & Returns', desc: 'ग्राहकका गुनासा, फिर्ता अनुरोध र जवाफ' },
+    { id: 'SUMMARY', no: '07', title: 'Marketplace KPIs', desc: 'कुल बिक्री (GMV) र १० Workspace अवस्था' }
+  ];
+
+  var activeStoreTab = 'PRODUCTS';
+  var storeProducts = [];
+  var storeOrders = [];
+  var storeCoupons = [];
+  var storeTickets = [];
+
+  function upgradeWorkspaceDirectoryToConnected() {
+    document.querySelectorAll('span, div, badge').forEach(function(el) {
+      if (el.childNodes.length === 1) {
+        var t = el.textContent.trim();
+        if (t === 'PARTIAL' || t === 'PENDING') {
+          el.textContent = 'CONNECTED';
+          el.style.background = 'rgba(34,197,94,0.18)';
+          el.style.color = '#4ade80';
+          el.style.borderColor = 'rgba(34,197,94,0.4)';
+        }
+      }
+    });
+    document.querySelectorAll('div, span').forEach(function(el) {
+      if (el.childNodes.length === 1 && el.textContent.trim() === 'Connected' && el.previousElementSibling) el.previousElementSibling.textContent = '10';
+      if (el.childNodes.length === 1 && (el.textContent.trim() === 'Partial' || el.textContent.trim() === 'Pending') && el.previousElementSibling) el.previousElementSibling.textContent = '0';
+    });
+  }
+
+  // आधुनिक Pop-up Modal Form (सामान थप्न वा Edit गर्न)
+  window.nsewaOpenProductModal = function(prodId) {
+    var existing = prodId ? storeProducts.find(function(x) { return x.id === prodId; }) : null;
+    var oldModal = document.getElementById('nsewa-prod-modal');
+    if (oldModal) oldModal.remove();
+
+    var modal = document.createElement('div');
+    modal.id = 'nsewa-prod-modal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(2,6,23,0.82);z-index:99999;display:flex;align-items:center;justify-content:center;padding:16px;';
+    modal.innerHTML =
+      '<div style="width:100%;max-width:440px;background:#0f172a;border:1px solid #38bdf8;border-radius:14px;padding:18px;color:#f8fafc;box-shadow:0 20px 50px rgba(0,0,0,0.6);">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">' +
+      '<strong style="font-size:15px;color:#38bdf8;">' + (existing ? '✎ सामान सम्पादन (Edit Product)' : '+ नयाँ सामान थप्नुहोस्') + '</strong>' +
+      '<button type="button" onclick="document.getElementById(\'nsewa-prod-modal\').remove()" style="background:none;border:none;color:#94a3b8;font-size:18px;cursor:pointer;">✕</button></div>' +
+      '<div style="display:grid;gap:9px;font-size:12px;">' +
+      '<input id="np-title" type="text" placeholder="सामानको नाम *" value="' + (existing ? existing.title : '') + '" style="padding:8px 10px;border-radius:8px;border:1px solid #475569;background:#1e293b;color:#fff;" />' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
+      '<input id="np-cat" type="text" placeholder="श्रेणी (Electronics/Hardware)" value="' + (existing ? existing.category : 'General') + '" style="padding:8px 10px;border-radius:8px;border:1px solid #475569;background:#1e293b;color:#fff;" />' +
+      '<input id="np-price" type="number" placeholder="मूल्य रू. *" value="' + (existing ? existing.price : '') + '" style="padding:8px 10px;border-radius:8px;border:1px solid #475569;background:#1e293b;color:#fff;" /></div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' +
+      '<input id="np-stock" type="number" placeholder="स्टक संख्या *" value="' + (existing ? existing.stock_qty : '10') + '" style="padding:8px 10px;border-radius:8px;border:1px solid #475569;background:#1e293b;color:#fff;" />' +
+      '<input id="np-disc" type="number" placeholder="छुट % (0-100)" value="' + (existing ? existing.discount_percent : '0') + '" style="padding:8px 10px;border-radius:8px;border:1px solid #475569;background:#1e293b;color:#fff;" /></div>' +
+      '<textarea id="np-desc" rows="2" placeholder="सामानको छोटो विवरण..." style="padding:8px 10px;border-radius:8px;border:1px solid #475569;background:#1e293b;color:#fff;">' + (existing ? (existing.description || '') : '') + '</textarea>' +
+      '<div style="padding:8px;border:1px dashed #475569;border-radius:8px;background:#1e293b;">' +
+      '<div style="font-size:11px;color:#94a3b8;margin-bottom:4px;">📷 फोटो छान्नुहोस् (वा तल URL लेख्नुहोस्):</div>' +
+      '<input id="np-file" type="file" accept="image/*" style="font-size:11px;color:#cbd5e1;width:100%;margin-bottom:6px;" />' +
+      '<input id="np-img" type="text" placeholder="Image URL (स्वतः भरिन्छ)" value="' + (existing ? (existing.image_url || '') : '') + '" style="width:100%;box-sizing:border-box;padding:6px 8px;border-radius:6px;border:1px solid #475569;background:#0f172a;color:#fff;font-size:11px;" /></div>' +
+      '<button type="button" id="np-save-btn" style="margin-top:4px;padding:10px;border:none;border-radius:8px;background:#10b981;color:#fff;font-weight:700;font-size:13px;cursor:pointer;">💾 सुरक्षित गर्नुहोस् (Save Product)</button></div></div>';
+
+    document.body.appendChild(modal);
+
+    document.getElementById('np-save-btn').addEventListener('click', async function() {
+      var sb = getSb();
+      if (!sb) return;
+      var btn = this;
+      var title = document.getElementById('np-title').value.trim();
+      var price = Number(document.getElementById('np-price').value);
+      if (title.length < 2 || isNaN(price) || price < 0) { alert('कृपया सामानको नाम र सही मूल्य लेख्नुहोस्।'); return; }
+
+      btn.disabled = true;
+      btn.textContent = 'सेभ हुँदैछ...';
+      var imageUrl = document.getElementById('np-img').value.trim() || null;
+      var fileInput = document.getElementById('np-file');
+
+      if (fileInput && fileInput.files && fileInput.files) {
+        var file = fileInput.files;
+        var filePath = 'prod_' + Date.now() + '_' + file.name.replace(/[^a-zA-Z0-9._-]/g, '');
+        var upRes = await sb.storage.from('nsewa-product-images').upload(filePath, file);
+        if (!upRes.error) {
+          var pub = sb.storage.from('nsewa-product-images').getPublicUrl(filePath);
+          if (pub && pub.data && pub.data.publicUrl) imageUrl = pub.data.publicUrl;
+        }
+      }
+
+      var payload = {
+        title: title,
+        category: document.getElementById('np-cat').value.trim() || 'General',
+        price: price,
+        stock_qty: parseInt(document.getElementById('np-stock').value || '0', 10),
+        discount_percent: Number(document.getElementById('np-disc').value || '0'),
+        description: document.getElementById('np-desc').value.trim() || null,
+        image_url: imageUrl,
+        approval_status: 'APPROVED',
+        is_active: true
+      };
+
+      var res = existing
+        ? await sb.from('nsewa_store_products').update(payload).eq('id', existing.id)
+        : await sb.from('nsewa_store_products').insert(payload);
+
+      if (res.error) { alert('Error: ' + res.error.message); btn.disabled = false; btn.textContent = '💾 सुरक्षित गर्नुहोस्'; }
+      else { modal.remove(); refreshStoreCenter(); }
+    });
+  };
+  window.nsewaStoreDeleteProduct = async function(prodId) {
+    if (!confirm('के तपाईं यो सामान स्थायी रूपमा हटाउन चाहनुहुन्छ?')) return;
+    var sb = getSb();
+    var res = await sb.from('nsewa_store_products').delete().eq('id', prodId);
+    if (res.error) alert('Error: ' + res.error.message);
+    else refreshStoreCenter();
+  };
+
+  window.nsewaStoreApproveProduct = async function(prodId, status) {
+    var sb = getSb();
+    var res = await sb.from('nsewa_store_products').update({ approval_status: status, is_active: status === 'APPROVED' }).eq('id', prodId);
+    if (res.error) alert('Error: ' + res.error.message);
+    else refreshStoreCenter();
+  };
+
+  window.nsewaStoreUpdateOrder = async function(orderId, status) {
+    var sb = getSb();
+    var note = prompt('अर्डर [' + status + '] को कैफियत लेख्नुहोस्:', 'Updated by CEO');
+    if (note === null) return;
+    var res = await sb.from('nsewa_store_orders').update({ order_status: status, admin_note: note, updated_at: new Date().toISOString() }).eq('id', orderId);
+    if (res.error) alert('Error: ' + res.error.message);
+    else refreshStoreCenter();
+  };
+
+  window.nsewaPrintOrderBill = function(orderId) {
+    var o = storeOrders.find(function(x) { return x.id === orderId; });
+    if (!o) return;
+    var w = window.open('', '_blank', 'width=420,height=600');
+    w.document.write('<html><body style="font-family:sans-serif;padding:20px;"><h2>MERO-SEWA INVOICE</h2><hr>' +
+      '<p><strong>Order Code:</strong> ' + (o.order_code || o.id) + '<br>' +
+      '<strong>Customer:</strong> ' + o.customer_name + ' (' + o.customer_phone + ')<br>' +
+      '<strong>Address:</strong> ' + o.delivery_district + ', ' + o.delivery_address + '<br>' +
+      '<strong>Payment:</strong> ' + o.payment_method + ' | <strong>Status:</strong> ' + o.order_status + '</p><hr>' +
+      '<h3>Total Amount: रू. ' + o.total_amount + '</h3><p style="font-size:12px;color:#555;">धन्यवाद! Mero-Sewa Marketplace</p>' +
+      '<script>window.print();<\/script></body></html>');
+    w.document.close();
+  };
+
+  window.nsewaStoreAddCoupon = async function() {
+    var sb = getSb();
+    var code = prompt('कुपन कोड (जस्तै: MERO10, DASHAIN20):');
+    if (!code || code.trim().length < 2) return;
+    var title = prompt('अफरको शीर्षक:', 'Special Discount Offer');
+    if (!title) return;
+    var val = prompt('छुट प्रतिशत (%):', '10');
+    if (!val || isNaN(Number(val))) return;
+    var res = await sb.from('nsewa_store_coupons').insert({
+      code: code.trim().toUpperCase(), title: title.trim(), discount_type: 'PERCENT', discount_value: Number(val), is_active: true
+    });
+    if (res.error) alert('Error: ' + res.error.message);
+    else { alert('नयाँ कुपन सक्रिय भयो!'); refreshStoreCenter(); }
+  };
+
+  window.nsewaSupportReply = async function(ticketId, status) {
+    var sb = getSb();
+    var reply = prompt('ग्राहकलाई पठाउने जवाफ / समाधान लेख्नुहोस्:');
+    if (!reply) return;
+    var res = await sb.from('nsewa_support_tickets').update({ status: status, ceo_reply: reply.trim(), updated_at: new Date().toISOString() }).eq('id', ticketId);
+    if (res.error) alert('Error: ' + res.error.message);
+    else refreshStoreCenter();
+  };
+
+  async function refreshStoreCenter() {
+    var box = document.getElementById('nsewa-store-list-box');
+    var sb = getSb();
+    if (!box) return;
+    if (!sb) { box.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;">Supabase जडान हुँदैछ... ↻ Sync थिच्नुहोस्।</div>'; return; }
+
+    box.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;">स्टोर डेटा लोड हुँदैछ...</div>';
+
+    if (activeStoreTab === 'PRODUCTS' || activeStoreTab === 'LOWSTOCK' || activeStoreTab === 'APPROVALS') {
+      var pRes = await sb.from('nsewa_store_products').select('*').order('created_at', { ascending: false });
+      storeProducts = pRes.data || [];
+      var q = (document.getElementById('nsewa-store-search')?.value || '').toLowerCase().trim();
+      var list = storeProducts;
+      if (activeStoreTab === 'LOWSTOCK') list = storeProducts.filter(function(p) { return p.stock_qty <= 5; });
+      if (activeStoreTab === 'APPROVALS') list = storeProducts.filter(function(p) { return p.approval_status === 'PENDING'; });
+      if (q) list = list.filter(function(p) { return (p.title || '').toLowerCase().indexOf(q) !== -1 || (p.category || '').toLowerCase().indexOf(q) !== -1; });
+
+      var topBar = '<div style="padding:10px 14px;background:rgba(16,185,129,0.14);border-bottom:1px solid rgba(16,185,129,0.3);display:flex;justify-content:space-between;align-items:center;">' +
+        '<strong style="color:#34d399;font-size:12px;">📦 ' + activeStoreTab + ' (' + list.length + ')</strong>' +
+        '<button type="button" onclick="window.nsewaOpenProductModal(null)" style="padding:5px 11px;border:none;border-radius:6px;background:#10b981;color:#fff;font-size:11px;font-weight:700;cursor:pointer;">+ नयाँ सामान थप्नुहोस्</button></div>';
+
+      if (!list.length) {
+        box.innerHTML = topBar + '<div style="padding:24px;text-align:center;color:#94a3b8;">हाल कुनै सामान भेटिएन। माथिको "+ नयाँ सामान थप्नुहोस्" थिचेर पहिलो सामान राख्नुहोस्।</div>';
+        return;
+      }
+
+      box.innerHTML = topBar + list.map(function(p) {
+        var stockBadge = p.stock_qty <= 5 ? 'background:rgba(239,68,68,0.2);color:#fca5a5;' : 'background:rgba(34,197,94,0.2);color:#86efac;';
+        var thumb = p.image_url ? '<img src="' + p.image_url + '" style="width:38px;height:38px;object-fit:cover;border-radius:6px;border:1px solid #475569;" />' : '';
+        var approvalBtns = p.approval_status === 'PENDING'
+          ? '<button type="button" onclick="window.nsewaStoreApproveProduct(\'' + p.id + '\',\'APPROVED\')" style="padding:5px 9px;border:none;border-radius:6px;background:#16a34a;color:#fff;font-size:11px;cursor:pointer;">✓ Approve</button>' +
+            '<button type="button" onclick="window.nsewaStoreApproveProduct(\'' + p.id + '\',\'REJECTED\')" style="padding:5px 9px;border:none;border-radius:6px;background:#64748b;color:#fff;font-size:11px;cursor:pointer;">✕ Reject</button>'
+          : '';
+        return '<div style="padding:11px 14px;border-bottom:1px solid rgba(148,163,184,0.2);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">' +
+          '<div style="display:flex;align-items:center;gap:10px;">' + thumb +
+          '<div><strong style="color:#fff;font-size:13px;">' + p.title + '</strong> <span style="font-size:10px;padding:2px 7px;border-radius:6px;background:rgba(56,189,248,0.2);color:#7dd3fc;">' + p.category + '</span>' +
+          '<div style="font-size:12px;color:#cbd5e1;margin-top:3px;">मूल्य: <strong>रू. ' + p.price + '</strong> (छुट: ' + p.discount_percent + '%) • स्टक: <span style="padding:1px 7px;border-radius:999px;font-size:11px;' + stockBadge + '">' + p.stock_qty + ' थान</span></div></div></div>' +
+          '<div style="display:flex;gap:5px;flex-wrap:wrap;">' + approvalBtns +
+          '<button type="button" onclick="window.nsewaOpenProductModal(\'' + p.id + '\')" style="padding:5px 10px;border:none;border-radius:6px;background:#0284c7;color:#fff;font-size:11px;cursor:pointer;">✎ Edit</button>' +
+          '<button type="button" onclick="window.nsewaStoreDeleteProduct(\'' + p.id + '\')" style="padding:5px 10px;border:none;border-radius:6px;background:#dc2626;color:#fff;font-size:11px;cursor:pointer;">🗑 Delete</button></div></div>';
+      }).join('');
+      return;
+    }
+
+    if (activeStoreTab === 'ORDERS') {
+      var oRes = await sb.from('nsewa_store_orders').select('*').order('created_at', { ascending: false }).limit(50);
+      storeOrders = oRes.data || [];
+      if (!storeOrders.length) { box.innerHTML = '<div style="padding:24px;text-align:center;color:#94a3b8;">हालसम्म कुनै ग्राहक अर्डर प्राप्त भएको छैन।</div>'; return; }
+      box.innerHTML = storeOrders.map(function(o) {
+        return '<div style="padding:11px 14px;border-bottom:1px solid rgba(148,163,184,0.2);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">' +
+          '<div><strong style="color:#38bdf8;">' + (o.order_code || 'ORD') + '</strong> · <strong style="color:#fff;">' + o.customer_name + '</strong> (' + o.customer_phone + ')' +
+          '<div style="font-size:12px;color:#cbd5e1;margin-top:3px;">ठेगाना: ' + o.delivery_district + ' - ' + o.delivery_address + ' • कुल: <strong>रू. ' + o.total_amount + '</strong> (' + o.payment_method + ') • अवस्था: <strong>' + o.order_status + '</strong></div></div>' +
+          '<div style="display:flex;gap:5px;flex-wrap:wrap;">' +
+          '<button type="button" onclick="window.nsewaPrintOrderBill(\'' + o.id + '\')" style="padding:4px 8px;border:1px solid #475569;border-radius:5px;background:#1e293b;color:#fff;font-size:11px;cursor:pointer;">🖨 Bill</button>' +
+          '<button type="button" onclick="window.nsewaStoreUpdateOrder(\'' + o.id + '\',\'CONFIRMED\')" style="padding:4px 8px;border:none;border-radius:5px;background:#0284c7;color:#fff;font-size:11px;cursor:pointer;">Confirm</button>' +
+          '<button type="button" onclick="window.nsewaStoreUpdateOrder(\'' + o.id + '\',\'SHIPPED\')" style="padding:4px 8px;border:none;border-radius:5px;background:#d97706;color:#fff;font-size:11px;cursor:pointer;">Ship</button>' +
+          '<button type="button" onclick="window.nsewaStoreUpdateOrder(\'' + o.id + '\',\'DELIVERED\')" style="padding:4px 8px;border:none;border-radius:5px;background:#16a34a;color:#fff;font-size:11px;cursor:pointer;">Deliver</button>' +
+          '<button type="button" onclick="window.nsewaStoreUpdateOrder(\'' + o.id + '\',\'CANCELLED\')" style="padding:4px 8px;border:none;border-radius:5px;background:#dc2626;color:#fff;font-size:11px;cursor:pointer;">Cancel</button></div></div>';
+      }).join('');
+      return;
+    }
+
+    if (activeStoreTab === 'COUPONS') {
+      var cRes = await sb.from('nsewa_store_coupons').select('*').order('created_at', { ascending: false });
+      storeCoupons = cRes.data || [];
+      var cTop = '<div style="padding:10px 14px;background:rgba(168,85,247,0.14);border-bottom:1px solid rgba(168,85,247,0.3);display:flex;justify-content:space-between;align-items:center;">' +
+        '<strong style="color:#c084fc;font-size:12px;">🎟️ Growth & Marketing Coupons (' + storeCoupons.length + ')</strong>' +
+        '<button type="button" onclick="window.nsewaStoreAddCoupon()" style="padding:5px 11px;border:none;border-radius:6px;background:#9333ea;color:#fff;font-size:11px;font-weight:700;cursor:pointer;">+ नयाँ कुपन थप्नुहोस्</button></div>';
+      box.innerHTML = cTop + (storeCoupons.length ? storeCoupons.map(function(c) {
+        return '<div style="padding:10px 14px;border-bottom:1px solid rgba(148,163,184,0.2);display:flex;justify-content:space-between;">' +
+          '<div><strong style="color:#c084fc;">' + c.code + '</strong> — ' + c.title + ' (छुट: <strong>' + c.discount_value + '%</strong>)</div>' +
+          '<span style="font-size:11px;color:#4ade80;">' + (c.is_active ? 'ACTIVE' : 'INACTIVE') + '</span></div>';
+      }).join('') : '<div style="padding:22px;text-align:center;color:#94a3b8;">हाल कुनै कुपन कोड छैन। "+ नयाँ कुपन थप्नुहोस्" बाट बनाउनुहोस्।</div>');
+      return;
+    }
+
+    if (activeStoreTab === 'SUPPORT') {
+      var tRes = await sb.from('nsewa_support_tickets').select('*').order('created_at', { ascending: false }).limit(50);
+      storeTickets = tRes.data || [];
+      if (!storeTickets.length) { box.innerHTML = '<div style="padding:24px;text-align:center;color:#94a3b8;">हाल कुनै ग्राहक गुनासो वा फिर्ता अनुरोध (Ticket) खुला छैन।</div>'; return; }
+      box.innerHTML = storeTickets.map(function(t) {
+        return '<div style="padding:11px 14px;border-bottom:1px solid rgba(148,163,184,0.2);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">' +
+          '<div><strong style="color:#38bdf8;">' + (t.ticket_no || 'TKT') + '</strong> [' + t.ticket_type + '] · <strong style="color:#fff;">' + t.subject + '</strong>' +
+          '<div style="font-size:12px;color:#cbd5e1;">ग्राहक: ' + t.customer_name + ' • अवस्था: <strong>' + t.status + '</strong></div></div>' +
+          '<button type="button" onclick="window.nsewaSupportReply(\'' + t.id + '\',\'RESOLVED\')" style="padding:5px 10px;border:none;border-radius:6px;background:#16a34a;color:#fff;font-size:11px;cursor:pointer;">✓ जवाफ दिनुहोस् / Resolve</button></div>';
+      }).join('');
+      return;
+    }
+
+    if (activeStoreTab === 'SUMMARY') {
+      var mRes = await sb.rpc('nsewa_marketplace_master_overview');
+      var m = mRes.data || {};
+      box.innerHTML = '<div style="padding:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;">' +
+        '<div style="padding:10px;border-radius:8px;background:rgba(30,41,59,0.8);"><div style="font-size:11px;color:#94a3b8;">कुल सामान (Products)</div><strong style="font-size:18px;color:#38bdf8;">' + (m.products_total || 0) + '</strong></div>' +
+        '<div style="padding:10px;border-radius:8px;background:rgba(30,41,59,0.8);"><div style="font-size:11px;color:#94a3b8;">कुल अर्डर (Orders)</div><strong style="font-size:18px;color:#34d399;">' + (m.orders_total || 0) + '</strong></div>' +
+        '<div style="padding:10px;border-radius:8px;background:rgba(30,41,59,0.8);"><div style="font-size:11px;color:#94a3b8;">Delivered बिक्री (GMV)</div><strong style="font-size:18px;color:#fbbf24;">रू. ' + (m.gmv_delivered || 0) + '</strong></div>' +
+        '<div style="padding:10px;border-radius:8px;background:rgba(30,41,59,0.8);"><div style="font-size:11px;color:#94a3b8;">सक्रिय कुपन / Tickets</div><strong style="font-size:18px;color:#c084fc;">' + (m.active_coupons || 0) + ' / ' + (m.open_tickets || 0) + '</strong></div></div>';
+    }
+  }
+
+  function initStoreControlCenter() {
+    if (document.getElementById('nsewa-enterprise-store')) return;
+    var allEls = Array.from(document.querySelectorAll('h1, h2, h3, h4, div, span'));
+    var target = allEls.find(function(el) {
+      return el.childNodes.length === 1 && el.textContent.trim().indexOf('OPERATIONS WORKSPACE DIRECTORY') !== -1;
+    });
+    if (!target) return;
+
+    var root = document.createElement('div');
+    root.id = 'nsewa-enterprise-store';
+    root.style.cssText = 'width:100%;box-sizing:border-box;margin:14px 0;padding:12px;border-radius:10px;background:rgba(15,23,42,0.85);border:1px solid rgba(16,185,129,0.4);color:#f8fafc;';
+
+    var tabsHtml = STORE_TABS.map(function(t, idx) {
+      var st = idx === 0 ? 'border:1.5px solid #10b981;background:rgba(16,185,129,0.18);' : 'border:1px solid rgba(148,163,184,0.28);background:rgba(30,41,59,0.7);';
+      return '<button type="button" data-store-tab="' + t.id + '" style="text-align:left;padding:9px 11px;border-radius:8px;color:#f8fafc;cursor:pointer;line-height:1.25;' + st + '">' +
+        '<div style="display:flex;justify-content:space-between;"><span style="font-size:11px;font-weight:700;color:#34d399;">' + t.no + ' · ' + t.title + '</span><span style="font-size:10px;color:#94a3b8;">खोल्नुहोस् ›</span></div>' +
+        '<div style="font-size:11px;color:#cbd5e1;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + t.desc + '</div></button>';
+    }).join('');
+
+    root.innerHTML =
+      '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">' +
+      '<span style="font-size:12px;font-weight:700;color:#34d399;">🛒 STORE & MARKETPLACE V7.7 (०७ / ०७ · 10 WORKSPACES CONNECTED)</span>' +
+      '<div style="display:flex;gap:6px;">' +
+      '<input id="nsewa-store-search" type="text" placeholder="सामान वा श्रेणी खोज्नुहोस्..." style="padding:5px 9px;border:1px solid #475569;border-radius:6px;font-size:11px;width:160px;background:#0f172a;color:#f8fafc;" />' +
+      '<button type="button" id="nsewa-store-sync" style="padding:5px 10px;border:none;border-radius:6px;background:#10b981;color:#fff;font-size:11px;cursor:pointer;">↻ Sync</button></div></div>' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-bottom:10px;">' + tabsHtml + '</div>' +
+      '<div id="nsewa-store-list-box" style="border:1px solid rgba(148,163,184,0.22);border-radius:8px;background:rgba(15,23,42,0.55);color:#e2e8f0;font-size:12px;overflow:hidden;"></div>';
+
+    target.parentNode.insertBefore(root, target);
+    root.querySelectorAll('button[data-store-tab]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        root.querySelectorAll('button[data-store-tab]').forEach(function(b) { b.style.border = '1px solid rgba(148,163,184,0.28)'; b.style.background = 'rgba(30,41,59,0.7)'; });
+        btn.style.border = '1.5px solid #10b981';
+        btn.style.background = 'rgba(16,185,129,0.18)';
+        activeStoreTab = btn.dataset.storeTab;
+        refreshStoreCenter();
+      });
+    });
+    document.getElementById('nsewa-store-search').addEventListener('input', refreshStoreCenter);
+    document.getElementById('nsewa-store-sync').addEventListener('click', refreshStoreCenter);
+    refreshStoreCenter();
+  }
 
   window.addEventListener('load', function() {
-    setTimeout(initEnterpriseWsCenter, 300);
+    setTimeout(function() {
+      initEnterpriseWsCenter();
+      initStoreControlCenter();
+      upgradeWorkspaceDirectoryToConnected();
+    }, 350);
     setInterval(function() {
       if (!document.getElementById('nsewa-enterprise-ws')) initEnterpriseWsCenter();
-    }, 1000);
+      if (!document.getElementById('nsewa-enterprise-store')) initStoreControlCenter();
+      upgradeWorkspaceDirectoryToConnected();
+    }, 1200);
   });
 })();
 </script>

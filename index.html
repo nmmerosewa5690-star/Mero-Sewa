@@ -7091,5 +7091,252 @@ window.nsewaCeoExportAuditTrail=function(){if(!rows.length){alert('Export गर
   });
 })();
 </script>
+  <!-- ========================================================================= -->
+<!-- MERO-SEWA V12.0 | HYPER-DYNAMIC STORE COMMAND COCKPIT (ADD-ONLY)          -->
+<!-- ========================================================================= -->
+<style>
+  @keyframes nsewaPulseDot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(1.25); }
+  }
+  @keyframes nsewaDrawerReveal {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .nsewa-live-dot {
+    width: 8px; height: 8px; border-radius: 50%; background: #10b981;
+    display: inline-block; animation: nsewaPulseDot 1.6s infinite;
+    box-shadow: 0 0 8px #10b981;
+  }
+  .nsewa-v12-drawer { animation: nsewaDrawerReveal 0.24s cubic-bezier(0.16, 1, 0.3, 1); }
+  .nsewa-v12-card {
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%) !important;
+  }
+  .nsewa-v12-card:hover {
+    transform: translateY(-2px);
+    border-color: #10b981 !important;
+    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.22);
+  }
+  .nsewa-v12-badge {
+    font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 999px;
+    background: rgba(16, 185, 129, 0.18); color: #34d399;
+    border: 1px solid rgba(52, 211, 153, 0.35);
+  }
+  #nsewa-toast-stack {
+    position: fixed; bottom: 18px; right: 18px; z-index: 999999;
+    display: flex; flex-direction: column; gap: 8px; pointer-events: none;
+  }
+  .nsewa-toast-item {
+    background: #064e3b; color: #ecfdf5; border: 1px solid #10b981;
+    padding: 10px 14px; border-radius: 10px; font-size: 12px; font-weight: 600;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5); animation: nsewaDrawerReveal 0.2s ease-out;
+  }
+</style>
+
+<script>
+(function() {
+  function showToast(msg) {
+    var stack = document.getElementById('nsewa-toast-stack');
+    if (!stack) {
+      stack = document.createElement('div');
+      stack.id = 'nsewa-toast-stack';
+      document.body.appendChild(stack);
+    }
+    var item = document.createElement('div');
+    item.className = 'nsewa-toast-item';
+    item.textContent = '✓ ' + msg;
+    stack.appendChild(item);
+    setTimeout(function() { item.remove(); }, 2800);
+  }
+
+  function getSbV12() {
+    if (window.supabaseClient && typeof window.supabaseClient.from === 'function') return window.supabaseClient;
+    if (window._supabase && typeof window._supabase.from === 'function') return window._supabase;
+    if (window.sb && typeof window.sb.from === 'function') return window.sb;
+    for (var k in window) {
+      try {
+        if (window[k] && typeof window[k] === 'object' && typeof window[k].from === 'function') return window[k];
+      } catch (e) {}
+    }
+    return null;
+  }
+
+  // १. एक क्लिकमा स्टक +1 / -1 अपडेट गर्ने
+  window.nsewaV12StepStock = async function(prodId, step) {
+    var sb = getSbV12();
+    if (!sb) return;
+    var res = await sb.from('nsewa_store_products').select('stock_qty,title').eq('id', prodId).single();
+    if (res.error || !res.data) return;
+    var next = Math.max(0, (res.data.stock_qty || 0) + step);
+    await sb.from('nsewa_store_products').update({ stock_qty: next, updated_at: new Date().toISOString() }).eq('id', prodId);
+    showToast(res.data.title + ' को स्टक: ' + next + ' थान');
+    var syncBtn = document.getElementById('nsewa-store-sync');
+    if (syncBtn) syncBtn.click();
+    syncV12Telemetry();
+  };
+
+  // २. लाइभ KPI, स्टक स्वास्थ्य बार र ब्याच काउन्टर अपडेट गर्ने
+  async function syncV12Telemetry() {
+    var sb = getSbV12();
+    if (!sb || typeof sb.rpc !== 'function') return;
+    try {
+      var res = await sb.rpc('nsewa_marketplace_master_overview');
+      var m = res.data;
+      if (!m) return;
+      var badges = {
+        PRODUCTS: m.products_total || 0,
+        APPROVALS: m.products_pending || 0,
+        ORDERS: m.orders_total || 0,
+        LOWSTOCK: m.low_stock || 0,
+        COUPONS: m.active_coupons || 0,
+        SUPPORT: m.open_tickets || 0
+      };
+      Object.keys(badges).forEach(function(k) {
+        var el = document.getElementById('v12-badge-' + k);
+        if (el) el.textContent = badges[k];
+      });
+      var total = Math.max(1, m.products_total || 0);
+      var healthyPct = Math.max(0, Math.min(100, Math.round(((total - (m.low_stock || 0)) / total) * 100)));
+      var bar = document.getElementById('v12-health-fill');
+      var barTxt = document.getElementById('v12-health-label');
+      if (bar) bar.style.width = healthyPct + '%';
+      if (barTxt) barTxt.textContent = 'स्टक स्वास्थ्य: ' + healthyPct + '% सन्तुलित · १० / १० विभाग सक्रिय';
+    } catch (e) {}
+  }
+
+  // ३. मुख्य V12 Hyper-Dynamic Cockpit रूपान्तरण
+  function buildV12Cockpit() {
+    var storeBox = document.getElementById('nsewa-enterprise-store');
+    if (!storeBox || storeBox.dataset.v12Built) return;
+
+    var mainHeading = Array.from(document.querySelectorAll('h2')).find(function(el) {
+      return el.textContent.indexOf('STORE & MARKETPLACE') !== -1;
+    });
+    if (!mainHeading) return;
+    var container = mainHeading.closest('section, div[id], .card') || mainHeading.parentElement;
+    if (!container) return;
+
+    storeBox.dataset.v12Built = '1';
+
+    // पुराना छरिएका खण्डहरूलाई सफासँग वर्गीकरण गरी भित्रै सुरक्षित राख्ने
+    var rulesDrawer = document.createElement('div');
+    rulesDrawer.id = 'v12-drawer-rules';
+    rulesDrawer.className = 'nsewa-v12-drawer';
+    rulesDrawer.style.cssText = 'display:none;margin-top:12px;padding:12px;border-radius:10px;background:rgba(15,23,42,0.92);border:1px solid rgba(56,189,248,0.35);';
+
+    var dirDrawer = document.createElement('div');
+    dirDrawer.id = 'v12-drawer-dir';
+    dirDrawer.className = 'nsewa-v12-drawer';
+    dirDrawer.style.cssText = 'display:none;margin-top:12px;padding:12px;border-radius:10px;background:rgba(15,23,42,0.92);border:1px solid rgba(168,85,247,0.35);';
+
+    Array.from(container.children).forEach(function(child) {
+      if (child === mainHeading || child.contains(mainHeading) || child === storeBox || child.contains(storeBox)) return;
+      var txt = child.textContent || '';
+      if (txt.indexOf('Commission') !== -1 || txt.indexOf('Delivery Pricing') !== -1 || txt.indexOf('Marketplace Rules') !== -1) {
+        rulesDrawer.appendChild(child);
+      } else if (txt.indexOf('WORKSPACE DIRECTORY') !== -1 || txt.indexOf('Readiness CSV') !== -1) {
+        dirDrawer.appendChild(child);
+      } else if (txt.indexOf('बजारका दैनिक काम') === -1 && txt.indexOf('Dashboard मा फर्कनुहोस्') === -1) {
+        child.style.display = 'none';
+      }
+    });
+
+    mainHeading.parentNode.insertBefore(storeBox, mainHeading.nextSibling);
+    storeBox.style.cssText = 'width:100%;box-sizing:border-box;margin:10px 0 18px;padding:16px;border-radius:16px;background:linear-gradient(180deg,#0f172a 0%,#090d16 100%);border:1px solid rgba(16,185,129,0.45);color:#f8fafc;box-shadow:0 14px 36px rgba(0,0,0,0.55);';
+
+    // शीर्ष Live Status र Stock Health Bar थप्ने
+    var headerTitle = storeBox.querySelector('strong');
+    if (headerTitle) {
+      headerTitle.innerHTML = '<span class="nsewa-live-dot"></span> &nbsp;MERO-SEWA STORE COMMAND COCKPIT <span style="font-size:10px;padding:2px 7px;border-radius:6px;background:rgba(16,185,129,0.2);color:#34d399;margin-left:6px;">LIVE SYNC</span>';
+    }
+
+    var healthStrip = document.createElement('div');
+    healthStrip.style.cssText = 'margin-bottom:12px;padding:8px 10px;border-radius:9px;background:rgba(30,41,59,0.65);border:1px solid rgba(148,163,184,0.18);';
+    healthStrip.innerHTML =
+      '<div style="display:flex;justify-content:space-between;font-size:11px;color:#cbd5e1;margin-bottom:5px;">' +
+      '<span id="v12-health-label">स्टक स्वास्थ्य: 100% सन्तुलित · १० / १० विभाग सक्रिय</span>' +
+      '<span style="color:#94a3b8;">Shortcut: <strong>/</strong> थिचेर खोज्नुहोस्</span></div>' +
+      '<div style="width:100%;height:6px;background:#1e293b;border-radius:999px;overflow:hidden;">' +
+      '<div id="v12-health-fill" style="width:100%;height:100%;background:linear-gradient(90deg,#10b981,#38bdf8);transition:width 0.4s ease;"></div></div>';
+
+    var tabBtns = Array.from(storeBox.querySelectorAll('button[data-store-tab]'));
+    if (tabBtns.length) {
+      var tabGrid = tabBtns.parentElement;
+      tabGrid.parentNode.insertBefore(healthStrip, tabGrid);
+      tabGrid.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:8px;';
+
+      tabBtns.forEach(function(btn) {
+        var key = btn.dataset.storeTab;
+        var label = (btn.querySelector('span') ? btn.querySelector('span').textContent : btn.textContent).trim();
+        btn.classList.add('nsewa-v12-card');
+        btn.style.cssText = 'padding:10px 12px;border-radius:10px;border:1px solid rgba(148,163,184,0.25);color:#f8fafc;cursor:pointer;text-align:left;';
+        btn.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;gap:6px;"><span style="font-size:11px;font-weight:700;color:#34d399;">' + label + '</span><span id="v12-badge-' + key + '" class="nsewa-v12-badge">0</span></div>';
+        btn.addEventListener('click', function() {
+          rulesDrawer.style.display = 'none';
+          dirDrawer.style.display = 'none';
+          syncV12Telemetry();
+        });
+      });
+
+      // बटन 07: कमिसन र डेलिभरी नियम
+      var btnRules = document.createElement('button');
+      btnRules.type = 'button';
+      btnRules.className = 'nsewa-v12-card';
+      btnRules.style.cssText = 'padding:10px 12px;border-radius:10px;border:1px solid rgba(56,189,248,0.35);color:#f8fafc;cursor:pointer;text-align:left;';
+      btnRules.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:11px;font-weight:700;color:#38bdf8;">07 · कमिसन र डेलिभरी</span><span class="nsewa-v12-badge" style="color:#38bdf8;border-color:rgba(56,189,248,0.4);">⚙</span></div>';
+      btnRules.addEventListener('click', function() {
+        if (typeof window.nsewaCloseStoreDrawer === 'function') window.nsewaCloseStoreDrawer();
+        dirDrawer.style.display = 'none';
+        rulesDrawer.style.display = (rulesDrawer.style.display === 'none') ? 'block' : 'none';
+      });
+      tabGrid.appendChild(btnRules);
+
+      // बटन 08: १० विभाग सूची
+      var btnDir = document.createElement('button');
+      btnDir.type = 'button';
+      btnDir.className = 'nsewa-v12-card';
+      btnDir.style.cssText = 'padding:10px 12px;border-radius:10px;border:1px solid rgba(168,85,247,0.35);color:#f8fafc;cursor:pointer;text-align:left;';
+      btnDir.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:11px;font-weight:700;color:#c084fc;">08 · १० विभाग सूची</span><span class="nsewa-v12-badge" style="color:#c084fc;border-color:rgba(168,85,247,0.4);">10/10</span></div>';
+      btnDir.addEventListener('click', function() {
+        if (typeof window.nsewaCloseStoreDrawer === 'function') window.nsewaCloseStoreDrawer();
+        rulesDrawer.style.display = 'none';
+        dirDrawer.style.display = (dirDrawer.style.display === 'none') ? 'block' : 'none';
+      });
+      tabGrid.appendChild(btnDir);
+    }
+
+    var listBox = document.getElementById('nsewa-store-list-box');
+    if (listBox) {
+      listBox.classList.add('nsewa-v12-drawer');
+      listBox.style.display = 'none';
+    }
+
+    storeBox.appendChild(rulesDrawer);
+    storeBox.appendChild(dirDrawer);
+
+    // किबोर्डमा '/' थिच्दा सर्च बार सक्रिय हुने
+    document.addEventListener('keydown', function(e) {
+      if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+        var sInput = document.getElementById('nsewa-store-search');
+        if (sInput && sInput.offsetParent !== null) {
+          e.preventDefault();
+          sInput.focus();
+        }
+      }
+    });
+
+    syncV12Telemetry();
+  }
+
+  window.addEventListener('load', function() {
+    setTimeout(buildV12Cockpit, 500);
+    setInterval(function() {
+      buildV12Cockpit();
+      syncV12Telemetry();
+    }, 5000);
+  });
+})();
+</script>
 </body>
 </html>

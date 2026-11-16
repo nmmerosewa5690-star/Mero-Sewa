@@ -8496,5 +8496,131 @@ window.nsewaCeoExportAuditTrail=function(){if(!rows.length){alert('Export गर
   setInterval(syncV27Offer, 10000);
 })();
 </script> 
+<!-- ========================================================================= -->
+<!-- MERO-SEWA V27.5 FINAL | 4-POINT CLEANER + BLESSING BUDDHA HEADER ARTWORK  -->
+<!-- ========================================================================= -->
+<style>
+  @keyframes nsewaBuddhaHalo {
+    0%, 100% { filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.55)); }
+    50% { filter: drop-shadow(0 0 14px rgba(251, 191, 36, 0.9)); }
+  }
+  .nsewa-buddha-blessing-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 14px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, rgba(251,191,36,0.14) 0%, rgba(217,119,6,0.22) 50%, rgba(251,191,36,0.14) 100%);
+    border: 1px solid rgba(251, 191, 36, 0.48);
+    color: #fef3c7;
+    margin: 0 auto;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  }
+  .nsewa-buddha-svg {
+    animation: nsewaBuddhaHalo 3.2s infinite ease-in-out;
+    flex-shrink: 0;
+  }
+</style>
+
+<script>
+(function() {
+  var BUDDHA_BLESSING_SVG =
+    '<svg class="nsewa-buddha-svg" width="40" height="40" viewBox="0 0 64 64" fill="none" xmlns="http://w3.org">' +
+      '<defs>' +
+        '<radialGradient id="buddhaHalo" cx="50%" cy="40%" r="50%">' +
+          '<stop offset="0%" stop-color="#fde047" stop-opacity="0.95"/>' +
+          '<stop offset="65%" stop-color="#f59e0b" stop-opacity="0.45"/>' +
+          '<stop offset="100%" stop-color="#b45309" stop-opacity="0"/>' +
+        '</radialGradient>' +
+        '<linearGradient id="buddhaGold" x1="16" y1="10" x2="48" y2="56" gradientUnits="userSpaceOnUse">' +
+          '<stop offset="0%" stop-color="#fef08a"/>' +
+          '<stop offset="50%" stop-color="#f59e0b"/>' +
+          '<stop offset="100%" stop-color="#b45309"/>' +
+        '</linearGradient>' +
+      '</defs>' +
+      /* सुनौलो आभामण्डल (Golden Halo) */
+      '<circle cx="32" cy="24" r="21" fill="url(#buddhaHalo)"/>' +
+      '<circle cx="32" cy="24" r="15" stroke="#fde047" stroke-width="1" stroke-dasharray="2 2" opacity="0.75"/>' +
+      /* उष्णीष र शिर (Head & Ushnisha) */
+      '<circle cx="32" cy="11.5" r="2.8" fill="url(#buddhaGold)"/>' +
+      '<circle cx="32" cy="17.5" r="5.5" fill="url(#buddhaGold)"/>' +
+      /* आशिर्वाद मुद्रामा शरीर र उठेको दाहिने हात (Abhaya Blessing Mudra) */
+      '<path d="M20 44C20 33 25 26 32 26C39 26 44 33 44 44H20Z" fill="url(#buddhaGold)"/>' +
+      /* आशिर्वाद दिइरहेको दाहिने हात */
+      '<path d="M24 33C22 29 22 25 24 23C25.5 22 27 24 27 27V33H24Z" fill="#fef08a" stroke="#b45309" stroke-width="0.8"/>' +
+      '<circle cx="25" cy="27.5" r="1.1" fill="#f59e0b"/>' +
+      /* ध्यान मुद्रामा बायाँ हात */
+      '<path d="M27 39H37C38.5 39 39 41.5 37 42H27C25 41.5 25.5 39 27 39Z" fill="#fde047" stroke="#b45309" stroke-width="0.7"/>' +
+      /* कमलको आसन (Lotus Throne) */
+      '<path d="M15 47C19 44 26 44 32 46C38 44 45 44 49 47C45 51 38 52 32 52C26 52 19 51 15 47Z" fill="url(#buddhaGold)"/>' +
+      '<path d="M22 52C26 50 38 50 42 52C39 55 25 55 22 52Z" fill="#fde047" opacity="0.85"/>' +
+    '</svg>';
+
+  function applyV275CleanAndBuddha() {
+    var shop = document.getElementById('nsewa-live-public-shop');
+    if (!shop) return;
+
+    // 1. १२ वटा SVG श्रेणी आइकनहरू मध्ये केवल १ वटा मात्र राख्ने
+    var allRails = Array.from(shop.querySelectorAll('.nsewa-v27-cat-rail, .nsewa-v24-cat-rail'));
+    for (var i = 1; i < allRails.length; i++) {
+      allRails[i].remove();
+    }
+
+    // 2. 'undefined' ब्यानर र 'लोकप्रिय खोजी' हटाउने
+    var oldOffer = document.getElementById('nsewa-v24-offer-slot');
+    if (oldOffer) oldOffer.remove();
+
+    Array.from(shop.querySelectorAll('div')).forEach(function(el) {
+      if (el.id === 'nsewa-live-public-shop' || el.id === 'nsewa-v27-offer-slot') return;
+      var txt = el.textContent || '';
+      if (txt.indexOf('undefined') !== -1 && txt.indexOf('विशेष छुट') !== -1) {
+        el.remove();
+      } else if (txt.indexOf('लोकप्रिय खोजी:') !== -1 && el.children.length <= 10) {
+        el.remove();
+      }
+    });
+
+    // 3. 'सबै सामान / ❤️ मनपर्ने (0)' को दोहोरिएको पट्टी हटाउने
+    var oldCatBar = document.getElementById('nsewa-pub-cat-bar');
+    if (oldCatBar) oldCatBar.style.display = 'none';
+
+    // 4. मेनु बाहिर रहेका दोहोरिएका 'ट्र्याक' र 'कार्ट' बटन हटाउने
+    var outerCart = document.getElementById('nsewa-pub-cart-btn');
+    if (outerCart) outerCart.style.display = 'none';
+
+    Array.from(shop.querySelectorAll('button')).forEach(function(btn) {
+      if (btn.closest('.nsewa-v27-menu-dd') || btn.id === 'nsewa-v27-mbtn') return;
+      var t = (btn.textContent || '').trim();
+      if (t.indexOf('ट्र्याक') !== -1 || t.indexOf('कार्ट') !== -1) {
+        btn.style.display = 'none';
+      }
+    });
+
+    // 5. हेडबारको बीचको खाली ठाउँमा भगवान गौतम बुद्धको आशिर्वाद चित्र राख्ने
+    var topHeader = shop.firstElementChild;
+    if (topHeader && !document.getElementById('nsewa-buddha-header-center')) {
+      var buddhaCenter = document.createElement('div');
+      buddhaCenter.id = 'nsewa-buddha-header-center';
+      buddhaCenter.className = 'nsewa-buddha-blessing-badge';
+      buddhaCenter.innerHTML =
+        BUDDHA_BLESSING_SVG +
+        '<div style="line-height:1.25;">' +
+          '<div style="font-size:12px;font-weight:800;color:#fde047;">☸️ शान्ति, समृद्धि र शुभ किनमेल</div>' +
+          '<div style="font-size:10px;color:#fef3c7;opacity:0.9;">भगवान गौतम बुद्धको आशिर्वाद सहित · Mero-Sewa</div>' +
+        '</div>';
+
+      // बायाँ शीर्षक र दायाँ कन्ट्रोल बारको ठीक बीचमा राख्ने
+      if (topHeader.children.length >= 2) {
+        topHeader.insertBefore(buddhaCenter, topHeader.children[1]);
+      } else {
+        topHeader.appendChild(buddhaCenter);
+      }
+    }
+  }
+
+  applyV275CleanAndBuddha();
+  setInterval(applyV275CleanAndBuddha, 300);
+})();
+</script>
 </body>
 </html>

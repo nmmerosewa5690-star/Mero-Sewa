@@ -7683,146 +7683,58 @@ window.nsewaCeoExportAuditTrail=function(){if(!rows.length){alert('Export गर
 })();
 </script>
 <!-- ========================================================================= -->
-<!-- MERO-SEWA V17.0 FINAL | ANTI-LOGOUT, SESSION SHIELD & SUB-PANEL MEMORY    -->
+<!-- MERO-SEWA V20.0 | HARD ANTI-LOGOUT & SESSION LOCK (CLEAN & FOCUSED)       -->
 <!-- ========================================================================= -->
 <script>
 (function() {
-  var STATE_KEY = 'nsewa_v17_dash_state';
+  var TOKEN_BACKUP = 'nsewa_ceo_token_backup_v20';
+  window.__allowManualLogout = false;
 
-  function getSbFinal() {
-    if (window.supabaseClient && window.supabaseClient.auth) return window.supabaseClient;
-    if (window._supabase && window._supabase.auth) return window._supabase;
-    if (window.sb && window.sb.auth) return window.sb;
-    if (window.supabase && window.supabase.auth) return window.supabase;
+  // १. तपाईंले आफैँ Logout बटन थिचेको मात्र पहिचान गर्ने
+  document.addEventListener('click', function(e) {
+    var btn = e.target.closest('button, a, [role="button"]');
+    if (!btn) return;
+    var txt = (btn.textContent || '').trim();
+    if (/logout|लगआउट|sign\s*out/i.test(txt)) {
+      window.__allowManualLogout = true;
+      localStorage.removeItem(TOKEN_BACKUP);
+    }
+  }, true);
+
+  // २. Supabase को स्थानीय टोकन सधैँ सुरक्षित राख्ने र आकस्मिक signOut रोक्ने
+  function lockSupabaseSession() {
+    // ब्राउजरको स्थानीय Supabase टोकन फेला पार्ने
+    var sbKey = Object.keys(localStorage).find(function(k) {
+      return k.indexOf('sb-') === 0 && k.indexOf('-auth-token') !== -1;
+    });
+    if (sbKey && localStorage.getItem(sbKey)) {
+      localStorage.setItem(TOKEN_BACKUP, JSON.stringify({ key: sbKey, val: localStorage.getItem(sbKey) }));
+    } else if (!window.__allowManualLogout && localStorage.getItem(TOKEN_BACKUP)) {
+      // यदि पुरानो कोडले रिफ्रेसमा टोकन मेटायो भने तुरुन्तै फिर्ता राख्ने
+      try {
+        var saved = JSON.parse(localStorage.getItem(TOKEN_BACKUP));
+        if (saved && saved.key && saved.val) localStorage.setItem(saved.key, saved.val);
+      } catch (e) {}
+    }
+
+    // window मा भेटिने Supabase client को signOut लक गर्ने
     for (var k in window) {
       try {
-        if (window[k] && typeof window[k] === 'object' && window[k].auth && typeof window[k].auth.getSession === 'function') {
-          return window[k];
+        var obj = window[k];
+        if (obj && typeof obj === 'object' && obj.auth && typeof obj.auth.signOut === 'function' && !obj.auth.__lockedV20) {
+          obj.auth.__lockedV20 = true;
+          var realSignOut = obj.auth.signOut.bind(obj.auth);
+          obj.auth.signOut = function(opts) {
+            return window.__allowManualLogout ? realSignOut(opts) : Promise.resolve({ error: null });
+          };
         }
       } catch (e) {}
     }
-    return null;
   }
 
-  function hasStoredAuthToken() {
-    try {
-      return Object.keys(localStorage).some(function(k) {
-        return k.indexOf('sb-') === 0 && k.indexOf('-auth-token') !== -1 && localStorage.getItem(k);
-      });
-    } catch (e) { return false; }
-  }
-
-  function saveState(patch) {
-    try {
-      var cur = JSON.parse(localStorage.getItem(STATE_KEY) || '{}');
-      Object.assign(cur, patch, { ts: Date.now() });
-      localStorage.setItem(STATE_KEY, JSON.stringify(cur));
-    } catch (e) {}
-  }
-
-  function getSavedState() {
-    try {
-      return JSON.parse(localStorage.getItem(STATE_KEY) || '{}');
-    } catch (e) { return {}; }
-  }
-
-  // १. रिफ्रेस हुँदा सेसन जोगाउने र भित्री ड्यासबोर्ड प्यानल पुनः खोल्ने
-  async function syncAndRestoreSession(forceRefresh) {
-    var sb = getSbFinal();
-    if (!sb || !sb.auth) return;
-
-    try {
-      var res = await sb.auth.getSession();
-      var session = res && res.data ? res.data.session : null;
-
-      if ((!session || forceRefresh) && hasStoredAuthToken()) {
-        var ref = await sb.auth.refreshSession();
-        if (ref && ref.data && ref.data.session) session = ref.data.session;
-      }
-
-      if (session && session.user) {
-        window.currentUser = session.user;
-        window.nsewaCurrentUser = session.user;
-        document.documentElement.dataset.nsewaAuthReady = '1';
-
-        var st = getSavedState();
-        if (st.inDashboard) {
-          restoreActivePanel(st.subPanel || 'MAIN');
-        }
-      }
-    } catch (e) {}
-  }
-
-  // २. प्रयोगकर्ता कुन ड्यासबोर्ड / प्यानलमा छन् भनी ट्र्याक गर्ने
-  function bindNavigationMemory() {
-    document.addEventListener('click', function(e) {
-      var btn = e.target.closest('button, a, [role="button"]');
-      if (!btn) return;
-      var txt = (btn.textContent || '').trim();
-
-      if (/logout|लगआउट|sign\s*out/i.test(txt)) {
-        localStorage.removeItem(STATE_KEY);
-        return;
-      }
-
-      if (txt.indexOf('STORE & MARKETPLACE') !== -1 || txt.indexOf('Store & Marketplace') !== -1) {
-        saveState({ inDashboard: true, subPanel: 'STORE' });
-      } else if (txt.indexOf('WORKER & SELLER') !== -1 || txt.indexOf('Worker & Seller') !== -1) {
-        saveState({ inDashboard: true, subPanel: 'WORKER' });
-      } else if (txt.indexOf('PAYMENT') !== -1 || txt.indexOf('Payment Operations') !== -1) {
-        saveState({ inDashboard: true, subPanel: 'PAYMENT' });
-      } else if (txt.indexOf('CEO Dashboard') !== -1 || txt.indexOf('CEO Panel') !== -1) {
-        saveState({ inDashboard: true, subPanel: 'MAIN' });
-      }
-    }, true);
-  }
-
-  // ३. रिफ्रेस पछि ठ्याक्कै अघिल्लो प्यानल पुनः खोल्ने
-  function restoreActivePanel(subPanel) {
-    var tries = 0;
-    var timer = setInterval(function() {
-      tries++;
-
-      // यदि मुख्य CEO Dashboard लुकेको छ भने खोल्ने
-      var openCeoBtn = Array.from(document.querySelectorAll('button, a')).find(function(b) {
-        var t = (b.textContent || '').trim();
-        return (t === 'CEO Dashboard' || t.indexOf('CEO Panel') !== -1) && b.offsetParent !== null;
-      });
-      if (openCeoBtn) openCeoBtn.click();
-
-      // यदि भित्री प्यानल (Store / Worker / Payment) खुलेको थियो भने त्यो पनि खोल्ने
-      if (subPanel === 'STORE' && !document.getElementById('nsewa-enterprise-store')) {
-        var stBtn = Array.from(document.querySelectorAll('button, a')).find(function(b) {
-          return (b.textContent || '').indexOf('Store & Marketplace') !== -1 && b.offsetParent !== null;
-        });
-        if (stBtn) stBtn.click();
-      } else if (subPanel === 'WORKER' && !document.getElementById('nsewa-enterprise-ws')) {
-        var wsBtn = Array.from(document.querySelectorAll('button, a')).find(function(b) {
-          return (b.textContent || '').indexOf('Worker & Seller') !== -1 && b.offsetParent !== null;
-        });
-        if (wsBtn) wsBtn.click();
-      }
-
-      if (tries >= 12) clearInterval(timer);
-    }, 300);
-  }
-
-  // पेज लोड हुने बित्तिकै तुरुन्तै सेसन सुरक्षित गर्ने
-  if (hasStoredAuthToken()) {
-    document.documentElement.dataset.nsewaAuthReady = '1';
-  }
-
-  bindNavigationMemory();
-  syncAndRestoreSession(false);
-
-  window.addEventListener('DOMContentLoaded', function() { syncAndRestoreSession(false); });
-  window.addEventListener('load', function() {
-    setTimeout(function() { syncAndRestoreSession(false); }, 250);
-    setTimeout(function() { syncAndRestoreSession(false); }, 1000);
-    // हरेक १० मिनेटमा सेसन स्वतः ताजा राख्ने (Keep-Alive)
-    setInterval(function() { syncAndRestoreSession(true); }, 600000);
-  });
+  lockSupabaseSession();
+  setInterval(lockSupabaseSession, 300);
 })();
-</script>  
+</script>
 </body>
 </html>

@@ -8668,23 +8668,226 @@ window.nsewaCeoExportAuditTrail=function(){if(!rows.length){alert('Export गर
     pointer-events: none;
   }
 </style>
+<style>
+  /* १. बाहिरी दोहोरिएको ब्याकग्राउन्ड (२ वटा बक्स) लाई पूर्ण रूपमा हटाएर पारदर्शी बनाउने */
+  #bazar, #store, .nsewa-shop-wrapper, #nsewa-live-public-shop > div:first-child,
+  #nsewa-live-public-shop > div:nth-child(2) {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  /* २. पूरै बजारलाई एउटै एकीकृत 5D प्रिमियम ग्लास ब्याकग्राउन्ड दिने */
+  #nsewa-live-public-shop {
+    background: linear-gradient(160deg, #0b1324 0%, #060a14 55%, #0c162c 100%) !important;
+    border: 1px solid rgba(56, 189, 248, 0.35) !important;
+    border-radius: 22px !important;
+    padding: 16px !important;
+    box-shadow: 0 22px 45px rgba(0, 0, 0, 0.8), inset 0 1px 1px rgba(255, 255, 255, 0.18) !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    margin: 0 auto !important;
+    overflow: hidden !important;
+  }
+
+  /* ३. आइकन लाइन (कम्प्युटरमा १२ वटै बराबर ग्रिड, मोबाइलमा स्मूथ स्क्रोल) */
+  .nsewa-v27-cat-rail, .nsewa-v24-cat-rail {
+    display: grid !important;
+    grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    padding: 12px 6px !important;
+    background: rgba(15, 23, 42, 0.4) !important;
+    border-radius: 18px !important;
+    border: 1px solid rgba(255, 255, 255, 0.07) !important;
+    margin-top: 10px !important;
+  }
+
+  /* ४. ५D फ्लोटिङ आइकन कार्ड */
+  .nsewa-v28-5d-card {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 7px !important;
+    padding: 10px 4px !important;
+    border-radius: 16px !important;
+    background: linear-gradient(180deg, rgba(30, 41, 59, 0.65) 0%, rgba(15, 23, 42, 0.92) 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.5) !important;
+    cursor: pointer !important;
+    transition: all 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+    user-select: none !important;
+  }
+
+  .nsewa-v28-5d-card:hover, .nsewa-v28-5d-card.active {
+    transform: translateY(-6px) scale(1.05) !important;
+    background: linear-gradient(180deg, rgba(56, 189, 248, 0.25) 0%, rgba(15, 23, 42, 0.98) 100%) !important;
+    border-color: #38bdf8 !important;
+    box-shadow: 0 14px 24px -4px rgba(56, 189, 248, 0.55), inset 0 1px 2px rgba(255, 255, 255, 0.5) !important;
+  }
+
+  /* ५. ५D चमकदार आइकन बक्स (5D Glossy & Neon Depth Orb) */
+  .nsewa-v28-5d-orb {
+    position: relative !important;
+    width: 50px !important;
+    height: 50px !important;
+    border-radius: 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 
+      0 10px 20px -4px rgba(0, 0, 0, 0.85),
+      inset 0 2px 4px rgba(255, 255, 255, 0.8),
+      inset 0 -5px 9px rgba(0, 0, 0, 0.55) !important;
+    overflow: hidden !important;
+  }
+
+  /* माथिबाट सिसा जस्तै टल्किने लेयर */
+  .nsewa-v28-5d-orb::before {
+    content: '' !important;
+    position: absolute !important;
+    top: -45% !important;
+    left: -45% !important;
+    width: 190% !important;
+    height: 95% !important;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.05) 100%) !important;
+    transform: rotate(-28deg) !important;
+    pointer-events: none !important;
+  }
+
+  .nsewa-v28-5d-orb svg {
+    width: 28px !important;
+    height: 28px !important;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.6)) !important;
+    z-index: 2 !important;
+  }
+
+  .nsewa-v28-5d-label {
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    color: #f8fafc !important;
+    text-align: center !important;
+    line-height: 1.2 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
+  }
+
+  .nsewa-v28-5d-card.active .nsewa-v28-5d-label {
+    color: #38bdf8 !important;
+  }
+
+  /* ६. मोबाइल र ट्याब्लेटमा १००% फिट हुने रेस्पोन्सिभ सेटिङ */
+  @media (max-width: 1024px) {
+    .nsewa-v27-cat-rail, .nsewa-v24-cat-rail {
+      display: flex !important;
+      flex-wrap: nowrap !important;
+      overflow-x: auto !important;
+      gap: 10px !important;
+      padding: 10px 8px !important;
+      -webkit-overflow-scrolling: touch !important;
+      scrollbar-width: none !important;
+    }
+    .nsewa-v27-cat-rail::-webkit-scrollbar, .nsewa-v24-cat-rail::-webkit-scrollbar {
+      display: none !important;
+    }
+    .nsewa-v28-5d-card {
+      flex: 0 0 76px !important;
+      min-width: 76px !important;
+    }
+  }
+
+  @media (max-width: 640px) {
+    #nsewa-live-public-shop {
+      padding: 12px 10px !important;
+      border-radius: 16px !important;
+    }
+    #nsewa-live-public-shop input,
+    #nsewa-live-public-shop select,
+    #nsewa-live-public-shop button {
+      max-width: 100% !important;
+      box-sizing: border-box !important;
+    }
+    .nsewa-v28-5d-card {
+      flex: 0 0 72px !important;
+      min-width: 72px !important;
+      padding: 8px 4px !important;
+    }
+    .nsewa-v28-5d-orb {
+      width: 44px !important;
+      height: 44px !important;
+      border-radius: 14px !important;
+    }
+    .nsewa-v28-5d-label {
+      font-size: 10px !important;
+    }
+  }
+</style>
+
 <script>
 (function() {
+  // १२ वटा एकदमै नयाँ युनिक (Unique Multi-Color) ५D आइकनहरू
   window.nsewaV28Icons = [
-    { key: 'ALL', label: 'सबै सामान', bg: 'linear-gradient(135deg,#10b981,#047857)', svg: '<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg>' },
-    { key: 'Electronics', label: 'इलेक्ट्रोनिक्स', bg: 'linear-gradient(135deg,#0ea5e9,#1d4ed8)', svg: '<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="4" width="20" height="14" rx="2.5"/><path d="M8 21h8M12 18v3"/></svg>' },
-    { key: 'Hardware', label: 'हार्डवेयर', bg: 'linear-gradient(135deg,#f59e0b,#b45309)', svg: '<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>' },
-    { key: 'Grocery', label: 'किराना पसल', bg: 'linear-gradient(135deg,#22c55e,#15803d)', svg: '<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="9" cy="21" r="1.2"/><circle cx="20" cy="21" r="1.2"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>' },
-    { key: 'Agriculture', label: 'कृषि औजार', bg: 'linear-gradient(135deg,#84cc16,#3f6212)', svg: '<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22V12M12 12C12 7 7 4 3 4c0 5 3 8 9 8zm0 0c0-5 5-8 9-8 0 5-3 8-9 8z"/></svg>' },
-    { key: 'Mobile', label: 'मोबाइल/ग्याजेट', bg: 'linear-gradient(135deg,#a855f7,#581c87)', svg: '<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="6" y="2" width="12" height="20" rx="2.5"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>' },
-    { key: 'Home', label: 'घरायसी सामान', bg: 'linear-gradient(135deg,#14b8a6,#0f766e)', svg: '<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>' },
-    { key: 'Fashion', label: 'फेसन/कपडा', bg: 'linear-gradient(135deg,#ec4899,#9d174d)', svg: '<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20.38 3.46L16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></svg>' },
-    { key: 'Construction', label: 'निर्माण सामग्री', bg: 'linear-gradient(135deg,#f97316,#9a3412)', svg: '<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M2 12h20M12 6v6M7 12v6M17 12v6"/></svg>' },
-    { key: 'Auto', label: 'अटो पार्ट्स', bg: 'linear-gradient(135deg,#ef4444,#991b1b)', svg: '<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M12 3v6M12 15v6M3 12h6M15 12h6"/></svg>' },
-    { key: 'Health', label: 'स्वास्थ्य/मेडिकल', bg: 'linear-gradient(135deg,#06b6d4,#155e75)', svg: '<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/><rect x="3" y="3" width="18" height="18" rx="4"/></svg>' },
-    { key: 'Stationery', label: 'स्टेशनरी', bg: 'linear-gradient(135deg,#6366f1,#312e81)', svg: '<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>' }
-  ];
-})();
+    { 
+      key: 'ALL', 
+      label: 'सबै सामान', 
+      bg: 'linear-gradient(135deg, #10b981 0%, #059669 50%, #064e3b 100%)', 
+      svg: '<svg viewBox="0 0 24 24" fill="none"><path d="M12 2L20 6.5V17.5L12 22L4 17.5V6.5L12 2Z" fill="#ffffff"/><path d="M12 2L20 6.5L12 11L4 6.5L12 2Z" fill="#a7f3d0"/><path d="M12 11V22L20 17.5V6.5L12 11Z" fill="#34d399"/></svg>' 
+    },
+    { 
+      key: 'Electronics', 
+      label: 'इलेक्ट्रोनिक्स', 
+      bg: 'linear-gradient(135deg, #38bdf8 0%, #2563eb 55%, #1e3a8a 100%)', 
+      svg: '<svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="12" rx="2.5" fill="#ffffff"/><rect x="5" y="6" width="14" height="8" rx="1" fill="#1e40af"/><path d="M13 7.5L10.5 10.5H12.5L11.5 13L14 10H12L13 7.5Z" fill="#fde047"/><path d="M7 19.5H17M12 16V19.5" stroke="#bae6fd" stroke-width="2.3" stroke-linecap="round"/></svg>' 
+    },
+    { 
+      key: 'Hardware', 
+      label: 'हार्डवेयर', 
+      bg: 'linear-gradient(135deg, #fbbf24 0%, #ea580c 60%, #7c2d12 100%)', 
+      svg: '<svg viewBox="0 0 24 24" fill="none"><path d="M14.5 3.5L20.5 9.5L18 12L15.5 9.5L8 17L10.5 19.5L8 22L2 16L4.5 13.5L7 16L14.5 8.5L12 6L14.5 3.5Z" fill="#ffffff"/><circle cx="17.5" cy="6.5" r="2.5" fill="#fde047"/></svg>' 
+    },
+    { 
+      key: 'Grocery', 
+      label: 'किराना पसल', 
+      bg: 'linear-gradient(135deg, #4ade80 0%, #16a34a 60%, #14532d 100%)', 
+      svg: '<svg viewBox="0 0 24 24" fill="none"><path d="M5 8H19L17.5 19.5C17.4 20.3 16.7 21 15.8 21H8.2C7.3 21 6.6 20.3 6.5 19.5L5 8Z" fill="#ffffff"/><path d="M8.5 8V6C8.5 4.1 10.1 2.5 12 2.5C13.9 2.5 15.5 4.1 15.5 6V8" stroke="#fef08a" stroke-width="2.4" stroke-linecap="round"/><circle cx="10" cy="13" r="1.5" fill="#ef4444"/><circle cx="14.5" cy="14.5" r="1.8" fill="#f59e0b"/></svg>' 
+    },
+    { 
+      key: 'Agriculture', 
+      label: 'कृषि औजार', 
+      bg: 'linear-gradient(135deg, #a3e635 0%, #65a30d 60%, #365314 100%)', 
+      svg: '<svg viewBox="0 0 24 24" fill="none"><circle cx="17.5" cy="6.5" r="3" fill="#fde047"/><path d="M12 21V11" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round"/><path d="M12 13C12 7.5 7 4.5 3 4.5C3 10 6 13 12 13Z" fill="#ffffff"/><path d="M12 11C12 6.5 16.5 4 20.5 4C20.5 8.5 17.5 11 12 11Z" fill="#dcfce7"/></svg>' 
+    },
+    { 
+      key: 'Mobile', 
+      label: 'मोबाइल/ग्याजेट', 
+      bg: 'linear-gradient(135deg, #c084fc 0%, #9333ea 55%, #4c1d95 100%)', 
+      svg: '<svg viewBox="0 0 24 24" fill="none"><rect x="6" y="2" width="12" height="20" rx="3" fill="#ffffff"/><rect x="8" y="4.5" width="8" height="13" rx="1.5" fill="#6b21a8"/><path d="M10.5 9.5L13.5 11L10.5 12.5V9.5Z" fill="#fde047"/><circle cx="12" cy="19.5" r="1.1" fill="#6b21a8"/></svg>' 
+    },
+    { 
+      key: 'Home', 
+      label: 'घरायसी सामान', 
+      bg: 'linear-gradient(135deg, #2dd4bf 0%, #0d9488 55%, #115e59 100%)', 
+      svg: '<svg viewBox="0 0 24 24" fill="none"><path d="M3 11L12 3.5L21 11V19.5C21 20.3 20.3 21 19.5 21H4.5C3.7 21 3 20.3 3 19.5V11Z" fill="#ffffff"/><path d="M2 11.5L12 3L22 11.5" stroke="#fef08a" stroke-width="2.4" stroke-linecap="round"/><rect x="9.5" y="13.5" width="5" height="7.5" rx="1" fill="#0f766e"/></svg>' 
+    },
+    { 
+      key: 'Fashion', 
+      label: 'फेसन/कपडा', 
+      bg: 'linear-gradient(135deg, #f472b6 0%, #db2777 55%, #831843 100%)', 
+      svg: '<svg viewBox="0 0 24 24" fill="none"><path d="M12 6C13.4 6 14.5 4.9 14.5 3.5C14.5 2.1 13.4 1 12 1C10.8 1 9.8 1.8 9.6 2.9" stroke="#fde047" stroke-width="2.2" stroke-linecap="round"/><path d="M12 6L3 12.5C2.2 13.1 2.6 14.5 3.6 14.5H20.4C21.4 14.5 21.8 13.1 21 12.5L12 6Z" fill="#ffffff"/><path d="M5 14.5H19V19.5C19 20.6 18.1 21.5 17 21.5H7C5.9 21.5 5 20.6 5 19.5V14.5Z" fill="#fbcfe8"/></svg>' 
+    },
+    { 
+      key: 'Construction', 
+      label: 'निर्माण सामग्री', 
+      bg: 'linear-gradient(135deg, #fb923c 0%, #ea580c 55%, #7c2d12 100%)', 
+      svg: '<svg viewBox="0 0 24 24" fill="none"><path d="M4 14C4 9.6 7.6 6 12 6C16.4 6 20 9.6 20 14H4Z" fill="#ffffff"/><path d="M12 6V14" stroke="#f59e0b" stroke-width="2.2"/><rect x="2.5" y="14" width="19" height="3" rx="1.5" fill="#fde047"/><path d="M6 19.5H18" stroke="#fed7aa" stroke-width="2.2" stroke-linecap="round"/></svg>' 
+    },
+    { 
+      key: 'Auto', 
+      label: 'अटो पार्ट्स', 
+      bg: 'linear-gradient(135deg, #f87171 0%, #dc2626 55%, #7f1d1d 100%)', 
 </script>
 <script>
 (function() {
@@ -8696,7 +8899,6 @@ window.nsewaCeoExportAuditTrail=function(){if(!rows.length){alert('Export गर
     try { return Object.assign(def, JSON.parse(localStorage.getItem(DELIV_KEY) || '{}')); } catch (e) { return def; }
   };
 
-  // ५. CEO निगरानी डेलिभरी प्रणाली
   window.nsewaOpenCeoDeliverySystem = function() {
     document.getElementById('nsewa-v27-dd')?.classList.remove('open');
     document.getElementById('nsewa-v28-deliv-modal')?.remove();
@@ -8747,7 +8949,6 @@ window.nsewaCeoExportAuditTrail=function(){if(!rows.length){alert('Export गर
     }
   };
 
-  // ६ र ८. विक्रेता (Seller Only) पोर्टल
   window.nsewaOpenSellerOnlyPortal = function() {
     document.getElementById('nsewa-v27-dd')?.classList.remove('open');
     document.getElementById('nsewa-v28-seller-modal')?.remove();
@@ -8784,7 +8985,6 @@ window.nsewaCeoExportAuditTrail=function(){if(!rows.length){alert('Export गर
     });
   };
 
-  // ८. ३-तह अर्डर पुष्टि फंसन (Level-3 CEO Approval)
   window.nsewaAdvanceOrderLevel = function(lvl) {
     localStorage.setItem(ORDER_LVL_KEY, String(lvl));
     alert('✓ अर्डर प्रणाली Level-' + lvl + ' (अन्तिम CEO प्रमाणीकरण) मा अपडेट भयो!');
@@ -8796,22 +8996,27 @@ window.nsewaCeoExportAuditTrail=function(){if(!rows.length){alert('Export गर
   function enforceV282Verified() {
     var shop = document.getElementById('nsewa-live-public-shop');
     if (shop) {
-      // 1. बाहिरी दोहोरिएको ब्याकग्राउन्ड हटाएर एउटै प्रिमियम ब्याकग्राउन्ड बनाउने
-      var parentWrap = shop.parentElement;
-      if (parentWrap && parentWrap.id !== 'bazar' && parentWrap.id !== 'store' && parentWrap.tagName !== 'MAIN' && parentWrap.tagName !== 'BODY') {
-        parentWrap.style.background = 'transparent';
-        parentWrap.style.border = 'none';
-        parentWrap.style.boxShadow = 'none';
-        parentWrap.style.padding = '0';
+      // १. बाहिरी दोहोरिएको ब्याकग्राउन्ड (२ वटा बक्स) हटाएर एउटै बनाउने
+      var p = shop.parentElement;
+      for (var step = 0; step < 3; step++) {
+        if (p && p.tagName === 'DIV' && p.id !== 'bazar' && p.id !== 'store') {
+          p.style.setProperty('background', 'transparent', 'important');
+          p.style.setProperty('border', 'none', 'important');
+          p.style.setProperty('box-shadow', 'none', 'important');
+          p.style.setProperty('padding', '0', 'important');
+          p = p.parentElement;
+        } else {
+          break;
+        }
       }
 
-      // 2. शीर्षकलाई "सस्तो-सस्तोमा सामान किन्नुहोस्" बनाउने
+      // २. शीर्षकलाई "सस्तो-सस्तोमा सामान किन्नुहोस्" बनाउने
       var titleEl = shop.querySelector('strong');
       if (titleEl && titleEl.textContent.indexOf('Live Marketplace') !== -1) {
         titleEl.innerHTML = '🛍️ सस्तो-सस्तोमा सामान किन्नुहोस् <span style="font-size:11px;font-weight:600;color:#fde047;">(नेपालभरि डेलिभरी)</span>';
       }
 
-      // 3. सच्याइएको Array Index (rails) बाट 5D Glossy आइकन लगाउने
+      // ३. पुरानो आइकन हटाएर नयाँ Unique 5D Glossy आइकन लगाउने
       var rails = Array.from(shop.querySelectorAll('.nsewa-v27-cat-rail, .nsewa-v24-cat-rail'));
       for (var i = 1; i < rails.length; i++) rails[i].remove();
 
@@ -8821,8 +9026,9 @@ window.nsewaCeoExportAuditTrail=function(){if(!rows.length){alert('Export गर
         mainRail.innerHTML = window.nsewaV28Icons.map(function(c, idx) {
           return '<div class="nsewa-v28-5d-card ' + (idx === 0 ? 'active' : '') + '" data-v27-cat="' + c.key + '">' +
             '<div class="nsewa-v28-5d-orb" style="background:' + c.bg + ';">' + c.svg + '</div>' +
-            '<span style="font-size:11px;font-weight:800;color:#f8fafc;">' + c.label + '</span></div>';
+            '<span class="nsewa-v28-5d-label">' + c.label + '</span></div>';
         }).join('');
+
         mainRail.querySelectorAll('.nsewa-v28-5d-card').forEach(function(card) {
           card.addEventListener('click', function() {
             mainRail.querySelectorAll('.nsewa-v28-5d-card').forEach(function(x) { x.classList.remove('active'); });
@@ -8832,7 +9038,7 @@ window.nsewaCeoExportAuditTrail=function(){if(!rows.length){alert('Export गर
         });
       }
 
-      // 4. बाहिरका ट्र्याक/कार्ट बटन र undefined ब्यानर हटाउने
+      // ४. बाहिरका अनावश्यक बटन र ब्यानर हटाउने
       var outerCart = document.getElementById('nsewa-pub-cart-btn');
       if (outerCart) outerCart.style.display = 'none';
       var oldCatBar = document.getElementById('nsewa-pub-cat-bar');
@@ -8846,7 +9052,7 @@ window.nsewaCeoExportAuditTrail=function(){if(!rows.length){alert('Export गर
         if (t.indexOf('ट्र्याक') !== -1 || t.indexOf('कार्ट') !== -1) btn.style.display = 'none';
       });
 
-      // 5 & 6. मेनु भित्र "🏪 विक्रेता (Seller Only)" र CEO डेलिभरी प्रणाली जोड्ने
+      // ५ र ६. मेनु भित्र "🏪 विक्रेता (Seller Only)" र CEO डेलिभरी प्रणाली जोड्ने
       var dd = document.getElementById('nsewa-v27-dd');
       if (dd) {
         if (!document.getElementById('nsewa-v28-seller-menu-item')) {
@@ -8872,7 +9078,7 @@ window.nsewaCeoExportAuditTrail=function(){if(!rows.length){alert('Export गर
       }
     }
 
-    // 8. CEO Dashboard मा "Level-3 अन्तिम अर्डर पुष्टि" बटन जोड्ने
+    // ८. CEO Dashboard मा "Level-3 अन्तिम अर्डर पुष्टि" बटन जोड्ने
     var ceoStore = document.getElementById('nsewa-enterprise-store');
     if (ceoStore && !document.getElementById('nsewa-v28-lvl3-btn')) {
       var syncBtn = document.getElementById('nsewa-store-sync');

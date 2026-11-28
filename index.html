@@ -2594,7 +2594,7 @@ header.sticky.top-0{z-index:100!important}
             const filtered = sourceProducts.filter(p => currentDistrictFilter === 'ALL' || p.district === currentDistrictFilter);
 
             if (filtered.length === 0) {
-                container.innerHTML = `<div class="col-span-full text-center py-8 text-gray-500 font-bold">${currentDistrictFilter} जिल्लामा सामान उपलब्ध छैन।</div>`;
+                container.innerHTML = `<div class="col-span-full text-center py-8 text-gray-500 font-bold">${window.nsewaEscapeHtml(currentDistrictFilter)} जिल्लामा सामान उपलब्ध छैन।</div>`;
                 return;
             }
 
@@ -4739,7 +4739,7 @@ create or replace function public.nsewa_ceo_analytics_summary(p_period text defa
 declare v_start timestamptz; v_step interval; v_slots integer; v_users bigint; v_views bigint; v_visitors bigint; v_searches bigint; v_top jsonb; v_series jsonb;
 begin
  if coalesce(auth.jwt()->'app_metadata'->>'role','') <> 'ceo' then raise exception 'CEO access required'; end if;
- if p_period not in ('day','week','month','year') then raise exception 'Invalid period'; end if;
+ if p_period is null or p_period not in ('day','week','month','year') then raise exception 'Invalid period'; end if;
  v_start:=case p_period when 'day' then date_trunc('day',now()) when 'week' then date_trunc('day',now())-interval '6 days' when 'month' then date_trunc('day',now())-interval '29 days' else date_trunc('month',now())-interval '11 months' end;
  v_step:=case p_period when 'day' then interval '1 hour' when 'year' then interval '1 month' else interval '1 day' end;
  v_slots:=case p_period when 'day' then 24 when 'week' then 7 when 'month' then 30 else 12 end;
@@ -4754,7 +4754,7 @@ grant execute on function public.nsewa_ceo_analytics_summary(text) to authentica
 let period='day';let loading=false;
 function status(t,ok=false){const e=$('nsewa-analytics-status');if(e){e.textContent=t;e.className='text-xs '+(ok?'text-emerald-300':'text-amber-200');}}
 function visitorId(){let id=localStorage.getItem('nsewa-analytics-visitor');if(!id){const a=new Uint8Array(18);crypto.getRandomValues(a);id=Array.from(a,x=>x.toString(16).padStart(2,'0')).join('');localStorage.setItem('nsewa-analytics-visitor',id);}return id;}
-async function record(type,term){try{if(!window.nsewaSupabaseReady||!window.nsewaSupabase)return;await window.nsewaSupabase.from('website_analytics_events').insert({event_type:type,visitor_id:visitorId(),search_term:term||null});}catch(e){console.debug('Analytics event not recorded',e);}}
+async function record(type,term){try{if(!window.nsewaSupabaseReady||!window.nsewaSupabase)return;if(!['page_view','search'].includes(type))return;const safeTerm=type==='search'?String(term||'').replace(/[\u0000-\u001f\u007f]/g,' ').replace(/\s+/g,' ').trim().slice(0,120):null;await window.nsewaSupabase.from('website_analytics_events').insert({event_type:type,visitor_id:visitorId(),search_term:safeTerm||null});}catch(e){console.debug('Analytics event not recorded',e);}}
 function draw(data){$('nsewa-an-total-users').textContent=Number(data.total_users||0).toLocaleString('en-US');$('nsewa-an-page-views').textContent=Number(data.page_views||0).toLocaleString('en-US');$('nsewa-an-visitors').textContent=Number(data.unique_visitors||0).toLocaleString('en-US');$('nsewa-an-search-count').textContent=Number(data.search_count||0).toLocaleString('en-US');$('nsewa-an-page-caption').textContent=({day:'आज',week:'पछिल्लो ७ दिन',month:'पछिल्लो ३० दिन',year:'पछिल्लो १२ महिना'})[period];$('nsewa-an-period-label').textContent=({day:'आजको घण्टागत गतिविधि',week:'पछिल्लो ७ दिनको गतिविधि',month:'पछिल्लो ३० दिनको गतिविधि',year:'१२ महिनाको गतिविधि'})[period];const chart=$('nsewa-analytics-chart');chart.replaceChildren();const rows=Array.isArray(data.series)?data.series:[];const max=Math.max(1,...rows.map(x=>Number(x.views)||0));rows.forEach(r=>{const wrap=document.createElement('div');wrap.className='flex min-w-0 flex-1 flex-col items-center justify-end gap-1';wrap.title=(r.label||'')+': '+r.views+' views';const bar=document.createElement('div');bar.className='w-full max-w-7 rounded-t bg-gradient-to-t from-blue-700 to-cyan-300';bar.style.height=Math.max(3,(Number(r.views)||0)/max*150)+'px';bar.style.minHeight='3px';wrap.appendChild(bar);const label=document.createElement('span');label.className='w-full truncate text-center text-[9px] text-slate-400';label.textContent=r.label||'';wrap.appendChild(label);chart.appendChild(wrap);});const list=$('nsewa-an-top-searches');list.replaceChildren();const tops=Array.isArray(data.top_searches)?data.top_searches:[];if(!tops.length){const li=document.createElement('li');li.className='text-sm text-slate-400';li.textContent='यो अवधिमा खोजी तथ्याङ्क भेटिएन।';list.appendChild(li);}tops.forEach((x,i)=>{const li=document.createElement('li');li.className='flex items-center justify-between gap-2 rounded-lg bg-slate-900 px-3 py-2 text-sm';const t=document.createElement('span');t.className='min-w-0 truncate';t.textContent=(i+1)+'. '+x.term;const n=document.createElement('b');n.className='shrink-0 text-cyan-200';n.textContent=Number(x.count||0).toLocaleString();li.append(t,n);list.appendChild(li);});}
 window.nsewaSetAnalyticsPeriod=function(v){if(!['day','week','month','year'].includes(v))return;period=v;document.querySelectorAll('[data-analytics-period]').forEach(b=>{const on=b.dataset.analyticsPeriod===v;b.classList.toggle('bg-cyan-600',on);b.classList.toggle('border',!on);b.classList.toggle('border-white/20',!on);});window.nsewaLoadAnalytics();};
 window.nsewaLoadAnalytics=async function(){if(loading)return;if(!window.hasVerifiedCeoLayoutSession?.()){status('CEO session आवश्यक छ।');return;}if(!window.nsewaSupabaseReady||!window.nsewaSupabase){status('Supabase client उपलब्ध छैन।');return;}loading=true;status('वास्तविक analytics data लोड हुँदैछ…');try{const {data,error}=await window.nsewaSupabase.rpc('nsewa_ceo_analytics_summary',{p_period:period});if(error)throw error;if(!data)throw new Error('Analytics function ले data दिएन।');draw(data);status('Supabase बाट वास्तविक तथ्याङ्क सफलतापूर्वक लोड भयो।',true);}catch(e){status('Analytics SQL चलाइएको छैन वा CEO RLS अनुमति छैन: '+(e.message||'अज्ञात त्रुटि'));}finally{loading=false;}};
@@ -7332,7 +7332,7 @@ window.nsewaCeoExportAuditTrail=function(){if(!rows.length){alert('Export गर
     }
 
     var res = await sb.from('nsewa_ws_registry').select('*').order('created_at', { ascending: false });
-    if (res.error) { listBox.innerHTML = headerHtml + '<div style="padding:14px;color:#f87171;">Error: ' + res.error.message + '</div>'; return; }
+    if (res.error) { listBox.innerHTML = headerHtml + '<div style="padding:14px;color:#f87171;">Error: ' + window.nsewaEscapeHtml(res.error.message) + '</div>'; return; }
     wsData = res.data || [];
     renderWsRows();
   }
@@ -7366,11 +7366,11 @@ window.nsewaCeoExportAuditTrail=function(){if(!rows.length){alert('Export गर
     }
 
     listBox.innerHTML = headerHtml + rows.map(function(r) {
-      var docBtn = r.doc_front_path ? ' • <a href="javascript:void(0)" onclick="window.nsewaViewDoc(\'' + r.doc_front_path + '\')" style="color:#38bdf8;font-weight:700;">📄 कागजात</a>' : '';
+      var docBtn = r.doc_front_path ? ' • <a href="javascript:void(0)" onclick="window.nsewaViewDoc(' + window.nsewaJsArg(r.doc_front_path) + ')" style="color:#38bdf8;font-weight:700;">📄 कागजात</a>' : '';
       return '<div style="padding:12px 14px;border-bottom:1px solid rgba(148,163,184,0.2);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">' +
-        '<div><strong style="color:#fff;font-size:14px;">[' + r.account_type + '] ' + r.full_name + '</strong> <span style="font-size:11px;padding:2px 8px;border-radius:999px;background:rgba(56,189,248,0.2);color:#7dd3fc;">' + r.verification_status + '</span>' +
-        '<div style="font-size:12px;color:#cbd5e1;margin-top:4px;">जिल्ला: <strong>' + (r.district || '—') + '</strong> (' + (r.municipality || '—') + ') • सीप/पसल: <strong>' + (r.skill_or_shop || '—') + '</strong> • फोन: ' + (r.phone || '—') + docBtn + '</div>' +
-        (r.status_reason ? '<div style="font-size:11px;color:#fbbf24;margin-top:2px;">कैफियत: ' + r.status_reason + '</div>' : '') + '</div>' +
+        '<div><strong style="color:#fff;font-size:14px;">[' + window.nsewaEscapeHtml(r.account_type) + '] ' + window.nsewaEscapeHtml(r.full_name) + '</strong> <span style="font-size:11px;padding:2px 8px;border-radius:999px;background:rgba(56,189,248,0.2);color:#7dd3fc;">' + window.nsewaEscapeHtml(r.verification_status) + '</span>' +
+        '<div style="font-size:12px;color:#cbd5e1;margin-top:4px;">जिल्ला: <strong>' + window.nsewaEscapeHtml(r.district || '—') + '</strong> (' + window.nsewaEscapeHtml(r.municipality || '—') + ') • सीप/पसल: <strong>' + window.nsewaEscapeHtml(r.skill_or_shop || '—') + '</strong> • फोन: ' + window.nsewaEscapeHtml(r.phone || '—') + docBtn + '</div>' +
+        (r.status_reason ? '<div style="font-size:11px;color:#fbbf24;margin-top:2px;">कैफियत: ' + window.nsewaEscapeHtml(r.status_reason) + '</div>' : '') + '</div>' +
         '<div style="display:flex;gap:5px;flex-wrap:wrap;">' +
         '<button type="button" onclick="window.nsewaOpenEditModal(\'' + r.user_id + '\')" style="padding:5px 10px;border:none;border-radius:6px;background:#0284c7;color:#fff;font-size:11px;font-weight:600;cursor:pointer;">✎ Edit</button>' +
         '<button type="button" onclick="window.nsewaWsAction(\'' + r.user_id + '\',\'APPROVED\')" style="padding:5px 10px;border:none;border-radius:6px;background:#16a34a;color:#fff;font-size:11px;font-weight:600;cursor:pointer;">✓ Approve</button>' +
